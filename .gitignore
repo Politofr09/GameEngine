@@ -13,6 +13,7 @@ Sandbox/**
 !Sandbox/src/**
 
 #Ignore all build files
+vendor/bin/premake/**/premake5
 **/Makefile
 *.sln
 *.vcxproj
