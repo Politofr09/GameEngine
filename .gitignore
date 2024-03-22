@@ -13,6 +13,11 @@ Sandbox/**
 !Sandbox/src/**
 
 #Ignore all build files
-Makefile
+**/Makefile
 *.sln
 *.vcxproj
+
+#Ignore also GLFW additional build files
+vendor/GLFW/Makefile
+vendor/bin/**
+vendor/bin/
