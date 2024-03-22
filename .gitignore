@@ -20,4 +20,4 @@ Sandbox/**
 #Ignore also GLFW additional build files
 vendor/GLFW/Makefile
 vendor/bin/**
-vendor/bin/
+vendor/bin-obj/**
