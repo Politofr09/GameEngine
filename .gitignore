@@ -1,0 +1,18 @@
+#Ignore everything inside Core
+Core/**
+
+#Except premake and source files, of course
+!Core/premake5.lua
+!Core/src/**
+
+#Ignore everything inside Sandbox
+Sandbox/**
+
+#Except premake and source files
+!Sandbox/premake5.lua
+!Sandbox/src/**
+
+#Ignore all build files
+Makefile
+*.sln
+*.vcxproj
