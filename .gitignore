@@ -17,6 +17,7 @@ vendor/bin/premake/**/premake5
 **/Makefile
 *.sln
 *.vcxproj
+.vs
 
 #Ignore also GLFW additional build files
 vendor/GLFW/Makefile
