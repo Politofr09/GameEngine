@@ -18,6 +18,9 @@ vendor/bin/premake/**/premake5
 *.sln
 *.vcxproj
 .vs
+**.idb
+**.pdb
+**.lib
 
 #Ignore also GLFW additional build files
 vendor/GLFW/Makefile
