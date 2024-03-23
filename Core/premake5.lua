@@ -18,18 +18,19 @@ project "Core"
 	libdirs {
 		"../vendor/GLFW/bin/GLFW/"
 	}
+    
+    filter "system:windows"
+        links {
+            "GLFW",
+            "opengl32",
+        }
 
-	links {
-        "opengl32",
-        "GLFW"
-    }
-
-	filter "system:linux"
-        pic "On"
-        systemversion "latest"
-        links { "X11", "dl", "pthread" } -- Link against X11 and other necessary libraries
-
-	
+    filter "system:linux"
+        links {
+            "GLFW",
+            "GL"
+        }
+        
     filter "configurations:Debug"
         defines "DEBUG"
         symbols "on"

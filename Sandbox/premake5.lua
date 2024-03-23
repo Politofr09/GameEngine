@@ -5,8 +5,6 @@ project "Sandbox"
 
     targetdir "bin/%{cfg.buildcfg}"
     objdir "bin/intermediates/%{cfg.buildcfg}"
-    
-    links "Core"
 
     files {
         "src/**"
@@ -14,8 +12,22 @@ project "Sandbox"
 
     includedirs {
         "../Core/src/",
-		"../vendor/GLFW/include/"
+        "../vendor/GLFW/include/"
     }
+
+    filter "system:windows"
+        links {
+            "Core",
+            "GLFW",
+            "Opengl32",
+        }
+
+    filter "system:linux"
+        links {
+            "Core",
+            "GLFW",
+            "GL",
+        }
 
     filter "configurations:Debug"
         defines "DEBUG"
