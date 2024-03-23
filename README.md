@@ -34,6 +34,7 @@ make
 ```
 
 # Features 🏗️ 
+- Works on Windows and Linux
 
 # Dependencies 📦 
 - [glfw3](https://github.com/Politofr09/glfw/)
