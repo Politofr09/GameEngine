@@ -12,20 +12,28 @@ project "Sandbox"
 
     includedirs {
         "../Core/src/",
-        "../vendor/GLFW/include/"
+        "../vendor/GLFW/include/",
+        "../vendor/GLEW/include/"
+    }
+
+	libdirs {
+		"../vendor/GLFW/bin/GLFW/",
+        "../vendor/GLEW/bin/%{cfg.buildcfg}"
+	}   
+
+    links {
+        "GLEW",
+        "GLFW",
+        "Core",
     }
 
     filter "system:windows"
         links {
-            "Core",
-            "GLFW",
             "Opengl32",
         }
 
     filter "system:linux"
         links {
-            "Core",
-            "GLFW",
             "GL",
         }
 

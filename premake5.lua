@@ -3,7 +3,9 @@ workspace "GameEngine"
     configurations { "Debug", "Release" }
     startproject "Sandbox"
 
-include "vendor/GLFW"
+    defines "GLEW_STATIC"
+
 include "vendor/GLEW"
+include "vendor/GLFW"
 include "Core"
 include "Sandbox"

@@ -7,10 +7,8 @@ project "GLEW"
 
     files
     {
-        "src/*.c",
-        "include/GL/glew.h",
-        "include/GL/wglew.h",
-        "include/GL/glxew.h",
+        "src/glew.c",
+        "include/GL/*.h"
     }
 
     includedirs

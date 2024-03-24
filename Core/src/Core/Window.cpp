@@ -1,3 +1,4 @@
+#include <GL/glew.h>
 #include "Window.h"
 #include "Utils.h"
 
@@ -17,6 +18,9 @@ namespace Core
         _window = glfwCreateWindow(_width, _height, _title.c_str(), nullptr, nullptr);
         ASSERT(_window);
         glfwMakeContextCurrent(_window);
+
+        // Init glew
+        ASSERT(glewInit() == GLEW_OK);
     }
 
     Window::Window(uint32_t w, uint32_t h, const std::string& title)

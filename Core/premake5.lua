@@ -12,23 +12,28 @@ project "Core"
     
     includedirs {
         "**",
-		"../vendor/GLFW/include/"
+		"../vendor/GLFW/include/",
+        "../vendor/GLEW/include/"
 	}
 	
 	libdirs {
-		"../vendor/GLFW/bin/GLFW/"
+		"../vendor/GLFW/bin/GLFW/",
+        "../vendor/GLEW/bin/%{cfg.buildcfg}"
 	}
     
+    links {
+        "GLEW",
+        "GLFW",
+    }
+
     filter "system:windows"
         links {
-            "GLFW",
             "opengl32",
         }
 
     filter "system:linux"
         links {
-            "GLFW",
-            "GL"
+            "GL",
         }
         
     filter "configurations:Debug"

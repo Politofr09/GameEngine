@@ -15,12 +15,18 @@ Sandbox/**
 #Ignore all build files
 vendor/bin/premake/**/premake5
 **/Makefile
-*.sln
-*.vcxproj
+**.sln
+**.vcxproj
+**.vcxproj.*
+**.recipe
 .vs
 **.idb
 **.pdb
 **.lib
+**.filters
+**.tlog
+**.log
+**.obj
 
 #Ignore also GLFW additional build files
 vendor/GLFW/Makefile
