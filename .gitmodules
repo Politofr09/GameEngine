@@ -1,7 +1,6 @@
-[submodule "vendor/GLFW"]
-	path = vendor/GLFW
-	url = https://github.com/Politofr09/glfw.git
-
 [submodule "vendor/GLEW"]
 	path = vendor/GLEW
 	url = https://github.com/Politofr09/glew.git
+[submodule "vendor/GLFW"]
+	path = vendor/GLFW
+	url = https://github.com/Politofr09/glfw.git
