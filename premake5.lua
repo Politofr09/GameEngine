@@ -4,5 +4,6 @@ workspace "GameEngine"
     startproject "Sandbox"
 
 include "vendor/GLFW"
+include "vendor/GLEW"
 include "Core"
 include "Sandbox"
