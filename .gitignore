@@ -11,6 +11,7 @@ Sandbox/**
 #Except premake and source files
 !Sandbox/premake5.lua
 !Sandbox/src/**
+!Sandbox/res/
 !Sandbox/res/**
 
 #Ignore all build files
