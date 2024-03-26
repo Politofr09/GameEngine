@@ -9,23 +9,25 @@
 namespace Core
 {
 
-#ifdef DEBUG
-#define ASSERT(condition) \
+#ifdef _WIN32
+#define ASSERT(x) \
     do { \
-        if (!(condition)) { \
-            fprintf(stderr, "Assertion failed at %s:%d\n", __FILE__, __LINE__); \
-            printf("Press enter to continue program"); \
-            std::cin.get(); \
+        if(!(x)) {\
+            std::cerr << "Assertion failed\n";\
+            std::cerr << " in file " << __FILE__ << " at line " << __LINE__ << std::endl;\
+            __debugbreak();\
         } \
-    } while (0)
+    } while(false)
+
 #else
-#define ASSERT(condition) \
+#define ASSERT(x) \
     do { \
-        if (!(condition)) { \
-            fprintf(stderr, "Assertion failed at %s:%d\n", __FILE__, __LINE__); \
-            exit(EXIT_FAILURE); \
+        if(!(x)) {\
+            std::cerr "Assertion failed\n";\
+            std::cerr << " in file " << __FILE__ << " at line " << __LINE__ << std::endl;\
+            std::abort();\
         } \
-    } while (0)
+    } while(false)
 #endif
 
 class Logger
