@@ -23,7 +23,7 @@ namespace Core
 #define ASSERT(x) \
     do { \
         if(!(x)) {\
-            std::cerr "Assertion failed\n";\
+            std::cerr << "Assertion failed\n";\
             std::cerr << " in file " << __FILE__ << " at line " << __LINE__ << std::endl;\
             std::abort();\
         } \
