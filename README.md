@@ -1,5 +1,5 @@
 # GameEngine / GLion 
-<img align="left" src="Logo.svg" alt="drawing" width="120px"/>
+<img align="left" src="Logo.png" alt="drawing" width="120px"/>
 
 My custom game engine written in C++ for my projects
 
