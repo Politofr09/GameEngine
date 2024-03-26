@@ -1,13 +1,9 @@
 # GameEngine / GLion 
-<div style="display: flex;">
-  <div style="flex: 1;">
-    <img src="logo.svg" alt="drawing" width="80"/>
-  </div>
-  <div style="flex: 3;">
-    <h1>GameEngine / GLion</h1>
-    <p>My custom game engine written in C++ for my projects</p>
-  </div>
-</div>
+<img align="left" src="logo.svg" alt="drawing" width="120px"/>
+
+<br/>
+My custom game engine written in C++ for my projects
+<br/><br/><br/><br/><br/><br/><br/>
 
 # Cloning this repo 
 ### Don't forget to `--recurse-submodules` to include all dependencies
