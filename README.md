@@ -1,8 +1,8 @@
 # GameEngine / GLion 
-<img align="left" src="logo.svg" alt="drawing" width="120px"/>
+<img align="left" src="logo.png" width="120px"/>
 
-<br/>
 My custom game engine written in C++ for my projects
+
 <br/><br/><br/><br/><br/><br/><br/>
 
 # Cloning this repo 
