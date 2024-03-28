@@ -13,6 +13,11 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
     {
         vShaderFile.open(vertexPath);
         fShaderFile.open(fragmentPath);
+
+        if (!vShaderFile.is_open() || !fShaderFile.is_open()) {
+            throw std::runtime_error("Failed to open shader file.");
+        }
+
         std::stringstream vShaderStream, fShaderStream;
 
         vShaderStream << vShaderFile.rdbuf();

@@ -10,13 +10,9 @@ vendor/bin/premake/**/premake5
 **.pdb
 **.lib
 **.filters
-**.tlog
-**.log
-**.obj
-**.exe
-**.ilk
-
-#Ignore also GLFW additional build files
-vendor/GLFW/Makefile
-vendor/bin/**
-vendor/bin-obj/**
+Core/bin
+Sandbox/bin
+vendor/GLEW/bin
+vendor/GLEW/bin-obj
+vendor/GLFW/bin
+vendor/GLFW/bin-obj
