@@ -13,7 +13,8 @@ project "Sandbox"
     includedirs {
         "../Core/src/",
         "../vendor/GLFW/include/",
-        "../vendor/GLEW/include/"
+        "../vendor/GLEW/include/",
+        "../vendor/"
     }
 
 	libdirs {

@@ -7,13 +7,16 @@ project "Core"
     objdir "bin/intermediates/%{cfg.buildcfg}"
 
     files {
-        "src/**"
+        "src/**",
+        "../vendor/stb/**.h",
+        "../vendor/stb/**.cpp",
     }
     
     includedirs {
         "**",
 		"../vendor/GLFW/include/",
-        "../vendor/GLEW/include/"
+        "../vendor/GLEW/include/",
+        "../vendor/stb/"
 	}
 	
 	libdirs {

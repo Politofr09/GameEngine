@@ -3,6 +3,7 @@
 #include "Core/Window.h"
 #include "Core/Shader.h"
 #include "Core/Utils.h"
+#include "stb/stb_image.h"
 
 using namespace Core;
 
@@ -32,10 +33,10 @@ int main()
     float vertices[] = 
     {
         // positions               // colors
-        -0.5f, -0.5f, 0.0f,        1.0f, 0.0f, 0.0f,    // bottom right, red
-         0.5f, -0.5f, 0.0f,        0.0f, 1.0f, 0.0f,    // bottom left, green
-         0.5f,  0.5f, 0.0f,        0.0f, 0.0f, 1.0f,    // top, blue
-        -0.5f,  0.5f, 0.0f,        0.2f, 0.5f, 0.3f,
+        -0.5f, -0.5f, 0.0f,        1.0f, 0.0f, 0.0f,    1.0f, 1.0f,
+         0.5f, -0.5f, 0.0f,        0.0f, 1.0f, 0.0f,    1.0f, 0.0f,
+         0.5f,  0.5f, 0.0f,        0.0f, 0.0f, 1.0f,    0.0f, 0.0f,
+        -0.5f,  0.5f, 0.0f,        0.2f, 0.5f, 0.3f,    0.0f, 1.0f,
     };
 
     unsigned int indices[] =
@@ -52,12 +53,16 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+// position attribute
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+glEnableVertexAttribArray(0);
+// color attribute
+glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+glEnableVertexAttribArray(1);
+// uv attribute
+glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+glEnableVertexAttribArray(2);
+  
 
     GLuint IBO;
     glGenBuffers(1, &IBO);
@@ -66,6 +71,16 @@ int main()
 
     Shader shader("res/VertexShader.vs", "res/FragmentShader.fs");
     shader.Use();
+
+    /**** Load texture ****/
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load("res/wall.jpg", &width, &height, &nrChannels, 0);
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
 
     /* Loop until the user closes the window */
     while (!window->ShouldClose())             
