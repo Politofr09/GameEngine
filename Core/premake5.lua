@@ -23,19 +23,18 @@ project "Core"
 		"../vendor/GLFW/bin/GLFW/",
         "../vendor/GLEW/bin/%{cfg.buildcfg}"
 	}
-    
-    links {
-        "GLEW",
-        "GLFW",
-    }
 
     filter "system:windows"
         links {
+            "GLEW",
+            "GLFW",
             "opengl32",
         }
 
     filter "system:linux"
         links {
+            "GLEW",
+            "GLFW",
             "GL",
         }
         

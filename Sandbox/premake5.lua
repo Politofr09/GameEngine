@@ -23,9 +23,9 @@ project "Sandbox"
 	}   
 
     links {
+        "Core",
         "GLEW",
         "GLFW",
-        "Core",
     }
 
     filter "system:windows"

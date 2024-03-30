@@ -7,8 +7,6 @@ layout (location = 2) in vec2 aTexCoord;
 out vec3 vertexColor;
 out vec2 uv;
 
-uniform float time;
-
 void main()
 {
     vertexColor = aColor;
