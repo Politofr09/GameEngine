@@ -14,7 +14,8 @@ project "Sandbox"
         "../Core/src/",
         "../vendor/GLFW/include/",
         "../vendor/GLEW/include/",
-        "../vendor/"
+        "../vendor/glm",
+        "../vendor/",
     }
 
 	libdirs {

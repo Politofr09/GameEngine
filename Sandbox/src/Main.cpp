@@ -4,6 +4,7 @@
 #include "Core/Shader.h"
 #include "Core/Utils.h"
 #include "stb/stb_image.h"
+#include "glm/glm.hpp"
 
 using namespace Core;
 
@@ -29,7 +30,7 @@ bool GLLogCall()
 int main()                                                                      
 {
     Window* window = new Window(1080, 720, "Hello, abstraction!");              
-    
+
     float vertices[] = 
     {
         // positions               // colors

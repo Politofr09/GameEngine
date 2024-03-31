@@ -10,13 +10,15 @@ project "Core"
         "src/**",
         "../vendor/stb/**.h",
         "../vendor/stb/**.cpp",
+        "../vendor/glm/glm/**.hpp",
     }
     
     includedirs {
         "**",
 		"../vendor/GLFW/include/",
         "../vendor/GLEW/include/",
-        "../vendor/stb/"
+        "../vendor/stb/",
+        "../vendor/glm/"
 	}
 	
 	libdirs {
