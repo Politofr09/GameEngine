@@ -5,6 +5,8 @@
 #include "Core/Utils.h"
 #include "stb/stb_image.h"
 #include "glm/glm.hpp"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 using namespace Core;
 
@@ -82,9 +84,18 @@ int main()
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(data);
 
-    /* Loop until the user closes the window */
+    /**** Transformation matrix ****/
+    glm::mat4 trans = glm::mat4(1.0f);
+    trans = glm::rotate(trans, glm::radians(45.0f), glm::vec3(0.0, 0.0, 1.0));
+    trans = glm::scale(trans, glm::vec3(0.5f, 0.5f, 0.5f));
+
+
+    /**** Main loop ****/
     while (!window->ShouldClose())             
     {
+        trans = glm::rotate(trans, (float)sin(glfwGetTime()) / 10, glm::vec3(0.0, 0.0, 1.0));
+        shader.SetMatrix("transform", trans);
+        
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);          
         /* Render here */
