@@ -29,5 +29,7 @@ namespace Core
 		bool ShouldClose();
 
 		void Close();
+
+		GLFWwindow* GetHandle() { return _window; }
 	};
 }

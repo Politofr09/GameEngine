@@ -36,10 +36,10 @@ int main()
     float vertices[] = 
     {
         // positions               // colors
-        -0.5f, -0.5f, 0.0f,        1.0f, 0.0f, 0.0f,    1.0f, 1.0f,
-         0.5f, -0.5f, 0.0f,        0.0f, 1.0f, 0.0f,    1.0f, 0.0f,
-         0.5f,  0.5f, 0.0f,        0.0f, 0.0f, 1.0f,    0.0f, 0.0f,
-        -0.5f,  0.5f, 0.0f,        0.2f, 0.5f, 0.3f,    0.0f, 1.0f,
+        -0.5f, 0.0f,-0.5f,        1.0f, 0.0f, 0.0f,    1.0f, 1.0f,
+         0.5f, 0.0f,-0.5f,        0.0f, 1.0f, 0.0f,    1.0f, 0.0f,
+         0.5f, 0.0f, 0.5f,        0.0f, 0.0f, 1.0f,    0.0f, 0.0f,
+        -0.5f, 0.0f, 0.5f,        0.2f, 0.5f, 0.3f,    0.0f, 1.0f,
     };
 
     unsigned int indices[] =
@@ -86,16 +86,49 @@ int main()
 
     /**** Transformation matrix ****/
     glm::mat4 trans = glm::mat4(1.0f);
-    trans = glm::rotate(trans, glm::radians(45.0f), glm::vec3(0.0, 0.0, 1.0));
-    trans = glm::scale(trans, glm::vec3(0.5f, 0.5f, 0.5f));
+    shader.SetMatrix("uTransform", trans);
 
+    /**** View & Projection matrices ****/
+    glm::vec3 cameraPos = glm::vec3(0.0f, 3.0f,  1.0f);
+    glm::vec3 cameraTarget = glm::vec3(0.0f);
+    glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f,  0.0f);
+    glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+    shader.SetMatrix("uView", view);
+    float aspectRatio = window->GetWidth() / window->GetHeight();
+    glm::mat4 projection = glm::perspective(glm::radians(75.0f), aspectRatio, 1.0f, 1000.0f);
+    shader.SetMatrix("uProjection", projection);
 
     /**** Main loop ****/
     while (!window->ShouldClose())             
     {
-        trans = glm::rotate(trans, (float)sin(glfwGetTime()) / 10, glm::vec3(0.0, 0.0, 1.0));
-        shader.SetMatrix("transform", trans);
-        
+        const float cameraSpeed = 0.05f;
+
+        // Update camera position based on user input
+        if (glfwGetKey(window->GetHandle(), GLFW_KEY_W) == GLFW_PRESS)
+        {
+            cameraPos.z -= cameraSpeed;
+            cameraTarget.z -= cameraSpeed;
+        }
+        if (glfwGetKey(window->GetHandle(), GLFW_KEY_S) == GLFW_PRESS)
+        {
+            cameraPos.z += cameraSpeed;
+            cameraTarget.z += cameraSpeed;
+        }
+        if (glfwGetKey(window->GetHandle(), GLFW_KEY_A) == GLFW_PRESS)
+        {
+            cameraPos.x -= cameraSpeed;
+            cameraTarget.x -= cameraSpeed;
+        }
+        if (glfwGetKey(window->GetHandle(), GLFW_KEY_D) == GLFW_PRESS)
+        {
+            cameraPos.x += cameraSpeed;
+            cameraTarget.x += cameraSpeed;
+        }
+
+        // Calculate view matrix
+        view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+        shader.SetMatrix("uView", view);
+
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);          
         /* Render here */
