@@ -14,14 +14,16 @@ namespace Core::Events
         KeyPressedEvent(int key_code) : key_code(key_code) {}
         ~KeyPressedEvent() override {}
     };
+    INSTANTIATE_DISPATCHER(KeyPressedEvent);
 
-    class KeyRelesedEvent : public Event
+    class KeyReleasedEvent : public Event
     {
     public:
         int key_code;
 
-        KeyRelesedEvent(int key_code) : key_code(key_code) {}
+        KeyReleasedEvent(int key_code) : key_code(key_code) {}
     };
+    INSTANTIATE_DISPATCHER(KeyReleasedEvent);
 
     /**** Input: mouse events ****/
     class MouseMovedEvent : public Event
@@ -32,6 +34,7 @@ namespace Core::Events
 
         MouseMovedEvent(float xpos, float ypos) : xpos(xpos), ypos(ypos) {}
     };
+    INSTANTIATE_DISPATCHER(MouseMovedEvent);
 
     class MouseButtonPressedEvent : public Event
     {
@@ -40,6 +43,7 @@ namespace Core::Events
 
         MouseButtonPressedEvent(int button) : button(button) {}
     };
+    INSTANTIATE_DISPATCHER(MouseButtonPressedEvent);
 
     class MouseWheelScrollEvent : public Event
     {
@@ -48,5 +52,6 @@ namespace Core::Events
 
         MouseWheelScrollEvent(float scroll) : scroll(scroll) {}
     };
-    
+    INSTANTIATE_DISPATCHER(MouseWheelScrollEvent);
+
 }

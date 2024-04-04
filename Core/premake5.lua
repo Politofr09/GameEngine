@@ -7,7 +7,8 @@ project "Core"
     objdir "bin/intermediates/%{cfg.buildcfg}"
 
     files {
-        "src/**",
+        "src/Core/**",
+        "src/Events/**",
         "../vendor/stb/**.h",
         "../vendor/stb/**.cpp",
         "../vendor/glm/glm/**.hpp",

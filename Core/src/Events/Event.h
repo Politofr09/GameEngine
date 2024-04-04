@@ -5,27 +5,9 @@
 
 namespace Core::Events
 {
-//
-//	enum class EventType 
-//	{
-//		None = 0,
-//		WindowCloose, WindowResize, WindowFocus, WindowLostFocus, WindowMoved,
-//		KeyPressed, KeyReleased,
-//		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled
-//	};
-//
-//	enum EventCategory 
-//	{
-//		None = 0,
-//		EventCategoryWindow,
-//		EventCategoryInput,
-//		EventCategoryMouse,
-//		EventCategoryKeyboard
-//	};
-//
-//#define EVENT_CLASS_TYPE(type) static EventType GetType() { return EventType::##type; }
-//
-//#define EVENT_CLASS_CATEGORY(category) static int GetCategory() const override { return category };
+
+#define INSTANTIATE_DISPATCHER(EventType) \
+    template class Dispatcher<EventType>;
 
 	class Event
 	{
@@ -34,14 +16,6 @@ namespace Core::Events
 
 		virtual ~Event() = default;
 
-		//virtual EventType GetEventType() = 0;
-
-		//virtual int GetCategory() = 0;
-
-		//inline bool IsInCategory(EventCategory category)
-		//{
-		//	return GetCategory() & category;
-		//}
 	};
 
 	template<typename EventType>
@@ -57,7 +31,6 @@ namespace Core::Events
 			for (auto& callback : _callbacks)
 			{
 				if (event.Handled) break;
-
 				callback(*dynamic_cast<EventType*>(&event));
 			}
 		}

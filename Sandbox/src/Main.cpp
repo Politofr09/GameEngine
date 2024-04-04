@@ -3,6 +3,7 @@
 #include "Core/Window.h"
 #include "Core/Shader.h"
 #include "Core/Utils.h"
+#include "Events/InputEvents.h"
 #include "stb/stb_image.h"
 #include "glm/glm.hpp"
 #include <glm/gtc/matrix_transform.hpp>
@@ -97,6 +98,10 @@ int main()
     float aspectRatio = window->GetWidth() / window->GetHeight();
     glm::mat4 projection = glm::perspective(glm::radians(75.0f), aspectRatio, 1.0f, 1000.0f);
     shader.SetMatrix("uProjection", projection);
+
+    Events::Dispatcher<Events::KeyPressedEvent>::Subscribe([](Events::KeyPressedEvent& e){
+        std::cout << e.key_code << std::endl;
+    });
 
     /**** Main loop ****/
     while (!window->ShouldClose())             
