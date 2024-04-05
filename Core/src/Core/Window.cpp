@@ -16,13 +16,13 @@ namespace Core
         if (action == GLFW_PRESS)
         {
             Events::KeyPressedEvent e(key);
-            Events::Dispatcher<Events::KeyPressedEvent>::Trigger(e);
+            Events::Dispatcher::Trigger(e);
             e.Handled = true;
         } 
         else if (action == GLFW_RELEASE)
         {
             Events::KeyReleasedEvent e(key);
-            Events::Dispatcher<Events::KeyReleasedEvent>::Trigger(e);
+            Events::Dispatcher::Trigger(e);
             e.Handled = true;
         }
     }
@@ -31,14 +31,14 @@ namespace Core
     {
         // Trigger WindowResizedEvent
         Events::WindowResizedEvent e(width, height);
-        Events::Dispatcher<Events::WindowResizedEvent>::Trigger(e);
+        Events::Dispatcher::Trigger(e);
     }
 
     void window_pos_callback(GLFWwindow* window, int xpos, int ypos)
     {
         // Trigger WindowMovedEvent
         Events::WindowMovedEvent e(xpos, ypos);
-        Events::Dispatcher<Events::WindowMovedEvent>::Trigger(e);
+        Events::Dispatcher::Trigger(e);
     }
 
     void Window::Init()
@@ -94,7 +94,8 @@ namespace Core
         glfwDestroyWindow(_window);
         glfwTerminate();
 
-        Events::Dispatcher<Events::WindowClosedEvent>();
+        Events::WindowClosedEvent e;
+        Events::Dispatcher::Trigger(e);
     }
 
 }

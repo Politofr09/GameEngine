@@ -95,18 +95,20 @@ int main()
     glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f,  0.0f);
     glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
     shader.SetMatrix("uView", view);
-    float aspectRatio = window->GetWidth() / window->GetHeight();
+    float aspectRatio = (float)window->GetWidth() / window->GetHeight();
     glm::mat4 projection = glm::perspective(glm::radians(75.0f), aspectRatio, 1.0f, 1000.0f);
     shader.SetMatrix("uProjection", projection);
 
-    Events::Dispatcher<Events::KeyPressedEvent>::Subscribe([](Events::KeyPressedEvent& e){
+    Events::Dispatcher::Subscribe("KeyPressedEvent", [](Events::Event& event) {
+        auto& e = static_cast<Events::KeyPressedEvent&>(event);
+
         std::cout << e.key_code << std::endl;
     });
 
     /**** Main loop ****/
     while (!window->ShouldClose())             
     {
-        const float cameraSpeed = 0.05f;
+        const float cameraSpeed = 0.0005f;
 
         // Update camera position based on user input
         if (glfwGetKey(window->GetHandle(), GLFW_KEY_W) == GLFW_PRESS)

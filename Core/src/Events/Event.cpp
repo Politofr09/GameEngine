@@ -1,9 +1,5 @@
-#include "Events/Event.h"
-#include "Events/InputEvents.h"
-#include "Events/WindowEvents.h"
+#include "Event.h"
 
 using namespace Core::Events;
 
-// Declaration of static member variable
-template <typename EventType>
-std::vector<typename Dispatcher<EventType>::EventCallbackFn> Dispatcher<EventType>::_callbacks;
+std::unordered_map<Event::DescriptorType, std::vector<Dispatcher::EventCallbackFn>> Dispatcher::_observers;

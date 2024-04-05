@@ -1,4 +1,5 @@
 #include <functional>
+#include <unordered_map>
 #include <vector>
 
 #pragma once
@@ -6,8 +7,8 @@
 namespace Core::Events
 {
 
-#define INSTANTIATE_DISPATCHER(EventType) \
-    template class Dispatcher<EventType>;
+#define DECLARE_EVENT_TYPE(event) static constexpr DescriptorType descriptor = event; \
+								  virtual DescriptorType GetType() const override { return descriptor; }
 
 	class Event
 	{
@@ -16,33 +17,42 @@ namespace Core::Events
 
 		virtual ~Event() = default;
 
+		using DescriptorType = const char*;
+
+		virtual DescriptorType GetType() const = 0;
 	};
 
-	template<typename EventType>
 	class Dispatcher
 	{
 	private:
-		using EventCallbackFn = std::function<void(EventType&)>;
-		static std::vector<EventCallbackFn> _callbacks;
+		using EventCallbackFn = std::function<void(Event&)>;
+		static std::unordered_map<Event::DescriptorType, std::vector<EventCallbackFn>> _observers;
 
 	public:
 		static void Trigger(Event& event)
 		{
-			for (auto& callback : _callbacks)
+			auto type = event.GetType();
+			
+			if (_observers.find(type) == _observers.end())
+				return;
+
+			auto& observers = _observers.at(type);
+			for (auto& observer : observers)
 			{
-				if (event.Handled) break;
-				callback(*dynamic_cast<EventType*>(&event));
+				observer(event);
+				if (event.Handled) 
+					break;
 			}
 		}
 
-		static void Subscribe(EventCallbackFn callback) 
+		static void Subscribe(Event::DescriptorType eventType, EventCallbackFn callback)
 		{
-			_callbacks.push_back(callback);
+			_observers[eventType].push_back(callback);
 		}
 
 		~Dispatcher()
 		{
-			_callbacks.clear();
+			_observers.clear();
 		}
 	};
 	

@@ -5,7 +5,11 @@ workspace "GameEngine"
 
     defines "GLEW_STATIC"
 
-include "vendor/GLEW"
-include "vendor/GLFW"
+-- Git submodules
+group "Dependencies"
+    include "vendor/GLEW"
+    include "vendor/GLFW"
+group ""
+
 include "Core"
 include "Sandbox"

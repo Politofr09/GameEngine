@@ -10,8 +10,7 @@ project "Core"
         "src/Core/**",
         "src/Events/**",
         "../vendor/stb/**.h",
-        "../vendor/stb/**.cpp",
-        "../vendor/glm/glm/**.hpp",
+        "../vendor/stb/**.cpp"
     }
     
     includedirs {
@@ -19,7 +18,8 @@ project "Core"
 		"../vendor/GLFW/include/",
         "../vendor/GLEW/include/",
         "../vendor/stb/",
-        "../vendor/glm/"
+        "../vendor/glm/",
+        "../vendor/ImGui/"
 	}
 	
 	libdirs {
@@ -27,17 +27,19 @@ project "Core"
         "../vendor/GLEW/bin/%{cfg.buildcfg}"
 	}
 
+    links {
+        "GLEW",
+        "GLFW",
+        "ImGui"
+    }
+
     filter "system:windows"
         links {
-            "GLEW",
-            "GLFW",
             "opengl32",
         }
 
     filter "system:linux"
         links {
-            "GLEW",
-            "GLFW",
             "GL",
         }
         

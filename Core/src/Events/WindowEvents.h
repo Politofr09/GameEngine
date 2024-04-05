@@ -12,8 +12,9 @@ namespace Core::Events
 		int xpos, ypos;
 
 		WindowMovedEvent(int xpos, int ypos) : xpos(xpos), ypos(ypos) {}
+
+		DECLARE_EVENT_TYPE("WindowMovedEvent");
 	};
-	INSTANTIATE_DISPATCHER(WindowMovedEvent);
 
 	class WindowResizedEvent : public Event
 	{
@@ -21,8 +22,9 @@ namespace Core::Events
 		int width, height;
 
 		WindowResizedEvent(int width, int height) : width(width), height(height) {}
+
+		DECLARE_EVENT_TYPE("WindowResizedEvent");
 	};
-	INSTANTIATE_DISPATCHER(WindowResizedEvent);
 
 	class WindowClosedEvent : public Event
 	{
@@ -30,7 +32,8 @@ namespace Core::Events
 		~WindowClosedEvent() override
 		{
 		}
+
+		DECLARE_EVENT_TYPE("WindowClosedEvent");
 	};
-	INSTANTIATE_DISPATCHER(WindowClosedEvent);
 
 }
