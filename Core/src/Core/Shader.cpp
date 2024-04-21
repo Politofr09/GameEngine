@@ -3,6 +3,11 @@
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath)
 {
+    Load(vertexPath, fragmentPath);
+}
+
+void Shader::Load(const char* vertexPath, const char* fragmentPath)
+{
     std::string vertexCode;
     std::string fragmentCode;
 
@@ -45,7 +50,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
     vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShaderID, 1, &vShaderCode, NULL);
     glCompileShader(vertexShaderID);
-    
+
     // Check errors
     glGetShaderiv(vertexShaderID, GL_COMPILE_STATUS, &success);
     if (!success)

@@ -21,12 +21,10 @@ project "Sandbox"
 	libdirs {
 		"../vendor/GLFW/bin/GLFW/",
         "../vendor/GLEW/bin/%{cfg.buildcfg}"
-	}   
+    }   
 
     links {
-        "Core",
-        "GLEW",
-        "GLFW",
+        "Core"
     }
 
     filter "system:windows"

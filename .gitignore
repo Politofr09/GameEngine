@@ -16,3 +16,4 @@ vendor/GLEW/bin
 vendor/GLEW/bin-obj
 vendor/GLFW/bin
 vendor/GLFW/bin-obj
+Sandbox/imgui.ini

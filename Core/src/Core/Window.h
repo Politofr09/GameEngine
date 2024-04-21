@@ -1,5 +1,6 @@
 #include <GLFW/glfw3.h>
 #include <string>
+#include <chrono>
 
 #pragma once
 
@@ -12,7 +13,14 @@ namespace Core
 		uint32_t _height;
 		std::string _title;
 
-		GLFWwindow* _window;
+		GLFWwindow* _window; // GLFW Handle
+
+		static std::chrono::steady_clock::time_point _prevTime;
+		static float _deltaTime;
+
+		static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+		static void window_resize_callback(GLFWwindow* window, int width, int height);
+		static void window_pos_callback(GLFWwindow* window, int xpos, int ypos);
 
 		void Init();
 
@@ -28,6 +36,8 @@ namespace Core
 		bool ShouldClose();
 
 		void Close();
+
+		static float GetDeltaTime() { return _deltaTime; }
 
 		GLFWwindow* GetHandle() { return _window; }
 	};

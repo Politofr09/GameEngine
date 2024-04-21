@@ -17,6 +17,17 @@ namespace Core::Events
         DECLARE_EVENT_TYPE("KeyPressedEvent");
     };
 
+    class KeyDownEvent : public Event
+    {
+    public:
+        int key_code;
+
+        KeyDownEvent(int key_code) : key_code(key_code) {}
+        ~KeyDownEvent() override {}
+
+        DECLARE_EVENT_TYPE("KeyDownEvent");
+    };
+
     class KeyReleasedEvent : public Event
     {
     public:

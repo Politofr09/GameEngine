@@ -26,28 +26,25 @@ namespace Core::Events
 	{
 	private:
 		using EventCallbackFn = std::function<void(Event&)>;
-		static std::unordered_map<Event::DescriptorType, std::vector<EventCallbackFn>> _observers;
+		static std::vector<EventCallbackFn> _observers;
 
 	public:
 		static void Trigger(Event& event)
 		{
 			auto type = event.GetType();
-			
-			if (_observers.find(type) == _observers.end())
-				return;
 
-			auto& observers = _observers.at(type);
-			for (auto& observer : observers)
+			for (auto& observer : _observers)
 			{
 				observer(event);
 				if (event.Handled) 
-					break;
+					return;
 			}
 		}
 
-		static void Subscribe(Event::DescriptorType eventType, EventCallbackFn callback)
+		// Subscribe to a specific event type
+		static void Subscribe(EventCallbackFn callback)
 		{
-			_observers[eventType].push_back(callback);
+			_observers.push_back(callback);
 		}
 
 		~Dispatcher()

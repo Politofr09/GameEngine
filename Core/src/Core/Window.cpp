@@ -1,40 +1,44 @@
 #include <GL/glew.h>
 #include "Window.h"
 #include "Utils.h"
+#include "Keyboard.h"
+#include "Mouse.h"
 #include "Events/WindowEvents.h"
 #include "Events/InputEvents.h"
+#include <imgui/imgui.h>
 
 namespace Core
 {
+    float Window::_deltaTime = 0.0f;
+    std::chrono::steady_clock::time_point Window::_prevTime;
+
     static void GLFWErrorCallback(int error, const char* description)
     {
         Logger::LogError(description);
     }
 
-    void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+    void Window::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
     {
-        if (action == GLFW_PRESS)
+        if (action == GLFW_PRESS || action == GLFW_REPEAT)
         {
             Events::KeyPressedEvent e(key);
             Events::Dispatcher::Trigger(e);
-            e.Handled = true;
-        } 
+        }
         else if (action == GLFW_RELEASE)
         {
             Events::KeyReleasedEvent e(key);
             Events::Dispatcher::Trigger(e);
-            e.Handled = true;
         }
     }
 
-    void window_resize_callback(GLFWwindow* window, int width, int height)
+    void Window::window_resize_callback(GLFWwindow* window, int width, int height)
     {
         // Trigger WindowResizedEvent
         Events::WindowResizedEvent e(width, height);
         Events::Dispatcher::Trigger(e);
     }
 
-    void window_pos_callback(GLFWwindow* window, int xpos, int ypos)
+    void Window::window_pos_callback(GLFWwindow* window, int xpos, int ypos)
     {
         // Trigger WindowMovedEvent
         Events::WindowMovedEvent e(xpos, ypos);
@@ -55,8 +59,22 @@ namespace Core
         glfwSetWindowSizeCallback(_window, window_resize_callback);
         glfwSetWindowPosCallback(_window, window_pos_callback);
 
+        Input::Keyboard::Init(_window);
+        Input::Mouse::Init(_window);
+
+        // Add another callback when the window resizes...
+        Events::Dispatcher::Subscribe([&](Events::Event& event){
+            if (event.GetType() != "WindowResizedEvent") return;
+
+            auto& e = static_cast<Events::WindowResizedEvent&>(event);
+            _width = e.width;
+            _height = e.height;
+        });
+
         // Init glew
         ASSERT(glewInit() == GLEW_OK);
+
+        _prevTime = std::chrono::steady_clock::now();
     }
 
     Window::Window(uint32_t w, uint32_t h, const std::string& title)
@@ -80,6 +98,11 @@ namespace Core
 
     void Window::Update()
     {
+        auto currentTime = std::chrono::steady_clock::now();
+        std::chrono::duration<float> elapsedTime = currentTime - _prevTime;
+        _deltaTime = elapsedTime.count();
+        _prevTime = currentTime;
+
         glfwPollEvents();
         glfwSwapBuffers(_window);
     }
@@ -93,9 +116,6 @@ namespace Core
     {
         glfwDestroyWindow(_window);
         glfwTerminate();
-
-        Events::WindowClosedEvent e;
-        Events::Dispatcher::Trigger(e);
     }
 
 }

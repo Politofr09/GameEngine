@@ -10,7 +10,8 @@ project "Core"
         "src/Core/**",
         "src/Events/**",
         "../vendor/stb/**.h",
-        "../vendor/stb/**.cpp"
+        "../vendor/stb/**.cpp",
+        "../vendor/imgui/**.cpp"
     }
     
     includedirs {
@@ -19,7 +20,7 @@ project "Core"
         "../vendor/GLEW/include/",
         "../vendor/stb/",
         "../vendor/glm/",
-        "../vendor/ImGui/"
+        "../vendor/"
 	}
 	
 	libdirs {
@@ -30,7 +31,6 @@ project "Core"
     links {
         "GLEW",
         "GLFW",
-        "ImGui"
     }
 
     filter "system:windows"
