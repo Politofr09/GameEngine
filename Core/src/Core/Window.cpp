@@ -17,20 +17,6 @@ namespace Core
         Logger::LogError(description);
     }
 
-    void Window::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-    {
-        if (action == GLFW_PRESS || action == GLFW_REPEAT)
-        {
-            Events::KeyPressedEvent e(key);
-            Events::Dispatcher::Trigger(e);
-        }
-        else if (action == GLFW_RELEASE)
-        {
-            Events::KeyReleasedEvent e(key);
-            Events::Dispatcher::Trigger(e);
-        }
-    }
-
     void Window::window_resize_callback(GLFWwindow* window, int width, int height)
     {
         // Trigger WindowResizedEvent
@@ -55,7 +41,7 @@ namespace Core
         glfwMakeContextCurrent(_window);
 
         // Setup callbacks
-        glfwSetKeyCallback(_window, key_callback);
+        //glfwSetKeyCallback(_window, key_callback);
         glfwSetWindowSizeCallback(_window, window_resize_callback);
         glfwSetWindowPosCallback(_window, window_pos_callback);
 

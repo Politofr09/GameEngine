@@ -61,12 +61,13 @@ void Core::Application::OnEvent(Core::Events::Event& event)
 Core::Application::~Application()
 {
 	delete m_ImGuiLayer;
-	m_Window->Close();
 
 	for (auto& layer : m_Layers)
 	{
 		layer->OnDettach();
 		delete layer;
 	}
+
+	m_Window->Close();
 	m_Layers.clear();
 }

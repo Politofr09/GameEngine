@@ -13,7 +13,7 @@ float Core::Camera::CalculateVerticalDistance()
 void Core::Camera::CalculateZoom()
 {
     accumulatedScroll -= Core::Input::Mouse::GetScrollOffset();
-    accumulatedScroll = glm::max(0.8f, accumulatedScroll);
+    accumulatedScroll = glm::max(0.4f, accumulatedScroll);
     distanceFromTarget = glm::mix(distanceFromTarget, accumulatedScroll, 9.0f * Window::GetDeltaTime());
 }
 
@@ -25,7 +25,7 @@ Core::Camera::Camera()
 
 Core::Camera::Camera(float aspectRatio)
 {
-    projection = glm::perspective(glm::radians(75.0f), aspectRatio, 0.1f, 1000.0f);
+    projection = glm::perspective(glm::radians(75.0f), aspectRatio, 0.0f, 1000.0f);
 }
 
 void Core::Camera::Move()
@@ -88,7 +88,7 @@ void Core::Camera::ProcessMouseInput()
     if (Core::Input::Mouse::IsButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
     {
         // Adjust the panning speed as needed
-        const float panSpeed = 15.0f * Window::GetDeltaTime();
+        const float panSpeed = distanceFromTarget * Window::GetDeltaTime();
         glm::vec2 mouseDelta = Core::Input::Mouse::GetMouseDelta();
 
         // Translate the target based on mouse movement

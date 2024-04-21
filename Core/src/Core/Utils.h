@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
-#include <ctime>
+#include <time.h>
 
 #pragma once
 
@@ -79,5 +79,10 @@ public:
         Log(message, LogLevels::LOG_DEBUG, file, line);
     }
 };
+
+#define LOG_ERROR(x) Core::Logger::LogError(x, __FILE__, __LINE__)
+#define LOG_WARNING(x) Core::Logger::LogWarning(x, __FILE__, __LINE__)
+#define LOG_INFO(x) Core::Logger::LogInfo(x, __FILE__, __LINE__)
+#define LOG_DEBUG(x) Core::Logger::LogDebug(x, __FILE__, __LINE__)
 
 }

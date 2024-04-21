@@ -5,16 +5,12 @@
 #include "Core/Utils.h"
 #include "Events/InputEvents.h"
 #include "Events/WindowEvents.h"
-#include "stb/stb_image.h"
+#include "Renderer/Texture.h"
 #include "glm/glm.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #pragma once
-
-#define GLCall(x) GLClearError(); \
-    x;\
-    ASSERT(GLLogCall());
 
 class SandboxLayer : public Core::Layer
 {
@@ -28,27 +24,12 @@ public:
 	void OnDettach() override;
 
 private:
-    float vertices[32] =
-    {
-        // positions               // colors
-        -0.5f, 0.0f,-0.5f,        1.0f, 0.0f, 0.0f,    1.0f, 1.0f,
-         0.5f, 0.0f,-0.5f,        0.0f, 1.0f, 0.0f,    1.0f, 0.0f,
-         0.5f, 0.0f, 0.5f,        0.0f, 0.0f, 1.0f,    0.0f, 0.0f,
-        -0.5f, 0.0f, 0.5f,        0.2f, 0.5f, 0.3f,    0.0f, 1.0f,
-    };
-
-    unsigned int indices[6] =
-    {
-        0, 1, 2,
-        2, 3, 0
-    };
-
-    GLuint VAO, VBO, IBO, textureID = 0;
-
+    
     glm::mat4 trans= glm::mat4();
     Core::Camera cam;
 
     Shader shader;
+    Core::Gfx::Texture texture;
 
     void UpdateCameraController();
     void ShowCameraControlImgui(bool* p_open);

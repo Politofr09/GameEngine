@@ -9,6 +9,7 @@ project "Core"
     files {
         "src/Core/**",
         "src/Events/**",
+        "src/Renderer/**",
         "../vendor/stb/**.h",
         "../vendor/stb/**.cpp",
         "../vendor/imgui/**.cpp"

@@ -18,7 +18,6 @@ namespace Core
 		static std::chrono::steady_clock::time_point _prevTime;
 		static float _deltaTime;
 
-		static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 		static void window_resize_callback(GLFWwindow* window, int width, int height);
 		static void window_pos_callback(GLFWwindow* window, int xpos, int ypos);
 
