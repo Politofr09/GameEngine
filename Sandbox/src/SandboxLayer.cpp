@@ -7,45 +7,76 @@
 #include "Core/ImGuiLayer.h"
 
 #include "Renderer/Renderer.h"
-#include "Renderer/VertexBuffer.h"
-#include "Renderer/IndexBuffer.h"
-#include "Renderer/VertexArray.h"
-#include "Renderer/Model.h"
+#include "Renderer/Renderer2D.h"
+#include "Renderer/TextRenderer.h"
 
-Core::Gfx::Renderer* renderer = nullptr;
-Core::Gfx::VertexArray* va = nullptr;
-Core::Gfx::Model model;
+using namespace Core::Gfx;
+
+Model model1;
+Model model2;
+Texture texture;
+Font font;
 
 void SandboxLayer::OnAttach()
 {
-    renderer = new Core::Gfx::Renderer();
+    // Setup OpenGL renderer
+    Renderer::Init();
+    Renderer2D::Init();
+    TextRenderer::Init();
 
-    //// Setup buffers and layouts
-    va = new Core::Gfx::VertexArray();
-    model = Core::Gfx::LoadFromOBJ("res/TestModel.obj", *va);
+    model1 = Model::LoadModel("res/Monkey.obj");
+    model2 = Model::LoadModel("res/Ball.obj");
     shader = Shader("res/VertexShader.vs", "res/FragmentShader.fs");
     shader.Use();
 
-    /**** Load texture ****/
-    texture.Load("res/TestModel_tex.png");
+    /**** Setup the camera(s) ****/
+    cam = Core::Gfx::Camera((float)m_Window->GetWidth() / m_Window->GetHeight());
+    cam2d = Core::Gfx::OrthographicCamera(0.0f, (float)m_Window->GetWidth(), (float)m_Window->GetHeight(), 0.0f);
 
-    /**** Transformation matrix ****/
-    trans = glm::mat4(1.0f);
-    shader.SetMatrix("uTransform", trans);
-
-    /**** Setup the camera ****/
-    cam = Core::Camera((float)m_Window->GetWidth() / m_Window->GetHeight());
-    shader.SetMatrix("uView", cam.GetViewMatrix());
-    shader.SetMatrix("uProjection", cam.GetProjectionMatrix());
+    texture.Load("res/water.jpg");
+    font.Load("res/ocr-a-extended.ttf", 100);
 }
+
+static int FONT_SCALE = 3;
 
 void SandboxLayer::OnUpdate()
 {
     UpdateCameraController();
 
+    shader.SetFloat("uTime", (float)glfwGetTime());
+
+    Renderer::Clear();
+
     // Render here
-    renderer->Clear();
-    renderer->Draw(*va, model.GetIndexBuffer());
+    Renderer::Begin(cam);
+    {
+        glm::mat4 trans = glm::mat4(1);
+
+        Renderer::DrawModel(model1, shader, trans);
+
+        trans = glm::translate(trans, glm::vec3(10, 0, 0));
+        Renderer::DrawModel(model2, shader, trans);
+    }
+    Renderer::End();
+
+    Renderer2D::Begin(cam2d);
+    {
+        //Renderer2D::DrawRectangle( Core::Input::Mouse::GetMousePosition() - glm::vec2{ 50.0f, 100.0f }, {100, 200}, {1.0f, 1.0f, 1.0f});
+        //Renderer2D::DrawTexture(font.GetTexture(), glm::vec2(100, 150), glm::vec2(1, 1));
+        //Renderer2D::DrawLine({ 100, 100 }, { 200, 100 }, { 1, 0, 0 });
+    }
+    Renderer2D::End();
+
+    TextRenderer::Begin(cam2d);
+    {
+        const char* message = "Engine demo";
+        
+        glm::ivec2 offset = font.MeasureText(message, FONT_SCALE);
+        float x = m_Window->GetWidth() - offset.x - 10;
+        float y = offset.y + 10;
+        TextRenderer::DrawTextEx(font, message, x, y, FONT_SCALE, glm::vec3(sin(glfwGetTime()), cos(glfwGetTime()), 1));
+    }
+    TextRenderer::End();
 }
 
 void SandboxLayer::ShowCameraControlImgui(bool* p_open)
@@ -58,7 +89,7 @@ void SandboxLayer::ShowCameraControlImgui(bool* p_open)
         if (ImGui::SliderFloat("FOV", &in_FOV, 30.0f, 120.0f))
         {
             float aspectRatio = (float)m_Window->GetWidth() / m_Window->GetHeight();
-            cam.SetProjectionMatrix(glm::perspective(glm::radians(in_FOV), aspectRatio, 0.0f, 1000.0f));
+            cam.SetProjectionMatrix(glm::perspective(glm::radians(in_FOV), aspectRatio, 0.01f, 1000.0f));
             shader.SetMatrix("uProjection", cam.GetProjectionMatrix());
         }
 
@@ -67,7 +98,7 @@ void SandboxLayer::ShowCameraControlImgui(bool* p_open)
         {
             in_FOV = 75.0F;
             float aspectRatio = (float)m_Window->GetWidth() / m_Window->GetHeight();
-            cam.SetProjectionMatrix(glm::perspective(glm::radians(in_FOV), aspectRatio, 0.0f, 1000.0f));
+            cam.SetProjectionMatrix(glm::perspective(glm::radians(in_FOV), aspectRatio, 0.01f, 1000.0f));
             shader.SetMatrix("uProjection", cam.GetProjectionMatrix());
         }
 
@@ -111,6 +142,7 @@ void SandboxLayer::OnImGuiRender()
         {
             Core::ImGuiLayer::SwitchTheme(!Core::ImGuiLayer::IsDarkThemed());
         }
+
         ImGui::Text(ICON_FA_PAINT_BRUSH "  Paint"           );
         ImGui::Text(ICON_FA_ARROW_DOWN  "  Down"            );
         ImGui::Text(ICON_FA_GAMEPAD     "  Preview"         );
@@ -137,7 +169,7 @@ void SandboxLayer::OnEvent(Core::Events::Event& event)
         auto& e = static_cast<Core::Events::WindowResizedEvent&>(event);
         glViewport(0, 0, e.width, e.height);
         float aspectRatio = (float)e.width / e.height;
-        glm::mat4 projection = glm::perspective(glm::radians(75.0f), aspectRatio, 0.0f, 1000.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(75.0f), aspectRatio, 0.1f, 1000.0f);
         cam.SetProjectionMatrix(projection);
         shader.SetMatrix("uProjection", projection);
     }
@@ -145,8 +177,6 @@ void SandboxLayer::OnEvent(Core::Events::Event& event)
 
 void SandboxLayer::OnDettach()
 {
-    model.Free();
-    delete va, renderer;
 }
 
 void SandboxLayer::UpdateCameraController()

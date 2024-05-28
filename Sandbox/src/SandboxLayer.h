@@ -1,7 +1,8 @@
 #include <GL/glew.h>
 #include "Core/Layer.h"
-#include "Core/Shader.h"
-#include "Core/Camera.h"
+#include "Renderer/Shader.h"
+#include "Renderer/Camera.h"
+#include "Renderer/OrthographicCamera.h"
 #include "Core/Utils.h"
 #include "Events/InputEvents.h"
 #include "Events/WindowEvents.h"
@@ -24,11 +25,10 @@ public:
 	void OnDettach() override;
 
 private:
-    
-    glm::mat4 trans= glm::mat4();
-    Core::Camera cam;
+    Core::Gfx::Camera cam;
+    Core::Gfx::OrthographicCamera cam2d;
 
-    Shader shader;
+    Core::Gfx::Shader shader;
     Core::Gfx::Texture texture;
 
     void UpdateCameraController();

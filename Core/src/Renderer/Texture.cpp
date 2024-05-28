@@ -10,16 +10,21 @@ Core::Gfx::Texture::Texture()
 	m_NrChannels = 0;
 	m_RendererID = 0;
 	m_Loaded = false;
+	m_Type = TEXTURE_DIFFUSE;
+	m_Path = "";
 }
 
-Core::Gfx::Texture::Texture(const std::string& path)
+Core::Gfx::Texture::Texture(const std::string& path, TextureType type)
 {
+	m_Type = type;
 	Load(path);
 }
 
 bool Core::Gfx::Texture::Load(const std::string& path)
 {
-	stbi_set_flip_vertically_on_load(1);
+	m_Path = path;
+	
+	//stbi_set_flip_vertically_on_load(1);
 	unsigned char* data = stbi_load(path.c_str(), &m_Width, &m_Height, &m_NrChannels, 0);
 
 	if (data == NULL)
@@ -29,21 +34,50 @@ bool Core::Gfx::Texture::Load(const std::string& path)
 		return false;
 	}
 
+	LoadFromMemory(m_Width, m_Height, m_NrChannels, data);
+	stbi_image_free(data);
+	return true;
+}
+
+void Core::Gfx::Texture::LoadFromMemory(unsigned int width, unsigned int height, int channels, void* data)
+{
+	m_Width = width;
+	m_Height = height;
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
 	glGenTextures(1, &m_RendererID);
 	glBindTexture(GL_TEXTURE_2D, m_RendererID);
-	glTexImage2D(GL_TEXTURE_2D, 0, m_NrChannels == 4 ? GL_RGBA : GL_RGB, m_Width, m_Height, 0, m_NrChannels == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, data);
 	
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	// Determine the texture format based on the number of channels
+	GLenum format;
+	switch (channels)
+	{
+	case 1:
+		format = GL_RED;
+		break;
+	case 3:
+		format = GL_RGB;
+		break;
+	case 4:
+		format = GL_RGBA;
+		break;
+	default:
+		LOG_ERROR("Unsupported number of channels: " + m_NrChannels);
+		return;
+	}
+
+	// Set texture data
+	glTexImage2D(GL_TEXTURE_2D, 0, format, m_Width, m_Height, 0, format, GL_UNSIGNED_BYTE, data);
+
+	// Set texture parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// Set parameters to determine how the texture wraps at edges
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
 	glGenerateMipmap(GL_TEXTURE_2D);
 
-	stbi_image_free(data);
 	m_Loaded = true;
-	return true;
 }
 
 void Core::Gfx::Texture::Bind() const

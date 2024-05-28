@@ -65,7 +65,8 @@ namespace Core::Gfx
 		unsigned int m_RendererID; // OpenGL ID
 	
 	public:
-		VertexArray();
+		VertexArray() = default;
+		void Init();
 		void Free();
 
 		void AddBuffer(const VertexBuffer& vb, const BufferLayout& layout);

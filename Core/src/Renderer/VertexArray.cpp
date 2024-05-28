@@ -12,7 +12,7 @@ unsigned int Core::Gfx::BufferElement::GetSizeOfType(unsigned int type)
     return 0;
 }
 
-Core::Gfx::VertexArray::VertexArray()
+void Core::Gfx::VertexArray::Init()
 {
     glGenVertexArrays(1, &m_RendererID);
 }

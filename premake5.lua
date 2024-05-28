@@ -9,6 +9,7 @@ workspace "GameEngine"
 group "Dependencies"
     include "vendor/GLEW"
     include "vendor/GLFW"
+    include "vendor/assimp"
 group ""
 
 include "Core"

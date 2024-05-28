@@ -1,6 +1,8 @@
 #include "Shader.h"
 #include "Utils.h"
 
+using namespace Core::Gfx;
+
 Shader::Shader(const char* vertexPath, const char* fragmentPath)
 {
     Load(vertexPath, fragmentPath);
@@ -41,6 +43,12 @@ void Shader::Load(const char* vertexPath, const char* fragmentPath)
 
     const char* vShaderCode = vertexCode.c_str();
     const char* fShaderCode = fragmentCode.c_str();
+
+    LoadFromMemory(vShaderCode, fShaderCode);
+}
+
+void Shader::LoadFromMemory(const char* vertexSource, const char* fragmentSource)
+{
     // Compile and link shaders
     GLuint vertexShaderID, fragmentShaderID;
     int success;
@@ -48,7 +56,7 @@ void Shader::Load(const char* vertexPath, const char* fragmentPath)
 
     // Vertex shader
     vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShaderID, 1, &vShaderCode, NULL);
+    glShaderSource(vertexShaderID, 1, &vertexSource, NULL);
     glCompileShader(vertexShaderID);
 
     // Check errors
@@ -59,9 +67,9 @@ void Shader::Load(const char* vertexPath, const char* fragmentPath)
         Core::Logger::LogError(infoLog, __FILE__, __LINE__);
     }
 
-    // Vertex shader
+    // Fragment shader
     fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShaderID, 1, &fShaderCode, NULL);
+    glShaderSource(fragmentShaderID, 1, &fragmentSource, NULL);
     glCompileShader(fragmentShaderID);
 
     // Check errors
@@ -104,6 +112,7 @@ void Shader::End()
 void Shader::SetBool(const std::string& uniformName, bool value)
 {
     glUniform1i(glGetUniformLocation(ID, uniformName.c_str()), (int)value);
+    
 }
 
 void Shader::SetFloat(const std::string& uniformName, float value)

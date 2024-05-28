@@ -2,113 +2,155 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <iostream> // For debugging
-#include <glm/glm.hpp>
 
 #include "Model.h"
 #include "Core/Utils.h"
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
 
-Core::Gfx::Model Core::Gfx::LoadFromOBJ(const std::string& path, VertexArray& va)
+using namespace Core::Gfx;
+
+Model Model::LoadModel(const std::string& path)
 {
-    std::ifstream file(path);
-    if (!file.is_open())
-    {
-        LOG_ERROR("Failed to open obj file: " + path);
-        return Model();
-    }
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile(path, aiProcess_FlipUVs | aiProcess_Triangulate);
+	
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+	{
+		LOG_ERROR("ERROR::ASSIMP::" + std::string(importer.GetErrorString()));
+		return Model(); // Empty model
+	}
 
-    // Vertex data
-    std::vector<glm::vec3> positions;
-    std::vector<glm::vec2> uvs;
-    std::vector<glm::vec3> normals;
+	std::string directory = path.substr(0, path.find_last_of('/'));
+	Model model({}, directory);
 
-    // Indices
-    std::vector<unsigned int> positionIndices, uvIndices, normalIndices;
+	// Process recursively root node
+	model.ProcessNode(scene->mRootNode, scene);
 
-    std::string currentLine;
-    while (std::getline(file, currentLine))
-    {
-        std::istringstream iss(currentLine);
-        std::string prefix; // "v"; "f"; "vn"; "vt"
-        iss >> prefix;
-
-        if (prefix == "v") // Vertex position 3D vector
-        {
-            glm::vec3 position{};
-            iss >> position.x >> position.y >> position.z;
-            positions.push_back(position);
-        }
-        else if (prefix == "vt") // Vertex uv 2D vector
-        {
-            glm::vec2 uv{};
-            iss >> uv.x >> uv.y;
-            uvs.push_back(uv);
-        }
-        else if (prefix == "vn") // Vertex normal 3D vector
-        {
-            glm::vec3 normal{};
-            iss >> normal.x >> normal.y >> normal.z;
-            normals.push_back(normal);
-        }
-        else if (prefix == "f")
-        {
-            for (unsigned int i = 0; i < 3; i++)
-            {
-                std::string faceVertex;
-                iss >> faceVertex;
-
-                unsigned int positionIndex, uvIndex, normalIndex;
-
-                std::istringstream faceVertexStream(faceVertex);
-                char slash;
-                faceVertexStream >> positionIndex >> slash >> uvIndex >> slash >> normalIndex;
-
-                positionIndices.push_back(positionIndex - 1);
-                uvIndices.push_back(uvIndex - 1);
-                normalIndices.push_back(normalIndex - 1);
-            }
-        }
-    }
-
-    // Interleave the data
-    std::vector<float> interleavedData;
-    for (unsigned int i = 0; i < positionIndices.size(); i++)
-    {
-        unsigned int positionIndex = positionIndices[i];
-        glm::vec3& position = positions[positionIndex];
-        interleavedData.push_back(position.x);
-        interleavedData.push_back(position.y);
-        interleavedData.push_back(position.z);
-
-        unsigned int normalIndex = normalIndices[i];
-        glm::vec3& normal = normals[normalIndex]; // Use the only available normal
-        interleavedData.push_back(normal.x);
-        interleavedData.push_back(normal.y);
-        interleavedData.push_back(normal.z);
-
-        unsigned int uvIndex = uvIndices[i];
-        glm::vec2& uv = uvs[uvIndex];
-        interleavedData.push_back(uv.x);
-        interleavedData.push_back(uv.y);
-    }
-
-    // Now that we have the data loaded in the CPU and interleaved, we can load it in the GPU with OpenGL
-    va.Bind();
-    VertexBuffer vb(interleavedData.data(), sizeof(float) * interleavedData.size());
-    LOG_INFO("Model loaded has " + std::to_string(positionIndices.size()) + " vertices");
-
-    BufferLayout layout;
-    layout.Push<float>(3); // Position attribute
-    layout.Push<float>(3); // Normal attribute
-    layout.Push<float>(2); // uv attribute
-    va.AddBuffer(vb, layout);
-
-    //std::reverse(positionIndices.begin(), positionIndices.end());
-
-    //positionIndices[positionIndices.size() - 1]++;
-    IndexBuffer ib(positionIndices.data(), positionIndices.size());
-
-    return Model(va.GetRendererID(), ib, vb);
+	return model;
 }
+
+void Model::ProcessNode(aiNode* node, const aiScene* scene)
+{
+	for (unsigned int i = 0; i < node->mNumMeshes; i++)
+	{
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		m_Meshes.push_back(ProcessMesh(mesh, scene));
+	}
+	for (unsigned int i = 0; i < node->mNumChildren; i++)
+	{
+		ProcessNode(node->mChildren[i], scene);
+	}
+}
+
+Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
+{
+	std::vector<Vertex> vertices;
+	std::vector<unsigned int> indices;
+	std::vector<Texture> textures;
+
+	for (unsigned int i = 0; i < mesh->mNumVertices; i++)
+	{
+		Vertex vertex{};
+
+		glm::vec3 pos{};
+		pos.x = mesh->mVertices[i].x;
+		pos.y = mesh->mVertices[i].y;
+		pos.z = mesh->mVertices[i].z;
+		vertex.Position = pos;
+
+		glm::vec3 normal{ 0, 0, 0 };
+		if (mesh->HasNormals())
+		{
+			normal.x = mesh->mNormals[i].x;
+			normal.y = mesh->mNormals[i].y;
+			normal.z = mesh->mNormals[i].z;
+		}
+		vertex.Normal = normal;
+
+		glm::vec2 texCoord{ 0, 0 };
+		if (mesh->mTextureCoords[0])
+		{
+			texCoord.x = mesh->mTextureCoords[0][i].x;
+			texCoord.y = mesh->mTextureCoords[0][i].y;
+		}
+		vertex.TexCoords = texCoord;
+
+		vertices.push_back(vertex);
+	}
+
+	// Process the indices
+	for (unsigned int i = 0; i < mesh->mNumFaces; i++)
+	{
+		aiFace face = mesh->mFaces[i];
+		for (unsigned int j = 0; j < face.mNumIndices; j++)
+			indices.push_back(face.mIndices[j]);
+	}
+
+	aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+
+	std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE);
+	textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+
+	std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR);
+	textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+
+	std::vector<Texture> ambientMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT);
+	textures.insert(textures.end(), ambientMaps.begin(), ambientMaps.end());
+
+	std::vector<Texture> emissionMaps = LoadMaterialTextures(material, aiTextureType_EMISSIVE);
+	textures.insert(textures.end(), emissionMaps.begin(), emissionMaps.end());
+
+	std::vector<Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_NORMALS);
+	textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+
+	std::vector<Texture> heightMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT);
+	textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+
+	return Mesh(vertices, indices, textures);
+}
+
+
+std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type)
+{
+	std::vector<Texture> textures;
+
+	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
+	{
+		aiString str;
+		mat->GetTexture(type, i, &str);
+		bool skip = false;
+
+		for (unsigned int j = 0; j < m_LoadedTextures.size(); j++)
+		{
+			if (std::strcmp(m_LoadedTextures[j].GetPath().data(), str.C_Str()) == 0)
+			{
+				textures.push_back(m_LoadedTextures[j]);
+				skip = true; // a texture with the same filepath has already been loaded, continue to next one. (optimization)
+				break;
+			}
+		}
+		if (!skip) // If texture doesn't exist already
+		{
+			TextureType tex_type = TEXTURE_NONE;
+
+			switch (type)
+			{
+			case aiTextureType_DIFFUSE:     tex_type = TEXTURE_DIFFUSE;     break;
+			case aiTextureType_SPECULAR:    tex_type = TEXTURE_SPECULAR;    break;
+			case aiTextureType_AMBIENT:     tex_type = TEXTURE_AMBIENT;     break;
+			case aiTextureType_EMISSIVE:    tex_type = TEXTURE_EMISSION;    break;
+			case aiTextureType_NORMALS:     tex_type = TEXTURE_NORMAL;      break;
+			case aiTextureType_HEIGHT:      tex_type = TEXTURE_HEIGHT;      break;
+			default:                        tex_type = TEXTURE_NONE;        break;
+			}
+
+			Texture texture(m_Directory + "/" + str.C_Str(), tex_type);
+
+			LOG_INFO("Loaded texture: " + texture.GetPath() + " with type: " + aiTextureTypeToString(type));
+
+			textures.push_back(texture);
+			m_LoadedTextures.push_back(texture);
+		}
+	}
+	return textures;
+}
+

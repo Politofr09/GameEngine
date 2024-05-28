@@ -3,14 +3,16 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include "Mouse.h"
-#include "Keyboard.h"
-#include "Window.h"
+#include "Core/Mouse.h"
+#include "Core/Keyboard.h"
+#include "Core/Window.h"
+#include "Events/Event.h"
 
-namespace Core
+namespace Core::Gfx
 {
 
-    class Camera {
+    class Camera
+    {
     private:
         glm::vec3 position = glm::vec3(0.0f, 20.0f, 0.0f);
         glm::vec3 target = glm::vec3(0.0f);
@@ -34,6 +36,8 @@ namespace Core
         glm::mat4 GetProjectionMatrix() { return projection; }
         void SetProjectionMatrix(glm::mat4 proj) { projection = proj; }
         float GetFOV() { return 2.0f * glm::atan(1.0f / projection[1][1]); }
+
+        void OnEvent(Events::Event& event);
 
     private:
         float CalculateHorizontalDistance();

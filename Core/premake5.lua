@@ -2,7 +2,7 @@ project "Core"
     kind "StaticLib"
     language "C++"
     cppdialect "C++17"
-
+    
     targetdir "bin/%{cfg.buildcfg}"
     objdir "bin/intermediates/%{cfg.buildcfg}"
 
@@ -21,6 +21,7 @@ project "Core"
         "../vendor/GLEW/include/",
         "../vendor/stb/",
         "../vendor/glm/",
+        "../vendor/assimp/include/",
         "../vendor/"
 	}
 	
@@ -32,6 +33,7 @@ project "Core"
     links {
         "GLEW",
         "GLFW",
+        "assimp"
     }
 
     filter "system:windows"
@@ -47,7 +49,9 @@ project "Core"
     filter "configurations:Debug"
         defines "DEBUG"
         symbols "on"
+        runtime "Debug"
 
     filter "configurations:Release"
         defines "RELEASE"
         optimize "on"
+        runtime "Release"

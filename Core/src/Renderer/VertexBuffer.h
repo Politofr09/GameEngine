@@ -10,8 +10,10 @@ namespace Core::Gfx
 
 	public:
 		VertexBuffer() = default;
-		VertexBuffer(const void* data, int size);
+		VertexBuffer(const void* data, int size, bool dynamic_draw = false);
 		void Free();
+
+		void UpdateData(const void* data, int size);
 
 		void Bind() const;
 		void UnBind() const;
