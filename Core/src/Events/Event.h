@@ -25,20 +25,30 @@ namespace Core::Events
 	class Dispatcher
 	{
 	private:
-		using EventCallbackFn = std::function<void(Event&)>;
+		using EventCallbackFn = std::function<void(Event*)>;
 		static std::vector<EventCallbackFn> _observers;
+		static std::vector<Event*> _eventQueue;
 
 	public:
-		static void Trigger(Event& event)
+		static void ProcessEvents()
 		{
-			auto type = event.GetType();
-
-			for (auto& observer : _observers)
+			while (!_eventQueue.empty())
 			{
-				observer(event);
-				if (event.Handled) 
-					return;
+				auto event = _eventQueue.front();
+				_eventQueue.erase(_eventQueue.begin());
+
+				for (auto& observer : _observers)
+				{
+					observer(event);
+					if (event->Handled)
+						break;
+				}
 			}
+		}
+
+		static void Trigger(Event* event)
+		{
+			_eventQueue.push_back(event);
 		}
 
 		// Subscribe to a specific event type

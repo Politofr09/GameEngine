@@ -20,22 +20,23 @@ namespace Core
     void Window::window_resize_callback(GLFWwindow* window, int width, int height)
     {
         // Trigger WindowResizedEvent
-        Events::WindowResizedEvent e(width, height);
+        Events::WindowResizedEvent* e = new Events::WindowResizedEvent(width, height);
         Events::Dispatcher::Trigger(e);
     }
 
     void Window::window_pos_callback(GLFWwindow* window, int xpos, int ypos)
     {
         // Trigger WindowMovedEvent
-        Events::WindowMovedEvent e(xpos, ypos);
+        Events::WindowMovedEvent* e = new Events::WindowMovedEvent(xpos, ypos);
         Events::Dispatcher::Trigger(e);
     }
 
-    void Window::Init()
+    void Window::Init(bool decorated)
     {
         ASSERT(glfwInit());
         glfwSetErrorCallback(GLFWErrorCallback);
 
+        if (!decorated) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
         _window = glfwCreateWindow(_width, _height, _title.c_str(), nullptr, nullptr);
         ASSERT(_window);
         glfwMakeContextCurrent(_window);
@@ -44,17 +45,17 @@ namespace Core
         //glfwSetKeyCallback(_window, key_callback);
         glfwSetWindowSizeCallback(_window, window_resize_callback);
         glfwSetWindowPosCallback(_window, window_pos_callback);
-
+        glfwMaximizeWindow(_window);
         Input::Keyboard::Init(_window);
         Input::Mouse::Init(_window);
 
         // Add another callback when the window resizes...
-        Events::Dispatcher::Subscribe([&](Events::Event& event){
-            if (event.GetType() != "WindowResizedEvent") return;
+        Events::Dispatcher::Subscribe([&](Events::Event* event){
+            if (event->GetType() != "WindowResizedEvent") return;
 
-            auto& e = static_cast<Events::WindowResizedEvent&>(event);
-            _width = e.width;
-            _height = e.height;
+            auto e = dynamic_cast<Events::WindowResizedEvent*>(event);
+            _width = e->width;
+            _height = e->height;
         });
 
         // Init glew
@@ -84,6 +85,14 @@ namespace Core
 
     void Window::Update()
     {
+        if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            GLFWwindow* backupWindowPtr = glfwGetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(backupWindowPtr);
+        }
+
         auto currentTime = std::chrono::steady_clock::now();
         std::chrono::duration<float> elapsedTime = currentTime - _prevTime;
         _deltaTime = elapsedTime.count();
@@ -100,8 +109,6 @@ namespace Core
 
     void Window::Close()
     {
-        glfwDestroyWindow(_window);
-        glfwTerminate();
+        glfwSetWindowShouldClose(_window, true);
     }
-
 }

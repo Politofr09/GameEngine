@@ -17,6 +17,12 @@ namespace Core::Gfx
 
 		void Bind() const;
 		void UnBind() const;
+
+		VertexBuffer& operator=(const VertexBuffer& other)
+		{
+			m_RendererID = other.m_RendererID;
+			return *this;
+		}
 	};
 
 }

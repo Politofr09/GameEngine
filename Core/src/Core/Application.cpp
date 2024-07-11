@@ -49,12 +49,12 @@ void Core::Application::Run()
 		}
 
 		m_ImGuiLayer->EndImGuiContent();
-
+		Events::Dispatcher::ProcessEvents();
 		m_Window->Update();
 	}
 }
 
-void Core::Application::OnEvent(Core::Events::Event& event)
+void Core::Application::OnEvent(Core::Events::Event* event)
 {
 }
 

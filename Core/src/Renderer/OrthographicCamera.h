@@ -15,16 +15,16 @@ namespace Core::Gfx
 
 		void SetProjection(float left, float right, float bottom, float top);
 
-		const glm::vec3& GetPosition() { return m_Position; }
+		const glm::vec3& GetPosition() const { return m_Position; }
 		void SetPosition(glm::vec3 position) { m_Position = position; CalculateViewMatrix(); }
 
 		float GetRotation() { return m_Rotation; }
 		void SetRotation(float rotation) { m_Rotation = rotation; CalculateViewMatrix(); }
 
-		const glm::mat4& GetViewMatrix() { return m_ViewMatrix; }
-		const glm::mat4& GetProjectionMatrix() { return m_ProjectionMatrix; }
+		const glm::mat4& GetViewMatrix() const { return m_ViewMatrix; }
+		const glm::mat4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
 
-		void OnEvent(Events::Event& event);
+		void OnEvent(Events::Event* event);
 	
 	private:
 		void CalculateViewMatrix();

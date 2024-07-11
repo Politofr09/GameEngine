@@ -1,5 +1,5 @@
 #include "OrthographicCamera.h"
-#include "Events/WindowEvents.h"
+#include "FrameBuffer.h"
 
 namespace Core::Gfx
 {
@@ -24,12 +24,12 @@ namespace Core::Gfx
 		m_ProjectionMatrix = glm::ortho(left, right, bottom, top);
 	}
 
-	void OrthographicCamera::OnEvent(Events::Event& event)
+	void OrthographicCamera::OnEvent(Events::Event* event)
 	{
-		if (event.GetType() == "WindowResizedEvent")
+		if (event->GetType() == "RenderingAreaUpdatedEvent")
 		{
-			auto& e = static_cast<Core::Events::WindowResizedEvent&>(event);
-			SetProjection(0.0f, e.width, e.height, 0.0f);
+			auto e = dynamic_cast<Core::Events::RenderingAreaUpdatedEvent*>(event);
+			SetProjection(0.0f, e->width, e->height, 0.0f);
 		}
 	}
 

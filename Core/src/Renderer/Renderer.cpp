@@ -1,5 +1,6 @@
 #include "Renderer.h"
 #include "Shader.h"
+#include "Events/WindowEvents.h"
 #include <iostream>
 
 namespace Core::Gfx
@@ -20,15 +21,20 @@ namespace Core::Gfx
         return true;
     }
 
-    Camera Renderer::m_ActiveCamera{ 0 };
+    Camera Renderer::m_ActiveCamera{};
+    FrameBuffer Renderer::m_FrameBuffer{};
+    
+    Renderer::Renderer()
+    {
+    }
 
     void Renderer::Init()
     {
-        glEnable(GL_DEPTH_TEST); // <-- it works here; anywhere above it doesn't work
+        glEnable(GL_DEPTH_TEST);
         GLCall(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
-        //glClearDepth(1.0f);
+        Events::Dispatcher::Subscribe(OnEvent);
     }
-
+    
     void Renderer::Clear()
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -39,89 +45,61 @@ namespace Core::Gfx
         m_ActiveCamera = cam;
     }
 
+    //void Renderer::BeginFBO(const Camera& cam, const FrameBuffer& fbo)
+    //{
+    //    fbo.Bind();
+    //    m_ActiveCamera = cam;
+
+    //    // Extract existing FOV from m_ActiveCamera's projection matrix
+    //    float existingFOV = glm::degrees(2.0f * atan(1.0f / m_ActiveCamera.GetProjectionMatrix()[1][1]));
+
+    //    float aspectRatio = (float)fbo.GetWidth() / fbo.GetHeight();
+    //    m_ActiveCamera.SetProjectionMatrix(glm::perspective(glm::radians(existingFOV), aspectRatio, 0.1f, 1000.0f));
+
+    //    glViewport(0, 0, fbo.GetWidth(), fbo.GetHeight());
+    //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the framebuffer
+    //}
+
     void Renderer::End()
     {
     }
 
-    void Renderer::DrawModel(Model& model, Shader& shader, glm::mat4 transform)
+    void Renderer::DrawModel(Model& model, glm::mat4 transform)
     {
-        for (auto& mesh : model.GetMeshes())
-        {
-            DrawMesh(mesh, shader, transform);
-        }
-    }
-
-    void Renderer::DrawMesh(Mesh& mesh, Shader& shader, glm::mat4 transform)
-    {
-        //// Turn on wireframe mode
-        //glPolygonMode(GL_FRONT, GL_LINE);
-        //glPolygonMode(GL_BACK, GL_LINE);
-
+        Shader shader = model.GetMaterial().GetShader();
         shader.Use();
+        Texture texture = model.GetMaterial().GetTexture();
+        texture.Bind();
+        glActiveTexture(GL_TEXTURE0);
 
-        // Upload camera matrices
         shader.SetMatrix("uView", m_ActiveCamera.GetViewMatrix());
         shader.SetMatrix("uProjection", m_ActiveCamera.GetProjectionMatrix());
-
-        mesh.GetVertexArray().Bind();
-        mesh.GetIndexBuffer().Bind();
-
-        unsigned int diffuseNr = 0, specularNr = 0, ambientNr = 0, emissionNr = 0, normalNr = 0, heightNr = 0, noiseNr = 0;
-
-        for (unsigned int i = 0; i < mesh.textures.size(); i++)
+        shader.SetMatrix("uTransform", transform);
+        
+        for (auto& mesh : model.GetMeshes())
         {
-            glActiveTexture(GL_TEXTURE0 + i);
-            TextureType type = mesh.textures[i].GetType();
-            std::string type_str = ""; // Shaders will use 'uniform sampler2D texture_diffuse1;'
+            mesh.GetVertexArray().Bind();
+            mesh.GetIndexBuffer().Bind();
 
-            unsigned int textureUnit = 0;
-            switch (type)
-            {
-            case TEXTURE_DIFFUSE:
-                textureUnit = diffuseNr++;
-                type_str = "texture_diffuse";
-                break;
-            case TEXTURE_SPECULAR:
-                textureUnit = specularNr++;
-                type_str = "texture_specular";
-                break;
-            case TEXTURE_AMBIENT:
-                textureUnit = ambientNr++;
-                type_str = "texture_ambient";
-                break;
-            case TEXTURE_EMISSION:
-                textureUnit = emissionNr++;
-                type_str = "texture_emission";
-                break;
-            case TEXTURE_NORMAL:
-                textureUnit = normalNr++;
-                type_str = "texture_normal";
-                break;
-            case TEXTURE_HEIGHT:
-                textureUnit = heightNr++;
-                type_str = "texture_height";
-                break;
-            case TEXTURE_NOISE:
-                textureUnit = noiseNr++;
-                type_str = "texture_noise";
-                break;
-            default:
-                break;
-            }
-
-            shader.SetInt(type_str + std::to_string(textureUnit), i);
-            mesh.textures[i].Bind();
+            GLCall(glDrawElements(GL_TRIANGLES, mesh.GetIndexBuffer().GetCount(), GL_UNSIGNED_INT, nullptr));
+        }
+    }
+    
+    void Renderer::OnEvent(Events::Event* event)
+    {
+        if (event->GetType() == "WindowResizedEvent")
+        {
+            auto e = dynamic_cast<Core::Events::WindowResizedEvent*>(event);
+            //Events::RenderingAreaUpdatedEvent* newEvent = new Events::RenderingAreaUpdatedEvent(e->width, e->height);
+            //Events::Dispatcher::Trigger(newEvent);
+            glViewport(0, 0, e->width, e->height);
         }
 
-        // Load the uniform into the shader
-        shader.SetMatrix("uTransform", transform);
-
-        glActiveTexture(GL_TEXTURE0);
-        GLCall(glDrawElements(GL_TRIANGLES, mesh.GetIndexBuffer().GetCount(), GL_UNSIGNED_INT, nullptr));
-
-        //// Turn off wireframe mode
-        //glPolygonMode(GL_FRONT, GL_FILL);
-        //glPolygonMode(GL_BACK, GL_FILL);
+        if (event->GetType() == "RenderingAreaUpdatedEvent")
+        {
+            auto e = dynamic_cast<Core::Events::RenderingAreaUpdatedEvent*>(event);
+            glViewport(0, 0, e->width, e->height);
+        }
     }
 
 }

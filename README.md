@@ -1,9 +1,6 @@
-# GameEngine / GLion 
-<img align="left" src="Logo.png" alt="drawing" width="120px"/>
+<img src="Proto_logo.svg" alt="drawing" width="600"/>
 
-My custom game engine written in C++ for my projects
-
-<br/><br/><br/><br/><br/><br/><br/>
+<h2 style="text-align: center;">My custom game engine written in C++ for my projects</h2>
 
 # Cloning this repo 
 ### Don't forget to `--recurse-submodules` to include all dependencies

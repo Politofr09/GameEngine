@@ -20,16 +20,23 @@ namespace Core::Gfx
 	class Mesh
 	{
 	public:
-		std::vector<Texture> textures;
-
-		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
+		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices);
 
 		VertexArray GetVertexArray() { return va; }
 		VertexBuffer GetVertexBuffer() { return vb; }
 		IndexBuffer GetIndexBuffer() { return ib; }
 
+		Mesh& operator =(const Mesh& other)
+		{
+			va = other.va;
+			vb = other.vb;
+			ib = other.ib;
+
+			return *this;
+		}
+
 	private:
-		void SetupMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
+		void SetupMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices);
 		VertexArray va;
 		VertexBuffer vb;
 		IndexBuffer ib;

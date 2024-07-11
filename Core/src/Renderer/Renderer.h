@@ -5,6 +5,7 @@
 #include "IndexBuffer.h"
 #include "Model.h"
 #include "Camera.h"
+#include "FrameBuffer.h"
 
 #pragma once
 
@@ -20,7 +21,7 @@ namespace Core::Gfx
     class Renderer
     {
     public:
-        Renderer() = default;
+        Renderer();
 
         // Initialize OpenGL
         static void Init();
@@ -28,16 +29,21 @@ namespace Core::Gfx
         // Clear the screen
         static void Clear();
 
-        // Begin rendering. Note: this calls Clear()
+        // Begin rendering
         static void Begin(const Camera& cam);
         static void End();
-        
+
+        //static void BeginFBO(const Camera& cam, const FrameBuffer& fbo);
+        //static void EndFBO(const FrameBuffer& fbo);
+
         // TODO: Make models have materials and materials have reference to shader programs. E.g. model.GetMaterials()[0].GetShader().Use();
-        static void DrawModel(Model& model, Shader& shader, glm::mat4 transform);
-        static void DrawMesh(Mesh& mesh, Shader& shader, glm::mat4 transform);
+        static void DrawModel(Model& model, glm::mat4 transform);
     
+        static void OnEvent(Events::Event* event);
+
     private:
         static Camera m_ActiveCamera;
+        static FrameBuffer m_FrameBuffer;
     };
 
 }

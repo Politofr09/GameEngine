@@ -35,7 +35,7 @@ namespace Core::Gfx
 	private:
 		std::unordered_map<char, Character> m_Characters;
 		stbtt_bakedchar m_BakedChars[128]{}; // ASCII 32..126 is 95 glyphs
-		unsigned int m_TextureID;
+		unsigned int m_TextureID = 0;
 		int m_Size = 0;
 	};
 

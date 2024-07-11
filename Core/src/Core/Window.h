@@ -21,7 +21,7 @@ namespace Core
 		static void window_resize_callback(GLFWwindow* window, int width, int height);
 		static void window_pos_callback(GLFWwindow* window, int xpos, int ypos);
 
-		void Init();
+		void Init(bool decorated = true);
 
 	public:
 		Window(uint32_t w, uint32_t h, const std::string& title = "");

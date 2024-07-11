@@ -74,6 +74,12 @@ namespace Core::Gfx
 		void UnBind() const;
 
 		unsigned int GetRendererID() { return m_RendererID; }
+
+		VertexArray& operator=(const VertexArray& other)
+		{
+			m_RendererID = other.m_RendererID;
+			return *this;
+		}
 	};
 
 }

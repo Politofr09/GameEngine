@@ -58,6 +58,19 @@ namespace Core::Gfx
 	{
 		m_ActiveCamera = camera;
 		m_Shader.Use();
+
+		// Get the projection matrix from the camera
+		const glm::mat4& projectionMatrix = camera.GetProjectionMatrix();
+
+		float bottom = (1 - projectionMatrix[1][3]) / projectionMatrix[1][1];
+		float top = -(1 + projectionMatrix[1][3]) / projectionMatrix[1][1];
+		float left = -(1 + projectionMatrix[0][3]) / projectionMatrix[0][0];
+		float right = (1 - projectionMatrix[0][3]) / projectionMatrix[0][0];
+
+		float window_width = abs(right - left);
+		float window_height = abs(top - bottom);
+
+		glViewport(0, 0, window_width, window_height);
 	}
 
 	void Renderer2D::End()

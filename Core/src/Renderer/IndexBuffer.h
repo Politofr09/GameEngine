@@ -18,6 +18,13 @@ namespace Core::Gfx
 		void UnBind() const;
 
 		inline unsigned int GetCount() const { return m_Count; }
+
+		IndexBuffer& operator=(const IndexBuffer& other)
+		{
+			m_RendererID = other.m_RendererID;
+			m_Count = other.m_Count;
+			return *this;
+		}
 	};
 
 }

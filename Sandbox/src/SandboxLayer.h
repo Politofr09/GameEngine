@@ -21,15 +21,12 @@ public:
     void OnAttach() override;
 	void OnUpdate() override;
 	void OnImGuiRender() override;
-	void OnEvent(Core::Events::Event& event) override;
+	void OnEvent(Core::Events::Event* event) override;
 	void OnDettach() override;
 
 private:
     Core::Gfx::Camera cam;
     Core::Gfx::OrthographicCamera cam2d;
-
-    Core::Gfx::Shader shader;
-    Core::Gfx::Texture texture;
 
     void UpdateCameraController();
     void ShowCameraControlImgui(bool* p_open);

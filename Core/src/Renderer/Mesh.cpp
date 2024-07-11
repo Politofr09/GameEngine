@@ -2,13 +2,12 @@
 
 using namespace Core::Gfx;
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices)
 {
-    this->textures = textures;
-	SetupMesh(vertices, indices, textures);
+	SetupMesh(vertices, indices);
 }
 
-void Mesh::SetupMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
+void Mesh::SetupMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices)
 {
     va.Init();
     va.Bind();

@@ -45,7 +45,6 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 {
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
-	std::vector<Texture> textures;
 
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 	{
@@ -87,28 +86,29 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 
 	aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-	std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE);
-	textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+	//std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE);
+	//textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 
-	std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR);
-	textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+	//std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR);
+	//textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 
-	std::vector<Texture> ambientMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT);
-	textures.insert(textures.end(), ambientMaps.begin(), ambientMaps.end());
+	//std::vector<Texture> ambientMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT);
+	//textures.insert(textures.end(), ambientMaps.begin(), ambientMaps.end());
 
-	std::vector<Texture> emissionMaps = LoadMaterialTextures(material, aiTextureType_EMISSIVE);
-	textures.insert(textures.end(), emissionMaps.begin(), emissionMaps.end());
+	//std::vector<Texture> emissionMaps = LoadMaterialTextures(material, aiTextureType_EMISSIVE);
+	//textures.insert(textures.end(), emissionMaps.begin(), emissionMaps.end());
 
-	std::vector<Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_NORMALS);
-	textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+	//std::vector<Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_NORMALS);
+	//textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
 
-	std::vector<Texture> heightMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT);
-	textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+	//std::vector<Texture> heightMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT);
+	//textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
-	return Mesh(vertices, indices, textures);
+	LoadMaterial(material);
+	return Mesh(vertices, indices);
 }
 
-
+// Not used :)
 std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type)
 {
 	std::vector<Texture> textures;
@@ -130,17 +130,17 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType 
 		}
 		if (!skip) // If texture doesn't exist already
 		{
-			TextureType tex_type = TEXTURE_NONE;
+			std::string tex_type = "texture_diffuse";
 
 			switch (type)
 			{
-			case aiTextureType_DIFFUSE:     tex_type = TEXTURE_DIFFUSE;     break;
-			case aiTextureType_SPECULAR:    tex_type = TEXTURE_SPECULAR;    break;
-			case aiTextureType_AMBIENT:     tex_type = TEXTURE_AMBIENT;     break;
-			case aiTextureType_EMISSIVE:    tex_type = TEXTURE_EMISSION;    break;
-			case aiTextureType_NORMALS:     tex_type = TEXTURE_NORMAL;      break;
-			case aiTextureType_HEIGHT:      tex_type = TEXTURE_HEIGHT;      break;
-			default:                        tex_type = TEXTURE_NONE;        break;
+			case aiTextureType_DIFFUSE:     tex_type = "texture_diffuse";		break;
+			case aiTextureType_SPECULAR:    tex_type = "texture_specular";		break;
+			case aiTextureType_AMBIENT:     tex_type = "texture_ambient";		break;
+			case aiTextureType_EMISSIVE:    tex_type = "texture_emissive";		break;
+			case aiTextureType_NORMALS:     tex_type = "texture_normal";		break;
+			case aiTextureType_HEIGHT:      tex_type = "texture_height";		break;
+			default:                        tex_type = "texture_diffuse";       break;
 			}
 
 			Texture texture(m_Directory + "/" + str.C_Str(), tex_type);
@@ -154,3 +154,11 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType 
 	return textures;
 }
 
+void Model::LoadMaterial(aiMaterial* mat)
+{
+	aiString str;
+	mat->GetTexture(aiTextureType_DIFFUSE, 0, &str);
+	Texture texture(m_Directory + "/" + str.C_Str(), "texture_diffuse");
+	m_Material.SetTexture(texture);
+	m_Material.SetMatrix("uTransform", 0);
+}

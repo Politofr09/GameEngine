@@ -1,6 +1,7 @@
 #include <iostream>
 #include <imgui/imgui.h>
 #include <imgui/IconsFontAwesome5.h>
+
 #include "SandboxLayer.h"
 #include "Core/Keyboard.h"
 #include "Core/Mouse.h"
@@ -14,8 +15,11 @@ using namespace Core::Gfx;
 
 Model model1;
 Model model2;
-Texture texture;
 Font font;
+Shader shader;
+Texture texture;
+
+FrameBuffer fbo;
 
 void SandboxLayer::OnAttach()
 {
@@ -24,46 +28,58 @@ void SandboxLayer::OnAttach()
     Renderer2D::Init();
     TextRenderer::Init();
 
-    model1 = Model::LoadModel("res/Monkey.obj");
-    model2 = Model::LoadModel("res/Ball.obj");
     shader = Shader("res/VertexShader.vs", "res/FragmentShader.fs");
-    shader.Use();
+
+    model1 = Model::LoadModel("res/Monkey.obj");
+
+    model2 = Model::LoadModel("res/Ball.obj");
+
+    model1.GetMaterial().SetShader(shader);
+    model2.GetMaterial().SetShader(shader);
 
     /**** Setup the camera(s) ****/
     cam = Core::Gfx::Camera((float)m_Window->GetWidth() / m_Window->GetHeight());
     cam2d = Core::Gfx::OrthographicCamera(0.0f, (float)m_Window->GetWidth(), (float)m_Window->GetHeight(), 0.0f);
 
-    texture.Load("res/water.jpg");
-    font.Load("res/ocr-a-extended.ttf", 100);
+    texture = Texture("res/water.jpg");
+
+    font = Font("res/ocr-a-extended.ttf", 100);
+    
+    fbo.Create(800, 600);
 }
 
 static int FONT_SCALE = 3;
 
 void SandboxLayer::OnUpdate()
 {
-    UpdateCameraController();
-
+    // UpdateCameraController();
     shader.SetFloat("uTime", (float)glfwGetTime());
 
     Renderer::Clear();
 
-    // Render here
+    /* · Render here *********************************************************************************************************************/
+    /* · TODO: Wrap this into a main renderer maybe rename Renderer to Renderer3D and have like one single class for all rendering code  */
+    /*************************************************************************************************************************************/
+
+    fbo.Bind();
     Renderer::Begin(cam);
     {
+        Renderer::Clear();
+
         glm::mat4 trans = glm::mat4(1);
 
-        Renderer::DrawModel(model1, shader, trans);
-
-        trans = glm::translate(trans, glm::vec3(10, 0, 0));
-        Renderer::DrawModel(model2, shader, trans);
+        Renderer::DrawModel(model1, trans);
+        
+        trans = glm::translate(trans, glm::vec3(10, 0, 0)); 
+        Renderer::DrawModel(model2, trans);
     }
     Renderer::End();
 
     Renderer2D::Begin(cam2d);
     {
-        //Renderer2D::DrawRectangle( Core::Input::Mouse::GetMousePosition() - glm::vec2{ 50.0f, 100.0f }, {100, 200}, {1.0f, 1.0f, 1.0f});
-        //Renderer2D::DrawTexture(font.GetTexture(), glm::vec2(100, 150), glm::vec2(1, 1));
-        //Renderer2D::DrawLine({ 100, 100 }, { 200, 100 }, { 1, 0, 0 });
+        Renderer2D::DrawRectangle( Core::Input::Mouse::GetMousePosition() - glm::vec2{ 50.0f, 100.0f } + glm::vec2{  }, {100, 200}, {1.0f, 1.0f, 1.0f});
+        Renderer2D::DrawTexture(texture, Core::Input::Mouse::GetMousePosition());
+        Renderer2D::DrawLine({ 100, 100 }, { 200, 100 }, { 1, 0, 0 });
     }
     Renderer2D::End();
 
@@ -72,11 +88,12 @@ void SandboxLayer::OnUpdate()
         const char* message = "Engine demo";
         
         glm::ivec2 offset = font.MeasureText(message, FONT_SCALE);
-        float x = m_Window->GetWidth() - offset.x - 10;
+        float x = fbo.GetWidth() - offset.x - 10;
         float y = offset.y + 10;
         TextRenderer::DrawTextEx(font, message, x, y, FONT_SCALE, glm::vec3(sin(glfwGetTime()), cos(glfwGetTime()), 1));
     }
     TextRenderer::End();
+    fbo.UnBind();
 }
 
 void SandboxLayer::ShowCameraControlImgui(bool* p_open)
@@ -132,6 +149,39 @@ void SandboxLayer::ShowCameraControlImgui(bool* p_open)
 
 void SandboxLayer::OnImGuiRender()
 {
+    // Setup dockspace
+    ImGui::SetNextWindowSize(ImVec2(m_Window->GetWidth(), m_Window->GetHeight()));
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+
+    int windowFlags = ImGuiWindowFlags_MenuBar |    ImGuiWindowFlags_NoDocking
+        | ImGuiWindowFlags_NoTitleBar   |           ImGuiWindowFlags_NoResize
+        | ImGuiWindowFlags_NoMove       |           ImGuiWindowFlags_NoBringToFrontOnFocus
+        | ImGuiWindowFlags_NoNav        |           ImGuiWindowFlags_MenuBar;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::Begin("Dockspace", nullptr, windowFlags);
+    ImGui::PopStyleVar(3);
+    ImVec2 min = ImGui::GetCursorScreenPos();
+    ImVec2 max = ImVec2(min.x + ImGui::GetContentRegionAvail().x, min.y + ImGui::GetContentRegionAvail().y);
+    ImGui::GetWindowDrawList()->AddRect(min, max, ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)), 6.0f, ImDrawFlags_RoundCornersAll, 6.0f);
+
+    ImGui::DockSpace(ImGui::GetID("Dockspace"));
+
+    if (ImGui::BeginMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("Exit"))
+            {
+                m_Window->Close();
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenuBar();
+    }
+
     // ImGui content
     ImGui::ShowDemoWindow();
 
@@ -160,23 +210,47 @@ void SandboxLayer::OnImGuiRender()
 
     static bool show_tree_open = true;
     ShowCameraControlImgui(&show_tree_open);
+
+    ImGui::GetStyle().WindowPadding = { 1.5f, 1.5f };
+    if (ImGui::Begin("VIEWPORT", 0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
+    {
+        ImVec2 availableSpace = ImGui::GetContentRegionAvail();
+        fbo.Resize((int)availableSpace.x, (int)availableSpace.y);
+
+        ImVec2 min = ImGui::GetCursorScreenPos();
+        ImVec2 max = ImVec2(min.x + availableSpace.x, min.y + availableSpace.y);
+        ImGui::GetWindowDrawList()->AddRect(min, max, ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)), 6.0f, ImDrawFlags_RoundCornersAll, 6.0f);
+        
+        ImGui::BeginChild("Viewport", availableSpace, false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoMove);
+        Core::ImGuiLayer::DisplayRoundedImage((ImTextureID)fbo.GetTextureID(), ImVec2(fbo.GetWidth(), fbo.GetHeight()), 6.0f, ImVec2(0, 1), ImVec2(1, 0));
+        if (ImGui::IsWindowHovered())
+        {
+            cam.Move();
+        }
+        ImGui::EndChild();
+
+    }
+    ImGui::End();
+
+    ImGui::End(); // Dockspace
 }
 
-void SandboxLayer::OnEvent(Core::Events::Event& event)
+void SandboxLayer::OnEvent(Core::Events::Event* event)
 {
-    if (event.GetType() == "WindowResizedEvent")
-    {
-        auto& e = static_cast<Core::Events::WindowResizedEvent&>(event);
-        glViewport(0, 0, e.width, e.height);
-        float aspectRatio = (float)e.width / e.height;
-        glm::mat4 projection = glm::perspective(glm::radians(75.0f), aspectRatio, 0.1f, 1000.0f);
-        cam.SetProjectionMatrix(projection);
-        shader.SetMatrix("uProjection", projection);
-    }
+    //if (event.GetType() == "WindowResizedEvent")
+    //{
+    //    auto& e = static_cast<Core::Events::WindowResizedEvent&>(event);
+    //    glViewport(0, 0, e.width, e.height);
+    //    float aspectRatio = (float)e.width / e.height;
+    //    glm::mat4 projection = glm::perspective(glm::radians(75.0f), aspectRatio, 0.1f, 1000.0f);
+    //    cam.SetProjectionMatrix(projection);
+    //    shader.SetMatrix("uProjection", projection);
+    //}
 }
 
 void SandboxLayer::OnDettach()
 {
+    // Cleanup
 }
 
 void SandboxLayer::UpdateCameraController()

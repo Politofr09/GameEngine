@@ -20,7 +20,7 @@ namespace Core
 		virtual void OnImGuiRender() = 0;
 		///*IMPORTANT: BEFORE CASTING EVENT WITH static_cast CHECK IF IT'S MATCHING THE EXPECTED TYPE
 		/// Event.GetType() = "myExpectedEvent" AND THEN CAST.
-		virtual void OnEvent(Events::Event& event) = 0;
+		virtual void OnEvent(Events::Event* event) = 0;
 		virtual void OnDettach() = 0;
 
 		const std::string& GetName() { return m_Name; }

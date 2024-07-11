@@ -27,13 +27,17 @@ namespace Core
 		void OnAttach() override;
 		void OnUpdate() override;
 		void OnImGuiRender() override;
-		void OnEvent(Core::Events::Event& event) override;
+		void OnEvent(Core::Events::Event* event) override;
 		void OnDettach() override;
 
 		void BeginImGuiContent(); // Call before any imgui code inside main loop
 		void EndImGuiContent();   // Call after any imgui code inside main loop
 
 		~ImGuiLayer();
+
+		// Extra ImGui utilities
+		static void DisplayRoundedImage(ImTextureID texture_id, ImVec2 size, float rounding, const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1), ImVec4 color = ImVec4(1, 1, 1, 1));
+		static bool IsMouseHoveringTitleBar();
 
 	private:
 		static bool m_Dark;

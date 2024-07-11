@@ -10,14 +10,19 @@ Core::Gfx::Texture::Texture()
 	m_NrChannels = 0;
 	m_RendererID = 0;
 	m_Loaded = false;
-	m_Type = TEXTURE_DIFFUSE;
+	m_Type = "texture_diffuse";
 	m_Path = "";
 }
 
-Core::Gfx::Texture::Texture(const std::string& path, TextureType type)
+Core::Gfx::Texture::Texture(const std::string& path, std::string type)
 {
 	m_Type = type;
 	Load(path);
+}
+
+Core::Gfx::Texture::Texture(const Texture& texture)
+{
+	*this = texture;
 }
 
 bool Core::Gfx::Texture::Load(const std::string& path)

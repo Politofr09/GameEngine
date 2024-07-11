@@ -37,7 +37,7 @@ namespace Core::Gfx
         void SetProjectionMatrix(glm::mat4 proj) { projection = proj; }
         float GetFOV() { return 2.0f * glm::atan(1.0f / projection[1][1]); }
 
-        void OnEvent(Events::Event& event);
+        void OnEvent(Events::Event* event);
 
     private:
         float CalculateHorizontalDistance();

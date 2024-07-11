@@ -22,7 +22,7 @@ namespace Core
 
 		///*IMPORTANT: BEFORE CASTING EVENT WITH static_cast CHECK IF IT'S MATCHING THE EXPECTED TYPE
 		/// Event.GetType() = "myExpectedEvent" AND THEN CAST.
-		void OnEvent(Events::Event&);
+		void OnEvent(Events::Event*);
 
 		~Application();
 
