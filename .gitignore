@@ -11,9 +11,9 @@ vendor/bin/premake/**/premake5
 **.lib
 **.filters
 Core/bin
-Sandbox/bin
+**bin
 vendor/GLEW/bin
 vendor/GLEW/bin-obj
 vendor/GLFW/bin
 vendor/GLFW/bin-obj
-Sandbox/imgui.ini
+Editor/imgui.ini
