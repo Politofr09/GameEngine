@@ -1,7 +1,7 @@
 -- premake5.lua
 workspace "GameEngine"
     configurations { "Debug", "Release" }
-    startproject "Sandbox"
+    startproject "Editor"
 
     defines "GLEW_STATIC"
 
