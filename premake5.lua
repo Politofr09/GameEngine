@@ -5,12 +5,29 @@ workspace "GameEngine"
 
     defines "GLEW_STATIC"
 
--- Git submodules
-group "Dependencies"
-    include "vendor/GLEW"
-    include "vendor/GLFW"
-    include "vendor/assimp"
-group ""
+	filter "configurations:Debug"
+        symbols "On"
+        optimize "Off"  -- Turn off optimization for debug builds
+		runtime "Debug"
+		defines "_ITERATOR_DEBUG_LEVEL=2"
 
-include "Core"
-include "Sandbox"
+    filter "configurations:Release"
+        symbols "Off"
+        optimize "Full"  -- Full optimization for release builds
+		runtime "Release"
+		defines "_ITERATOR_DEBUG_LEVEL=0"
+
+    filter ""
+
+    -- Git submodules
+    group "Dependencies"
+        include "vendor/assimp"
+        include "vendor/GLEW"
+        include "vendor/GLFW"
+    group ""
+
+    -- Engine Code
+    group "Engine"
+        include "Core"
+        include "Editor"
+    group ""

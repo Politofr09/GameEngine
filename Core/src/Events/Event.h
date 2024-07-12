@@ -1,6 +1,7 @@
 #include <functional>
 #include <unordered_map>
 #include <vector>
+#include <iostream>
 
 #pragma once
 
@@ -40,8 +41,8 @@ namespace Core::Events
 				for (auto& observer : _observers)
 				{
 					observer(event);
-					if (event->Handled)
-						break;
+					//if (event->Handled)
+					//	break;
 				}
 			}
 		}
