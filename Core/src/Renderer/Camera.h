@@ -27,7 +27,6 @@ namespace Core::Gfx
 
     public:
         Camera();
-        Camera(float aspectRatio);
 
         void Move();
 
@@ -35,6 +34,7 @@ namespace Core::Gfx
 
         glm::mat4 GetProjectionMatrix() { return projection; }
         void SetProjectionMatrix(glm::mat4 proj) { projection = proj; }
+        void SetAspectRatio(float aspectRatio);
         float GetFOV() { return 2.0f * glm::atan(1.0f / projection[1][1]); }
 
         void OnEvent(Events::Event* event);

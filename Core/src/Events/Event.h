@@ -1,6 +1,6 @@
 #include <functional>
 #include <unordered_map>
-#include <vector>
+#include <queue>
 #include <iostream>
 
 #pragma once
@@ -28,31 +28,18 @@ namespace Core::Events
 	private:
 		using EventCallbackFn = std::function<void(Event*)>;
 		static std::vector<EventCallbackFn> _observers;
-		static std::vector<Event*> _eventQueue;
+		static std::queue<Event*> _eventQueue;
 
 	public:
-		static void ProcessEvents()
-		{
-			while (!_eventQueue.empty())
-			{
-				auto event = _eventQueue.front();
-				_eventQueue.erase(_eventQueue.begin());
-
-				for (auto& observer : _observers)
-				{
-					observer(event);
-					//if (event->Handled)
-					//	break;
-				}
-			}
-		}
+		static void ProcessEvents();
 
 		static void Trigger(Event* event)
 		{
-			_eventQueue.push_back(event);
+			_eventQueue.push(event);
 		}
-
-		// Subscribe to a specific event type
+		/// BIG WARNING: (Only when using std::bind)
+		// - Make sure to use std::bind properly and make sure you don't call it on the same class twice! 
+		//   (at least not with the same std::placeholder)
 		static void Subscribe(EventCallbackFn callback)
 		{
 			_observers.push_back(callback);

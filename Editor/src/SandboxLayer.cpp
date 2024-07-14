@@ -38,7 +38,7 @@ void SandboxLayer::OnAttach()
     model2.GetMaterial().SetShader(shader);
 
     /**** Setup the camera(s) ****/
-    cam = Core::Gfx::Camera((float)m_Window->GetWidth() / m_Window->GetHeight());
+    cam.SetAspectRatio((float)m_Window->GetWidth() / m_Window->GetHeight());
     cam2d = Core::Gfx::OrthographicCamera(0.0f, (float)m_Window->GetWidth(), (float)m_Window->GetHeight(), 0.0f);
 
     texture = Texture("res/water.jpg");
@@ -77,7 +77,7 @@ void SandboxLayer::OnUpdate()
 
     Renderer2D::Begin(cam2d);
     {
-        Renderer2D::DrawRectangle( Core::Input::Mouse::GetMousePosition() - glm::vec2{ 50.0f, 100.0f } + glm::vec2{  }, {100, 200}, {1.0f, 1.0f, 1.0f});
+        //Renderer2D::DrawRectangle( Core::Input::Mouse::GetMousePosition() - glm::vec2{ 50.0f, 100.0f } + glm::vec2{  }, {100, 200}, {1.0f, 1.0f, 1.0f});
         Renderer2D::DrawTexture(texture, Core::Input::Mouse::GetMousePosition());
         Renderer2D::DrawLine({ 100, 100 }, { 200, 100 }, { 1, 0, 0 });
     }

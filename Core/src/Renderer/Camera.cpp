@@ -39,10 +39,15 @@ namespace Core::Gfx
         Events::Dispatcher::Subscribe(std::bind(&Camera::OnEvent, this, std::placeholders::_1));
     }
 
-    Camera::Camera(float aspectRatio)
+    //Camera::Camera(float aspectRatio)
+    //{
+    //    projection = glm::perspective(glm::radians(75.0f), aspectRatio, 0.1f, 1000.0f);
+    //    // No need for subscribing because default constructor already does it
+    //    // Events::Dispatcher::Subscribe(std::bind(&Camera::OnEvent, this, std::placeholders::_1));
+    //}
+    void Camera::SetAspectRatio(float aspectRatio)
     {
         projection = glm::perspective(glm::radians(75.0f), aspectRatio, 0.1f, 1000.0f);
-        Events::Dispatcher::Subscribe(std::bind(&Camera::OnEvent, this, std::placeholders::_1));
     }
 
     void Camera::Move()

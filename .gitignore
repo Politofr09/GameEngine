@@ -17,3 +17,7 @@ vendor/GLEW/bin-obj
 vendor/GLFW/bin
 vendor/GLFW/bin-obj
 Editor/imgui.ini
+Editor/bin/intermediates/Debug/Main.obj
+Editor/bin/intermediates/Debug/SandboxLayer.obj
+Editor/bin/intermediates/Release/Main.obj
+Editor/bin/intermediates/Release/SandboxLayer.obj

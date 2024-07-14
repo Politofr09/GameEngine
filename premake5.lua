@@ -12,8 +12,8 @@ workspace "GameEngine"
 		defines "_ITERATOR_DEBUG_LEVEL=2"
 
     filter "configurations:Release"
-        symbols "Off"
-        optimize "Full"  -- Full optimization for release builds
+        symbols "On"
+        optimize "Off"  -- Full optimization for release builds
 		runtime "Release"
 		defines "_ITERATOR_DEBUG_LEVEL=0"
 
