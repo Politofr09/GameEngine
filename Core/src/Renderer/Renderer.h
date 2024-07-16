@@ -43,7 +43,6 @@ namespace Core::Gfx
 
     private:
         static Camera m_ActiveCamera;
-        static FrameBuffer m_FrameBuffer;
     };
 
 }

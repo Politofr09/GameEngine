@@ -2,7 +2,7 @@
 #include <imgui/imgui.h>
 #include <imgui/IconsFontAwesome5.h>
 
-#include "SandboxLayer.h"
+#include "EditorLayer.h"
 #include "Core/Keyboard.h"
 #include "Core/Mouse.h"
 #include "Core/ImGuiLayer.h"
@@ -19,9 +19,7 @@ Font font;
 Shader shader;
 Texture texture;
 
-FrameBuffer fbo;
-
-void SandboxLayer::OnAttach()
+void EditorLayer::OnAttach()
 {
     // Setup OpenGL renderer
     Renderer::Init();
@@ -38,31 +36,27 @@ void SandboxLayer::OnAttach()
     model2.GetMaterial().SetShader(shader);
 
     /**** Setup the camera(s) ****/
-    cam.SetAspectRatio((float)m_Window->GetWidth() / m_Window->GetHeight());
-    cam2d = Core::Gfx::OrthographicCamera(0.0f, (float)m_Window->GetWidth(), (float)m_Window->GetHeight(), 0.0f);
+    m_Cam.SetAspectRatio((float)m_Window->GetWidth() / m_Window->GetHeight());
+    m_Cam2d = Core::Gfx::OrthographicCamera(0.0f, (float)m_Window->GetWidth(), (float)m_Window->GetHeight(), 0.0f);
 
     texture = Texture("res/water.jpg");
 
     font = Font("res/ocr-a-extended.ttf", 100);
     
-    fbo.Create(800, 600);
+    m_FrameBuffer = FrameBuffer(m_Window->GetWidth(), m_Window->GetHeight());
 }
 
 static int FONT_SCALE = 3;
 
-void SandboxLayer::OnUpdate()
+void EditorLayer::OnUpdate()
 {
     // UpdateCameraController();
     shader.SetFloat("uTime", (float)glfwGetTime());
 
     Renderer::Clear();
 
-    /* · Render here *********************************************************************************************************************/
-    /* · TODO: Wrap this into a main renderer maybe rename Renderer to Renderer3D and have like one single class for all rendering code  */
-    /*************************************************************************************************************************************/
-
-    fbo.Bind();
-    Renderer::Begin(cam);
+    m_FrameBuffer.Bind();
+    Renderer::Begin(m_Cam);
     {
         Renderer::Clear();
 
@@ -75,7 +69,7 @@ void SandboxLayer::OnUpdate()
     }
     Renderer::End();
 
-    Renderer2D::Begin(cam2d);
+    Renderer2D::Begin(m_Cam2d);
     {
         //Renderer2D::DrawRectangle( Core::Input::Mouse::GetMousePosition() - glm::vec2{ 50.0f, 100.0f } + glm::vec2{  }, {100, 200}, {1.0f, 1.0f, 1.0f});
         Renderer2D::DrawTexture(texture, Core::Input::Mouse::GetMousePosition());
@@ -83,20 +77,20 @@ void SandboxLayer::OnUpdate()
     }
     Renderer2D::End();
 
-    TextRenderer::Begin(cam2d);
+    TextRenderer::Begin(m_Cam2d);
     {
         const char* message = "Engine demo";
         
         glm::ivec2 offset = font.MeasureText(message, FONT_SCALE);
-        float x = fbo.GetWidth() - offset.x - 10;
+        float x = m_FrameBuffer.GetWidth() - offset.x - 10;
         float y = offset.y + 10;
         TextRenderer::DrawTextEx(font, message, x, y, FONT_SCALE, glm::vec3(sin(glfwGetTime()), cos(glfwGetTime()), 1));
     }
     TextRenderer::End();
-    fbo.UnBind();
+    m_FrameBuffer.UnBind();
 }
 
-void SandboxLayer::ShowCameraControlImgui(bool* p_open)
+void EditorLayer::ShowCameraControlImgui(bool* p_open)
 {
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_Tooltip;
     if (ImGui::Begin("Switch perspective"), p_open, window_flags)
@@ -106,8 +100,8 @@ void SandboxLayer::ShowCameraControlImgui(bool* p_open)
         if (ImGui::SliderFloat("FOV", &in_FOV, 30.0f, 120.0f))
         {
             float aspectRatio = (float)m_Window->GetWidth() / m_Window->GetHeight();
-            cam.SetProjectionMatrix(glm::perspective(glm::radians(in_FOV), aspectRatio, 0.01f, 1000.0f));
-            shader.SetMatrix("uProjection", cam.GetProjectionMatrix());
+            m_Cam.SetProjectionMatrix(glm::perspective(glm::radians(in_FOV), aspectRatio, 0.01f, 1000.0f));
+            shader.SetMatrix("uProjection", m_Cam.GetProjectionMatrix());
         }
 
         ImGui::SameLine();
@@ -115,8 +109,8 @@ void SandboxLayer::ShowCameraControlImgui(bool* p_open)
         {
             in_FOV = 75.0F;
             float aspectRatio = (float)m_Window->GetWidth() / m_Window->GetHeight();
-            cam.SetProjectionMatrix(glm::perspective(glm::radians(in_FOV), aspectRatio, 0.01f, 1000.0f));
-            shader.SetMatrix("uProjection", cam.GetProjectionMatrix());
+            m_Cam.SetProjectionMatrix(glm::perspective(glm::radians(in_FOV), aspectRatio, 0.01f, 1000.0f));
+            shader.SetMatrix("uProjection", m_Cam.GetProjectionMatrix());
         }
 
         // Display a 2D representation of the perspective frustum
@@ -147,7 +141,7 @@ void SandboxLayer::ShowCameraControlImgui(bool* p_open)
     ImGui::End();
 }
 
-void SandboxLayer::OnImGuiRender()
+void EditorLayer::OnImGuiRender()
 {
     // Setup dockspace
     ImGui::SetNextWindowSize(ImVec2(m_Window->GetWidth(), m_Window->GetHeight()));
@@ -215,17 +209,17 @@ void SandboxLayer::OnImGuiRender()
     if (ImGui::Begin("VIEWPORT", 0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
     {
         ImVec2 availableSpace = ImGui::GetContentRegionAvail();
-        fbo.Resize((int)availableSpace.x, (int)availableSpace.y);
+        m_FrameBuffer.Resize((int)availableSpace.x, (int)availableSpace.y);
 
         ImVec2 min = ImGui::GetCursorScreenPos();
         ImVec2 max = ImVec2(min.x + availableSpace.x, min.y + availableSpace.y);
         ImGui::GetWindowDrawList()->AddRect(min, max, ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)), 6.0f, ImDrawFlags_RoundCornersAll, 6.0f);
         
         ImGui::BeginChild("Viewport", availableSpace, false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoMove);
-        Core::ImGuiLayer::DisplayRoundedImage((ImTextureID)fbo.GetTextureID(), ImVec2(fbo.GetWidth(), fbo.GetHeight()), 6.0f, ImVec2(0, 1), ImVec2(1, 0));
+        Core::ImGuiLayer::DisplayRoundedImage((ImTextureID)m_FrameBuffer.GetTextureID(), ImVec2(m_FrameBuffer.GetWidth(), m_FrameBuffer.GetHeight()), 6.0f, ImVec2(0, 1), ImVec2(1, 0));
         if (ImGui::IsWindowHovered())
         {
-            cam.Move();
+            m_Cam.Move();
         }
         ImGui::EndChild();
 
@@ -235,7 +229,7 @@ void SandboxLayer::OnImGuiRender()
     ImGui::End(); // Dockspace
 }
 
-void SandboxLayer::OnEvent(Core::Events::Event* event)
+void EditorLayer::OnEvent(Core::Events::Event* event)
 {
     //if (event.GetType() == "WindowResizedEvent")
     //{
@@ -248,21 +242,21 @@ void SandboxLayer::OnEvent(Core::Events::Event* event)
     //}
 }
 
-void SandboxLayer::OnDettach()
+void EditorLayer::OnDettach()
 {
     // Cleanup
 }
 
-void SandboxLayer::UpdateCameraController()
-{
-    using namespace Core::Input;
-
-    // Calculate view matrix
-    if (!Core::ImGuiLayer::OnTop())
-    {
-        cam.Move();
-    }
-
-    // Update camera position based on user input
-    shader.SetMatrix("uView", cam.GetViewMatrix());
-}
+//void EditorLayer::UpdateCameraController()
+//{
+//    using namespace Core::Input;
+//
+//    // Calculate view matrix
+//    if (!Core::ImGuiLayer::OnTop())
+//    {
+//        m_Cam.Move();
+//    }
+//
+//    // Update camera position based on user input
+//    shader.SetMatrix("uView", m_Cam.GetViewMatrix());
+//}

@@ -13,10 +13,10 @@
 
 #pragma once
 
-class SandboxLayer : public Core::Layer
+class EditorLayer : public Core::Layer
 {
 public:
-    SandboxLayer(Core::Window* window) : Layer(window) {};
+    EditorLayer(Core::Window* window) : Layer(window) {};
 	
     void OnAttach() override;
 	void OnUpdate() override;
@@ -25,9 +25,11 @@ public:
 	void OnDettach() override;
 
 private:
-    Core::Gfx::Camera cam;
-    Core::Gfx::OrthographicCamera cam2d;
+    Core::Gfx::Camera m_Cam;
+    Core::Gfx::OrthographicCamera m_Cam2d;
+    Core::Gfx::FrameBuffer m_FrameBuffer;
 
-    void UpdateCameraController();
+    //void UpdateCameraController();
     void ShowCameraControlImgui(bool* p_open);
+    void DrawViewportImGui();
 };

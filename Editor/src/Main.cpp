@@ -1,4 +1,4 @@
-#include "SandboxLayer.h"
+#include "EditorLayer.h"
 #include "Core/Application.h"
 #include <memory>
 
@@ -8,8 +8,8 @@ int main()
 {
     std::unique_ptr<Application> app = std::make_unique<Application>();
 
-    SandboxLayer* sandboxLayer = new SandboxLayer(app->GetWindow());
-    app->PushLayer(sandboxLayer);
+    EditorLayer* editorLayer = new EditorLayer(app->GetWindow());
+    app->PushLayer(editorLayer);
 
     app->Run();
 

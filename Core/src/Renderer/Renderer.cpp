@@ -22,7 +22,6 @@ namespace Core::Gfx
     }
 
     Camera Renderer::m_ActiveCamera{};
-    FrameBuffer Renderer::m_FrameBuffer{};
     
     Renderer::Renderer()
     {
