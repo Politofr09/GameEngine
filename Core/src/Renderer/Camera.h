@@ -37,7 +37,7 @@ namespace Core::Gfx
         void SetAspectRatio(float aspectRatio);
         float GetFOV() { return 2.0f * glm::atan(1.0f / projection[1][1]); }
 
-        void OnEvent(Events::Event* event);
+        void OnViewportResize(int width, int height);
 
     private:
         float CalculateHorizontalDistance();

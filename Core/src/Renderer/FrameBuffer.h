@@ -5,14 +5,14 @@
 namespace Core::Events
 {
 
-	class RenderingAreaUpdatedEvent : public Event
+	class ViewportResizedEvent : public Event
 	{
 	public:
 		int width, height;
 
-		RenderingAreaUpdatedEvent(int width, int height) : width(width), height(height) {}
+		ViewportResizedEvent(int width, int height) : width(width), height(height) {}
 
-		DECLARE_EVENT_TYPE("RenderingAreaUpdatedEvent");
+		DECLARE_EVENT_TYPE("ViewportResizedEvent");
 	};
 
 }
@@ -33,8 +33,15 @@ namespace Core::Gfx
 		void UnBind() const;
 
 		unsigned int GetTextureID() const { return m_TextureID; }
+		
 		unsigned int GetWidth() const { return m_Width; }
 		unsigned int GetHeight() const { return m_Height; }
+		float GetAspectRatio() { return m_Width / m_Height;  }
+
+		int GetOffsetX() const { return m_PositionX; }
+		int GetOffsetY() const { return m_PositionY; }
+
+		void SetPosition(int x, int y) { m_PositionX = x; m_PositionY = y; }
 
 		void Free();
 
@@ -45,6 +52,8 @@ namespace Core::Gfx
 
 		unsigned int m_Width;
 		unsigned int m_Height;
+		int m_PositionX;
+		int m_PositionY;
 	};
 
 }

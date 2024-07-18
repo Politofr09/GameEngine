@@ -3,6 +3,7 @@
 #include "Renderer/Shader.h"
 #include "Renderer/Camera.h"
 #include "Renderer/OrthographicCamera.h"
+#include "Renderer/FrameBuffer.h"
 #include "Core/Utils.h"
 #include "Events/InputEvents.h"
 #include "Events/WindowEvents.h"

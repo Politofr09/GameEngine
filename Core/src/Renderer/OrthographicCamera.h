@@ -24,8 +24,8 @@ namespace Core::Gfx
 		const glm::mat4& GetViewMatrix() const { return m_ViewMatrix; }
 		const glm::mat4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
 
-		void OnEvent(Events::Event* event);
-	
+		void OnViewportResize(int width, int height);
+		
 	private:
 		void CalculateViewMatrix();
 	private:

@@ -31,7 +31,6 @@ namespace Core::Gfx
     {
         glEnable(GL_DEPTH_TEST);
         GLCall(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
-        Events::Dispatcher::Subscribe(OnEvent);
     }
     
     void Renderer::Clear()
@@ -83,22 +82,10 @@ namespace Core::Gfx
             GLCall(glDrawElements(GL_TRIANGLES, mesh.GetIndexBuffer().GetCount(), GL_UNSIGNED_INT, nullptr));
         }
     }
-    
-    void Renderer::OnEvent(Events::Event* event)
-    {
-        if (event->GetType() == "WindowResizedEvent")
-        {
-            auto e = dynamic_cast<Core::Events::WindowResizedEvent*>(event);
-            //Events::RenderingAreaUpdatedEvent* newEvent = new Events::RenderingAreaUpdatedEvent(e->width, e->height);
-            //Events::Dispatcher::Trigger(newEvent);
-            glViewport(0, 0, e->width, e->height);
-        }
 
-        if (event->GetType() == "RenderingAreaUpdatedEvent")
-        {
-            auto e = dynamic_cast<Core::Events::RenderingAreaUpdatedEvent*>(event);
-            glViewport(0, 0, e->width, e->height);
-        }
+    void Renderer::OnViewportResize(int width, int height)
+    {
+        glViewport(0, 0, width, height);
     }
 
 }

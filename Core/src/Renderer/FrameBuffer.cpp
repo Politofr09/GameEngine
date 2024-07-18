@@ -57,8 +57,8 @@ namespace Core::Gfx
 		glBindFramebuffer(GL_FRAMEBUFFER, m_FrameBufferID);
 
 		// We've bound the frame buffer; this means we want to update the rendering area dimensions
-		// We can do so by triggering a RenderingAreaUpdatedEvent
-		Events::RenderingAreaUpdatedEvent* event = new Events::RenderingAreaUpdatedEvent(m_Width, m_Height);
+		// We can do so by triggering a ViewportResizedEvent event
+		Events::ViewportResizedEvent* event = new Events::ViewportResizedEvent(m_Width, m_Height);
 		Events::Dispatcher::Trigger(event);
 	}
 

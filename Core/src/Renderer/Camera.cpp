@@ -4,15 +4,12 @@
 
 namespace Core::Gfx
 {
-    void Camera::OnEvent(Events::Event* event)
+
+    void Camera::OnViewportResize(int width, int height)
     {
-        if (event->GetType() == "RenderingAreaUpdatedEvent")
-        {
-            auto e = dynamic_cast<Core::Events::RenderingAreaUpdatedEvent*>(event);
-            float aspectRatio = (float)e->width / e->height;
-            float existingFOV = 2.0f * atan(1.0f / projection[1][1]);
-            projection = glm::perspective(existingFOV, aspectRatio, 0.1f, 1000.0f);
-        }
+        float aspectRatio = (float)width / height;
+        float FOV = 2.0f * atan(1.0f / projection[1][1]);
+        projection = glm::perspective(FOV, aspectRatio, 0.1f, 1000.0f);
     }
 
     float Camera::CalculateHorizontalDistance()
@@ -36,15 +33,8 @@ namespace Core::Gfx
     Camera::Camera()
     {
         projection = glm::mat4(0.0f);
-        Events::Dispatcher::Subscribe(std::bind(&Camera::OnEvent, this, std::placeholders::_1));
     }
 
-    //Camera::Camera(float aspectRatio)
-    //{
-    //    projection = glm::perspective(glm::radians(75.0f), aspectRatio, 0.1f, 1000.0f);
-    //    // No need for subscribing because default constructor already does it
-    //    // Events::Dispatcher::Subscribe(std::bind(&Camera::OnEvent, this, std::placeholders::_1));
-    //}
     void Camera::SetAspectRatio(float aspectRatio)
     {
         projection = glm::perspective(glm::radians(75.0f), aspectRatio, 0.1f, 1000.0f);

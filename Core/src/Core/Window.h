@@ -35,6 +35,8 @@ namespace Core
 		bool ShouldClose();
 
 		void Close();
+		void Maximize();
+		void Minimize();
 
 		static float GetDeltaTime() { return _deltaTime; }
 

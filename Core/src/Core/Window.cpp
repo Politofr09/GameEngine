@@ -111,4 +111,17 @@ namespace Core
     {
         glfwSetWindowShouldClose(_window, true);
     }
+
+    void Window::Maximize()
+    {
+        if (glfwGetWindowAttrib(_window, GLFW_MAXIMIZED))
+            glfwRestoreWindow(_window);
+        else
+            glfwMaximizeWindow(_window);
+    }
+
+    void Window::Minimize()
+    {
+        glfwIconifyWindow(_window);
+    }
 }

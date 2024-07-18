@@ -9,8 +9,6 @@ namespace Core::Gfx
 		m_ViewMatrix		= glm::mat4(1.0f);
 		m_Position			= glm::vec3(0.0f);
 		m_Rotation			= 0.0f;
-
-		Events::Dispatcher::Subscribe(std::bind(&OrthographicCamera::OnEvent, this, std::placeholders::_1));
 	}
 
 	OrthographicCamera::OrthographicCamera(float left, float right, float bottom, float top)
@@ -24,13 +22,9 @@ namespace Core::Gfx
 		m_ProjectionMatrix = glm::ortho(left, right, bottom, top);
 	}
 
-	void OrthographicCamera::OnEvent(Events::Event* event)
+	void OrthographicCamera::OnViewportResize(int width, int height)
 	{
-		if (event->GetType() == "RenderingAreaUpdatedEvent")
-		{
-			auto e = dynamic_cast<Core::Events::RenderingAreaUpdatedEvent*>(event);
-			SetProjection(0.0f, e->width, e->height, 0.0f);
-		}
+		SetProjection(0.0f, width, height, 0.0f);
 	}
 
 	void OrthographicCamera::CalculateViewMatrix()

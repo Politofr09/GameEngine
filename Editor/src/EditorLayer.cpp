@@ -72,7 +72,11 @@ void EditorLayer::OnUpdate()
     Renderer2D::Begin(m_Cam2d);
     {
         //Renderer2D::DrawRectangle( Core::Input::Mouse::GetMousePosition() - glm::vec2{ 50.0f, 100.0f } + glm::vec2{  }, {100, 200}, {1.0f, 1.0f, 1.0f});
-        Renderer2D::DrawTexture(texture, Core::Input::Mouse::GetMousePosition());
+        Renderer2D::DrawTexture(texture, 
+            { 
+                Core::Input::Mouse::GetMousePosition().x - m_FrameBuffer.GetOffsetX() * m_FrameBuffer.GetAspectRatio(),
+                Core::Input::Mouse::GetMousePosition().y - m_FrameBuffer.GetOffsetY() * m_FrameBuffer.GetAspectRatio()
+            });
         Renderer2D::DrawLine({ 100, 100 }, { 200, 100 }, { 1, 0, 0 });
     }
     Renderer2D::End();
@@ -173,6 +177,7 @@ void EditorLayer::OnImGuiRender()
             }
             ImGui::EndMenu();
         }
+
         ImGui::EndMenuBar();
     }
 
@@ -210,6 +215,7 @@ void EditorLayer::OnImGuiRender()
     {
         ImVec2 availableSpace = ImGui::GetContentRegionAvail();
         m_FrameBuffer.Resize((int)availableSpace.x, (int)availableSpace.y);
+        m_FrameBuffer.SetPosition(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y + 6);
 
         ImVec2 min = ImGui::GetCursorScreenPos();
         ImVec2 max = ImVec2(min.x + availableSpace.x, min.y + availableSpace.y);
@@ -231,15 +237,21 @@ void EditorLayer::OnImGuiRender()
 
 void EditorLayer::OnEvent(Core::Events::Event* event)
 {
-    //if (event.GetType() == "WindowResizedEvent")
-    //{
-    //    auto& e = static_cast<Core::Events::WindowResizedEvent&>(event);
-    //    glViewport(0, 0, e.width, e.height);
-    //    float aspectRatio = (float)e.width / e.height;
-    //    glm::mat4 projection = glm::perspective(glm::radians(75.0f), aspectRatio, 0.1f, 1000.0f);
-    //    cam.SetProjectionMatrix(projection);
-    //    shader.SetMatrix("uProjection", projection);
-    //}
+    if (event->GetType() == "WindowResizedEvent")
+    {
+        auto e = dynamic_cast<Core::Events::WindowResizedEvent*>(event);
+
+        Renderer::OnViewportResize(e->width, e->height);
+    }
+    if (event->GetType() == "ViewportResizedEvent")
+    {
+        auto e = dynamic_cast<Core::Events::ViewportResizedEvent*>(event);
+
+        Renderer::OnViewportResize(e->width, e->height);
+
+        m_Cam.OnViewportResize(e->width, e->height);
+        m_Cam2d.OnViewportResize(e->width, e->height);
+    }
 }
 
 void EditorLayer::OnDettach()
@@ -260,3 +272,8 @@ void EditorLayer::OnDettach()
 //    // Update camera position based on user input
 //    shader.SetMatrix("uView", m_Cam.GetViewMatrix());
 //}
+
+void EditorLayer::DrawViewportImGui()
+{
+
+}

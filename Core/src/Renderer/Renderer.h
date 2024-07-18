@@ -39,7 +39,7 @@ namespace Core::Gfx
         // TODO: Make models have materials and materials have reference to shader programs. E.g. model.GetMaterials()[0].GetShader().Use();
         static void DrawModel(Model& model, glm::mat4 transform);
     
-        static void OnEvent(Events::Event* event);
+        static void OnViewportResize(int width, int height); // Call this when window / framebuffer changes
 
     private:
         static Camera m_ActiveCamera;
