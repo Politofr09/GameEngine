@@ -7,47 +7,52 @@ project "Editor"
     objdir "bin/intermediates/%{cfg.buildcfg}"
 
     files {
-        "src/**"
+        "src/**.h",
+        "src/**.cpp"
     }
 
     includedirs {
-        "../Core/src/",
+        "../Core/src",
         "../vendor/GLFW/include/",
         "../vendor/GLEW/include/",
+        "../vendor/stb/",
+        "../vendor/glm/",
         "../vendor/assimp/include/",
-        "../vendor/glm",
-        "../vendor/",
+        "../vendor/"
     }
 
-	libdirs {
-		"../vendor/GLFW/bin/GLFW/",
+    libdirs {
+        "../vendor/GLFW/bin/GLFW/",
         "../vendor/GLEW/bin/%{cfg.buildcfg}",
         "../vendor/assimp/bin/assimp/",
         "../Core/bin/%{cfg.buildcfg}"
-    }   
+    }
 
     links {
-        "assimp",
         "Core",
+        "GLEW",
+        "GLFW",
+        "assimp",
     }
 
     filter "system:windows"
         links {
-            "Opengl32",
+            "opengl32",
         }
 
     filter "system:linux"
+        buildoptions { "-fPIC" }
+        linkoptions { "-pie" }
         links {
             "GL",
         }
 
     filter "configurations:Debug"
-        runtime "Debug"
         defines "DEBUG"
         symbols "on"
-        optimize "Off"  -- Turn off optimization for debug builds
+        runtime "Debug"
 
     filter "configurations:Release"
-        runtime "Release"
         defines "RELEASE"
         optimize "on"
+        runtime "Release"

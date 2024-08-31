@@ -35,12 +35,8 @@ namespace Core
 
 		~ImGuiLayer();
 
-		// Extra ImGui utilities
-		static void DisplayRoundedImage(ImTextureID texture_id, ImVec2 size, float rounding, const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1), ImVec4 color = ImVec4(1, 1, 1, 1));
-		static bool IsMouseHoveringTitleBar();
-
 	private:
 		static bool m_Dark;
-		static bool m_OnTop; // Are we using this layer or the Sandbox layer?
+		static bool m_OnTop; // Are we using this layer or another layer?
 	};
 }

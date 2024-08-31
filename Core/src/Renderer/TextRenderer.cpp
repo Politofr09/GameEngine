@@ -12,17 +12,17 @@ namespace Core::Gfx
 
 	void TextRenderer::Init()
 	{
-		// Make the shader (optimized for text)
 		const char* vertexShaderSource = R"(
 			#version 330 core
 			layout (location = 0) in vec4 vertex; // vec2 position + vec2 uv
 			out vec2 uv;
 
 			uniform mat4 uProjection;
+			uniform mat4 uView;
  
 			void main()
 			{
-				gl_Position = uProjection * vec4(vertex.xy, 0.0, 1.0);
+				gl_Position = uProjection * uView * vec4(vertex.xy, 0.0, 1.0);
 				uv = vertex.zw;
 			}
 		)";
@@ -61,6 +61,7 @@ namespace Core::Gfx
 		m_ActiveCamera = camera;
 		m_Shader.Use();
 		m_Shader.SetMatrix("uProjection", m_ActiveCamera.GetProjectionMatrix());
+		m_Shader.SetMatrix("uView", m_ActiveCamera.GetViewMatrix());
 	}
 
 	void TextRenderer::End()

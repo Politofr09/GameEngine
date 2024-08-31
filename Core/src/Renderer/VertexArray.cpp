@@ -48,3 +48,24 @@ void Core::Gfx::VertexArray::UnBind() const
 {
     glBindVertexArray(0);
 }
+
+template<>
+void Core::Gfx::BufferLayout::Push<float>(unsigned int count)
+{
+	m_Elements.push_back({ GL_FLOAT, count, GL_FALSE });
+	m_Stride += count * BufferElement::GetSizeOfType(GL_FLOAT);
+}
+
+template<>
+void Core::Gfx::BufferLayout::Push<unsigned int>(unsigned int count)
+{
+	m_Elements.push_back({ GL_UNSIGNED_INT, count, GL_FALSE });
+	m_Stride += count * BufferElement::GetSizeOfType(GL_UNSIGNED_INT);
+}
+
+template<>
+void Core::Gfx::BufferLayout::Push<unsigned char>(unsigned int count)
+{
+	m_Elements.push_back({ GL_BYTE, count, GL_FALSE });
+	m_Stride += count * BufferElement::GetSizeOfType(GL_BYTE);
+}

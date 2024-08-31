@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
-#include <time.h>
+#include <ctime>
 
 #pragma once
 

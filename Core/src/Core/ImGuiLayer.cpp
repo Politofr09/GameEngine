@@ -103,6 +103,9 @@ void SetupImGuiStyle(bool bStyleDark_, float alpha)
         colors[ImGuiCol_ResizeGrip] = ImVec4(0.80f, 0.80f, 0.80f, 0.56f);
         colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.87f, 0.87f, 0.87f, 0.67f);
         colors[ImGuiCol_ResizeGripActive] = ImVec4(0.87f, 0.87f, 0.87f, 0.95f);
+        colors[ImGuiCol_TableHeaderBg] = ImVec4(0.95f, 0.95f, 0.98f, 1.00f);
+        colors[ImGuiCol_TableBorderStrong] = ImVec4(0.30f, 0.30f, 0.45f, 1.00f);
+        colors[ImGuiCol_TableBorderLight] = ImVec4(0.55f, 0.55f, 0.68f, 0.75f);
         colors[ImGuiCol_Tab] = ImVec4(0.37f, 0.65f, 0.98f, 0.86f);
         colors[ImGuiCol_TabHovered] = ImVec4(0.28f, 0.59f, 1.00f, 1.00f);
         colors[ImGuiCol_TabActive] = ImVec4(0.39f, 0.67f, 1.00f, 1.00f);
@@ -211,43 +214,39 @@ void Core::ImGuiLayer::BeginImGuiContent()
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+
+    // Setup dockspace
+    ImGui::SetNextWindowSize(ImVec2(m_Window->GetWidth(), m_Window->GetHeight()));
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+
+    int windowFlags = ImGuiWindowFlags_MenuBar |    ImGuiWindowFlags_NoDocking
+        | ImGuiWindowFlags_NoTitleBar   |           ImGuiWindowFlags_NoResize
+        | ImGuiWindowFlags_NoMove       |           ImGuiWindowFlags_NoBringToFrontOnFocus
+        | ImGuiWindowFlags_NoNav        |           ImGuiWindowFlags_MenuBar;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::Begin("Dockspace", nullptr, windowFlags);
+    ImGui::PopStyleVar(3);
+    ImVec2 min = ImGui::GetCursorScreenPos();
+    ImVec2 max = ImVec2(min.x + ImGui::GetContentRegionAvail().x, min.y + ImGui::GetContentRegionAvail().y);
+    ImGui::GetWindowDrawList()->AddRect(min, max, ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)), 6.0f, ImDrawFlags_RoundCornersAll, 6.0f);
+
+    ImGui::DockSpace(ImGui::GetID("Dockspace"));
 }
 
 // Render ImGui
 void Core::ImGuiLayer::EndImGuiContent()
 {
+    ImGui::End(); // Dockspace
+
     ImGuiIO& io = ImGui::GetIO();
     m_OnTop = ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow);
 
     ImGui::EndFrame();
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
-
-void Core::ImGuiLayer::DisplayRoundedImage(ImTextureID texture_id, ImVec2 size, float rounding, const ImVec2& uv0, const ImVec2& uv1, ImVec4 color)
-{
-    // Get the current window draw list
-    ImDrawList* draw_list = ImGui::GetWindowDrawList();
-
-    // Get the current cursor position
-    ImVec2 pos = ImGui::GetCursorScreenPos();
-
-    // Define the rectangle area for the image
-    ImVec2 min = pos;
-    ImVec2 max = ImVec2(pos.x + size.x, pos.y + size.y);
-
-    // Draw the image
-    ImGui::Image(texture_id, size, uv0, uv1, color);
-
-    // Draw the rounded rectangle on top of the image
-    draw_list->AddRect(min, max, ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)), rounding, ImDrawFlags_RoundCornersAll, rounding);
-}
-
-bool Core::ImGuiLayer::IsMouseHoveringTitleBar()
-{
-    const float titleBarHeight = ImGui::GetFrameHeight();
-    ImRect titleBarRect = ImRect(ImGui::GetWindowPos(), ImVec2(ImGui::GetWindowPos().x + ImGui::GetWindowSize().x, ImGui::GetWindowPos().y + titleBarHeight));
-    return ImGui::IsMouseHoveringRect(titleBarRect.Min, titleBarRect.Max);
 }
 
 Core::ImGuiLayer::~ImGuiLayer()

@@ -3,44 +3,64 @@
 #include <GL/glew.h>
 #include <stb/stb_image.h>
 
+Core::Gfx::Texture& Core::Gfx::Texture::Create(const std::string &path, const std::string &name, std::string type)
+{
+	Texture* texture = new Texture(path, name, type);
+
+	if (texture->Load())
+	{
+		TRACK_RESOURCE(texture);
+	}
+
+	return *texture;
+}
+
 Core::Gfx::Texture::Texture()
 {
 	m_Width = 0;
 	m_Height = 0;
 	m_NrChannels = 0;
 	m_RendererID = 0;
-	m_Loaded = false;
 	m_Type = "texture_diffuse";
-	m_Path = "";
 }
 
-Core::Gfx::Texture::Texture(const std::string& path, std::string type)
+Core::Gfx::Texture::Texture(const std::string& path, const std::string& name, std::string type)
 {
-	m_Type = type;
-	Load(path);
-}
-
-Core::Gfx::Texture::Texture(const Texture& texture)
-{
-	*this = texture;
-}
-
-bool Core::Gfx::Texture::Load(const std::string& path)
-{
-	m_Path = path;
+	m_FileDirectory = path;
+	m_Name = name;
+	if (m_Name.empty()) m_Name = GetType() + std::to_string(ID);
 	
+	m_Type = type;
+}
+
+// Core::Gfx::Texture::Texture(const Texture& texture)
+// {
+// 	*this = texture;
+// }
+
+bool Core::Gfx::Texture::Load()
+{
 	//stbi_set_flip_vertically_on_load(1);
-	unsigned char* data = stbi_load(path.c_str(), &m_Width, &m_Height, &m_NrChannels, 0);
+	unsigned char* data = stbi_load(m_FileDirectory.c_str(), &m_Width, &m_Height, &m_NrChannels, 0);
 
 	if (data == NULL)
 	{
-		LOG_ERROR("stbi_load failed to load image: " + path);
+		LOG_ERROR("stbi_load failed to load image: " + m_FileDirectory);
 		m_Loaded = false;
 		return false;
 	}
 
 	LoadFromMemory(m_Width, m_Height, m_NrChannels, data);
 	stbi_image_free(data);
+
+	LOG_INFO("Texture " + m_Name + " loaded.");
+
+	return true;
+}
+
+bool Core::Gfx::Texture::UnLoad()
+{
+	glDeleteTextures(1, &m_RendererID);
 	return true;
 }
 
@@ -93,9 +113,4 @@ void Core::Gfx::Texture::Bind() const
 void Core::Gfx::Texture::UnBind() const
 {
 	glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-bool Core::Gfx::Texture::IsLoaded() const
-{
-	return m_Loaded;
 }

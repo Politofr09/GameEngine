@@ -2,7 +2,7 @@ project "Core"
     kind "StaticLib"
     language "C++"
     cppdialect "C++17"
-    
+
     targetdir "bin/%{cfg.buildcfg}"
     objdir "bin/intermediates/%{cfg.buildcfg}"
 
@@ -14,24 +14,25 @@ project "Core"
         "../vendor/stb/**.cpp",
         "../vendor/imgui/**.cpp"
     }
-    
+
     includedirs {
         "**",
-		"../vendor/GLFW/include/",
+        "../vendor/GLFW/include/",
         "../vendor/GLEW/include/",
         "../vendor/stb/",
         "../vendor/glm/",
         "../vendor/assimp/include/",
         "../vendor/"
-	}
-	
-	libdirs {
-		"../vendor/GLFW/bin/GLFW/",
-        "../vendor/GLEW/bin/%{cfg.buildcfg}"
-	}
+    }
+
+    libdirs {
+        "../vendor/GLFW/bin/GLFW/",
+        "../vendor/GLEW/bin/%{cfg.buildcfg}",
+        "../vendor/assimp/bin/assimp/"
+    }
 
     links {
-        "GLEW",
+        "glew",
         "GLFW",
         "assimp"
     }
@@ -42,10 +43,11 @@ project "Core"
         }
 
     filter "system:linux"
+        buildoptions { "-fPIC" }
         links {
             "GL",
         }
-        
+
     filter "configurations:Debug"
         defines "DEBUG"
         symbols "on"

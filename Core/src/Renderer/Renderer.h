@@ -23,13 +23,12 @@ namespace Core::Gfx
     public:
         Renderer();
 
-        // Initialize OpenGL
         static void Init();
 
-        // Clear the screen
+        static void SetBackgroundColor(glm::vec3 color);
+
         static void Clear();
 
-        // Begin rendering
         static void Begin(const Camera& cam);
         static void End();
 

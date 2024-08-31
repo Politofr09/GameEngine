@@ -1,4 +1,5 @@
 #include "EditorLayer.h"
+#include "TilemapLayer.h"
 #include "Core/Application.h"
 #include <memory>
 
@@ -10,6 +11,9 @@ int main()
 
     EditorLayer* editorLayer = new EditorLayer(app->GetWindow());
     app->PushLayer(editorLayer);
+
+    TilemapLayer* tilemapLayer = new TilemapLayer(app->GetWindow());
+    app->PushLayer(tilemapLayer);
 
     app->Run();
 

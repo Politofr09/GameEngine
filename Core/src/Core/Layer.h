@@ -18,8 +18,6 @@ namespace Core
 		virtual void OnAttach() = 0;
 		virtual void OnUpdate() = 0;
 		virtual void OnImGuiRender() = 0;
-		///*IMPORTANT: BEFORE CASTING EVENT WITH static_cast CHECK IF IT'S MATCHING THE EXPECTED TYPE
-		/// Event.GetType() = "myExpectedEvent" AND THEN CAST.
 		virtual void OnEvent(Events::Event* event) = 0;
 		virtual void OnDettach() = 0;
 

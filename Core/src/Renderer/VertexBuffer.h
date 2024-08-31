@@ -14,9 +14,12 @@ namespace Core::Gfx
 		void Free();
 
 		void UpdateData(const void* data, int size);
+		void Resize(int size, bool dynamic_draw = false);
 
 		void Bind() const;
 		void UnBind() const;
+
+		int GetRendererID() { return m_RendererID; }
 
 		VertexBuffer& operator=(const VertexBuffer& other)
 		{

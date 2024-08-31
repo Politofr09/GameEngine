@@ -1,6 +1,6 @@
 #include "FrameBuffer.h"
 #include <Core/Utils.h>
-#include <gl/glew.h>
+#include <GL/glew.h>
 
 namespace Core::Gfx
 {

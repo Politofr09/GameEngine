@@ -2,21 +2,37 @@
 #include <fstream>
 #include <GL/glew.h>
 #include <iostream>
+#include <vector>
 
 namespace Core::Gfx
 {
 
-	Font::Font(const std::string& path, int fontSize)
-	{
-		Load(path, fontSize);
+    Font& Font::Create(const std::string &path, int fontSize,const std::string &name)
+    {
+        Font* font = new Font(path, fontSize, name);
+
+		if (font->Load())
+		{
+			TRACK_RESOURCE(font);
+		}
+
+		return *font;
 	}
 
-	void Font::Load(const std::string& path, int fontSize)
+	Font::Font(const std::string& path, int fontSize, const std::string& name)
 	{
-		std::ifstream file(path, std::ios::binary | std::ios::ate);
+		m_FileDirectory = path;
+		m_Size = fontSize;
+		m_Name = name;
+	}
+
+    bool Font::Load()
+    {
+		std::ifstream file(m_FileDirectory, std::ios::binary | std::ios::ate);
 		if (!file.is_open())
 		{
-			throw std::runtime_error("Failed, to open font file: " + path);
+			throw std::runtime_error("Failed, to open font file: " + m_FileDirectory);
+			return false;
 		}
 
 		std::streamsize size = file.tellg();
@@ -25,15 +41,15 @@ namespace Core::Gfx
 		std::vector<unsigned char> fontData(size);
 		if (!file.read(reinterpret_cast<char*>(fontData.data()), size))
 		{
-			throw std::runtime_error("Failed to read font file: " + path);
+			throw std::runtime_error("Failed to read font file: " + m_FileDirectory);
+			return false;
 		}
 
-		LoadFromMemory(fontData.data(), size, fontSize);
+		return LoadFromMemory(fontData.data(), size, m_Size);
 	}
 
-	void Font::LoadFromMemory(unsigned char* fontData, int dataSize, int fontSize)
+	bool Font::LoadFromMemory(unsigned char* fontData, int dataSize, int fontSize)
 	{
-		m_Size = fontSize;
 		std::vector<unsigned char> tempBitmap(512 * 512);
 
 		stbtt_BakeFontBitmap(fontData, 0, fontSize, tempBitmap.data(), 512, 512, 32, 96, m_BakedChars);
@@ -66,8 +82,14 @@ namespace Core::Gfx
 		}
 
 		glBindTexture(GL_TEXTURE_2D, 0);
+
+		return true;
 	}
 
+	bool Font::UnLoad()
+	{
+		return true;
+	}
 
 	glm::ivec2 Font::MeasureText(const std::string& text, float scale) const 
 	{

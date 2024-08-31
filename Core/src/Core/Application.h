@@ -13,7 +13,7 @@ namespace Core
 	class Application
 	{
 	public:
-		Application(const std::string& name = "GLion app", int window_width = 1080, int window_height = 720);
+		Application(const std::string& name = "Proton app", int window_width = 1080, int window_height = 720);
 		const std::string& GetName() { return m_Name; }
 
 		void PushLayer(Layer* layer);

@@ -1,4 +1,5 @@
-#pragma once
+#include "Core/Resource.h"
+#include "Core/ResourceManager.h"
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -9,27 +10,33 @@
 #include <sstream>
 #include <iostream>
 
+#pragma once
+
 namespace Core::Gfx
 {
 
-	class Shader
+	class Shader : public Resource
 	{
 	public:
+		DECLARE_RESOURCE_TYPE("Shader")
+
+		static Shader& Create(const std::string& vertexPath, const std::string& fragmentPath, const std::string& name);
+
 		Shader() = default;
-		Shader(const char* vertexPath, const char* fragmentPath);
 		Shader& operator=(const Shader& other)
 		{
-			this->ID = other.ID;
+			this->m_RendererID = other.m_RendererID;
 			return *this;
 		}
 
-		void Load(const char* vertexPath, const char* fragmentPath);
-		void LoadFromMemory(const char* vertexSource, const char* fragmentSource);
+		bool Load() override;
+		bool UnLoad() override;
+		bool LoadFromMemory(const char* vertexSource, const char* fragmentSource);
 
 		void Use();
 		void End();
 
-		unsigned int GetID() { return ID; }
+		unsigned int GetID() { return m_RendererID; }
 
 		// Uniform loading functions
 		void SetBool(const std::string& uniformName, bool value);
@@ -39,9 +46,14 @@ namespace Core::Gfx
 		void SetVector3(const std::string& uniformName, glm::vec3 value);
 		void SetVector4(const std::string& uniformName, glm::vec4 value);
 		void SetMatrix(const std::string& uniformName, glm::mat4 value);
+	
+	private:
+		Shader(const std::string& vertexPath, const std::string& fragmentPath, const std::string& name);
+		std::string m_VertexPath;
+		std::string m_FragmentPath;
 
 	private:
-		GLuint ID;
+		unsigned int m_RendererID;
 	};
 
 }

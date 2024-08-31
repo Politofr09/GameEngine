@@ -121,7 +121,7 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType 
 
 		for (unsigned int j = 0; j < m_LoadedTextures.size(); j++)
 		{
-			if (std::strcmp(m_LoadedTextures[j].GetPath().data(), str.C_Str()) == 0)
+			if (std::strcmp(m_LoadedTextures[j].GetFileDirectory().data(), str.C_Str()) == 0)
 			{
 				textures.push_back(m_LoadedTextures[j]);
 				skip = true; // a texture with the same filepath has already been loaded, continue to next one. (optimization)
@@ -143,9 +143,9 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType 
 			default:                        tex_type = "texture_diffuse";       break;
 			}
 
-			Texture texture(m_Directory + "/" + str.C_Str(), tex_type);
+			Texture texture = Texture::Create(m_Directory + "/" + str.C_Str(), tex_type);
 
-			LOG_INFO("Loaded texture: " + texture.GetPath() + " with type: " + aiTextureTypeToString(type));
+			// LOG_INFO("Loaded texture: " + texture.GetPath() + " with type: " + aiTextureTypeToString(type));
 
 			textures.push_back(texture);
 			m_LoadedTextures.push_back(texture);
@@ -158,7 +158,7 @@ void Model::LoadMaterial(aiMaterial* mat)
 {
 	aiString str;
 	mat->GetTexture(aiTextureType_DIFFUSE, 0, &str);
-	Texture texture(m_Directory + "/" + str.C_Str(), "texture_diffuse");
+	Texture texture = Texture::Create(m_Directory + "/" + str.C_Str(), "model_texture" + std::string(mat->GetName().C_Str()), "texture_diffuse");
 	m_Material.SetTexture(texture);
-	m_Material.SetMatrix("uTransform", 0);
+	m_Material.SetMatrix("uTransform", glm::mat4(1.0f));
 }

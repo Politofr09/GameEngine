@@ -1,4 +1,6 @@
 #include "Application.h"
+#include "ResourceManager.h"
+#include <algorithm>
 
 Core::Application::Application(const std::string& name, int window_width, int window_height)
 {
@@ -15,8 +17,6 @@ Core::Application::Application(const std::string& name, int window_width, int wi
 void Core::Application::PushLayer(Layer* layer)
 {
 	layer->OnAttach();
-	// Subscribe layer to all events
-	Events::Dispatcher::Subscribe(std::bind(&Layer::OnEvent, layer, std::placeholders::_1));
 	m_Layers.push_back(layer);
 }
 
@@ -67,6 +67,8 @@ Core::Application::~Application()
 		layer->OnDettach();
 		delete layer;
 	}
+
+	Core::ResourceManager::get().Free();
 
 	m_Window->Close();
 	m_Layers.clear();

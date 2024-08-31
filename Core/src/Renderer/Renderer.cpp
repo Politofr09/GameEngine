@@ -32,6 +32,11 @@ namespace Core::Gfx
         glEnable(GL_DEPTH_TEST);
         GLCall(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
     }
+
+    void Renderer::SetBackgroundColor(glm::vec3 color)
+    {
+        GLCall(glClearColor(color.x, color.y, color.z, 1.0f));
+    }
     
     void Renderer::Clear()
     {

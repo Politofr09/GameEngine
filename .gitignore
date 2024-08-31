@@ -6,6 +6,7 @@ vendor/bin/premake/**/premake5
 **.vcxproj.*
 **.recipe
 .vs
+.vscode
 **.idb
 **.pdb
 **.lib

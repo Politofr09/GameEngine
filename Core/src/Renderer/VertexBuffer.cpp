@@ -33,6 +33,19 @@ void Core::Gfx::VertexBuffer::UnBind() const
 
 void Core::Gfx::VertexBuffer::UpdateData(const void* data, int size)
 {
-    glBindBuffer(GL_ARRAY_BUFFER, m_RendererID);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, m_RendererID));
+    GLCall(glBufferSubData(GL_ARRAY_BUFFER, 0, size, data));
+}
+
+void Core::Gfx::VertexBuffer::Resize(int size, bool dynamic_draw)
+{
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, m_RendererID));
+    if (dynamic_draw)
+    {
+        GLCall(glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_DYNAMIC_DRAW));
+    }
+    else
+    {
+        GLCall(glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_STATIC_DRAW));
+    }
 }

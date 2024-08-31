@@ -32,33 +32,20 @@ namespace Core::Gfx
 			static_assert(false);
 		}
 
-		template<>
-		void Push<float>(unsigned int count)
-		{
-			m_Elements.push_back({ GL_FLOAT, count, GL_FALSE });
-			m_Stride += count * BufferElement::GetSizeOfType(GL_FLOAT);
-		}
-
-		template<>
-		void Push<unsigned int>(unsigned int count)
-		{
-			m_Elements.push_back({ GL_UNSIGNED_INT, count, GL_FALSE });
-			m_Stride += count * BufferElement::GetSizeOfType(GL_UNSIGNED_INT);
-		}
-
-		template<>
-		void Push<unsigned char>(unsigned int count)
-		{
-			m_Elements.push_back({ GL_BYTE, count, GL_FALSE });
-			m_Stride += count * BufferElement::GetSizeOfType(GL_BYTE);
-		}
-		// TODO: Add more types?
-
 		inline const std::vector<BufferElement>& GetElements() const { return m_Elements; }
 		inline unsigned int GetStride() const { return m_Stride; }
-
 	};
 
+	template<>
+	void BufferLayout::Push<float>(unsigned int count);
+
+	template<>
+	void BufferLayout::Push<unsigned int>(unsigned int count);
+
+	template<>
+	void BufferLayout::Push<unsigned char>(unsigned int count);
+
+	// TODO: Add more types?
 	class VertexArray
 	{
 	private:
