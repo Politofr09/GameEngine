@@ -1,5 +1,5 @@
-#include "Core/Resource.h"
-#include "Core/ResourceManager.h"
+#include "Core/Asset.h"
+#include "Core/AssetRegistry.h"
 #include <glm/glm.hpp>
 #include <map>
 #include <string>
@@ -20,12 +20,12 @@ namespace Core::Gfx
 	};
 	typedef Character Glyph;
 
-	class Font : public Resource
+	class Font : public Asset
 	{
 	public:
-		DECLARE_RESOURCE_TYPE("Font")
+		DECLARE_ASSET_TYPE("Font")
 
-		static Font& Create(const std::string& path, int fontSize, const std::string& name = "Font");
+		static Font& Create(AssetRegistry& registry, const std::string& path, int fontSize, const std::string& name = "Font");
 
 		Font() = default;
 

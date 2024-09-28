@@ -1,3 +1,5 @@
+#pragma once
+
 #include <GL/glew.h>
 #include "Core/Layer.h"
 #include "Renderer/Shader.h"
@@ -12,12 +14,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#pragma once
 
 class EditorLayer : public Core::Layer
 {
 public:
-    EditorLayer(Core::Window* window) : Layer(window) {};
+    EditorLayer(Core::Application* app) : Layer(app) {};
 	
     void OnAttach() override;
 	void OnUpdate() override;
@@ -31,6 +32,21 @@ private:
     Core::Gfx::FrameBuffer m_FrameBuffer;
 
     //void UpdateCameraController();
-    void ShowCameraControlImgui(bool* p_open);
     void DrawViewportImGui();
+
+    // UI:
+    bool showCameraControl = true;
+    void ShowCameraControlImgui(bool* p_open);
+
+    bool showThemeSwitcher = true;
+    void ShowThemeSwitcher(bool* p_open);
+
+    bool showAssetRegistry = true;
+    void ShowAssetRegistry(bool* p_open);
+
+    bool showMaterialEditor = true;
+    void ShowMaterialEditor(bool* p_open);
+
+    bool showRenderingSettings = true;
+    void ShowRenderingSettings(bool* p_open);
 };

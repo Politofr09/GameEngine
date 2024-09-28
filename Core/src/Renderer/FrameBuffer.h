@@ -36,7 +36,7 @@ namespace Core::Gfx
 		
 		unsigned int GetWidth() const { return m_Width; }
 		unsigned int GetHeight() const { return m_Height; }
-		float GetAspectRatio() { return m_Width / m_Height;  }
+		float GetAspectRatio() { return (float)m_Width / m_Height;  }
 
 		int GetOffsetX() const { return m_PositionX; }
 		int GetOffsetY() const { return m_PositionY; }

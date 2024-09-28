@@ -1,5 +1,5 @@
-#include "Core/Resource.h"
-#include "Core/ResourceManager.h"
+#include "Core/Asset.h"
+#include "Core/AssetRegistry.h"
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -15,23 +15,31 @@
 namespace Core::Gfx
 {
 
-	class Shader : public Resource
+	enum class ShaderType
+	{
+		None,
+		FlatShading,
+		PhongShading
+		// TODO: Add more types as we develop more rendering techniques and shaders
+	};
+
+	class Shader : public Asset
 	{
 	public:
-		DECLARE_RESOURCE_TYPE("Shader")
+		DECLARE_ASSET_TYPE("Shader")
 
-		static Shader& Create(const std::string& vertexPath, const std::string& fragmentPath, const std::string& name);
+		static Shader& Create(AssetRegistry& registry, const std::string& shaderPath, const std::string& name);
 
 		Shader() = default;
-		Shader& operator=(const Shader& other)
-		{
-			this->m_RendererID = other.m_RendererID;
-			return *this;
-		}
+		//Shader& operator=(const Shader& other)
+		//{
+		//	this->m_RendererID = other.m_RendererID;
+		//	return *this;
+		//}
 
 		bool Load() override;
 		bool UnLoad() override;
-		bool LoadFromMemory(const char* vertexSource, const char* fragmentSource);
+		bool LoadFromMemory(const char* vertexShaderSource, const char* fragmentShaderSource);
 
 		void Use();
 		void End();
@@ -48,9 +56,7 @@ namespace Core::Gfx
 		void SetMatrix(const std::string& uniformName, glm::mat4 value);
 	
 	private:
-		Shader(const std::string& vertexPath, const std::string& fragmentPath, const std::string& name);
-		std::string m_VertexPath;
-		std::string m_FragmentPath;
+		Shader(const std::string& shaderPath, const std::string& name);
 
 	private:
 		unsigned int m_RendererID;

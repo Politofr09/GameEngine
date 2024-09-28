@@ -6,6 +6,10 @@
 #include "Model.h"
 #include "Camera.h"
 #include "FrameBuffer.h"
+#include "Light.h"
+
+#include "Shading/FlatShading.h"
+#include "Shading/PhongShading.h"
 
 #pragma once
 
@@ -23,7 +27,7 @@ namespace Core::Gfx
     public:
         Renderer();
 
-        static void Init();
+        static void Init(AssetRegistry& registry);
 
         static void SetBackgroundColor(glm::vec3 color);
 
@@ -32,16 +36,28 @@ namespace Core::Gfx
         static void Begin(const Camera& cam);
         static void End();
 
-        //static void BeginFBO(const Camera& cam, const FrameBuffer& fbo);
-        //static void EndFBO(const FrameBuffer& fbo);
+        static void SetLight(const Light& light) { m_SceneLight = light; }
 
         // TODO: Make models have materials and materials have reference to shader programs. E.g. model.GetMaterials()[0].GetShader().Use();
         static void DrawModel(Model& model, glm::mat4 transform);
     
         static void OnViewportResize(int width, int height); // Call this when window / framebuffer changes
 
+        // Settings
+        static void EnableCulling();
+        static void DisableCulling();
+
+        static void EnableDepthTesting();
+        static void DisableDepthTesting();
+
+        static void EnableWireframeMode();
+        static void DisableWireframeMode();
+
     private:
         static Camera m_ActiveCamera;
+        static Light m_SceneLight;
+        static FlatShading m_FlatShading;
+        static PhongShading m_PhongShading;
     };
 
 }

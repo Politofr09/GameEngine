@@ -1,17 +1,22 @@
 #include "Application.h"
-#include "ResourceManager.h"
+#include "AssetRegistry.h"
+#include "Project.h"
 #include <algorithm>
+#include <fstream>
+
+#include <thread>
 
 Core::Application::Application(const std::string& name, int window_width, int window_height)
 {
 	m_Window = new Window(window_width, window_height, name);
-	m_Name = name;
 
-	m_ImGuiLayer = new ImGuiLayer(m_Window);
-	m_ImGuiLayer->SetupImGui(m_Window);
+	m_ImGuiLayer = new ImGuiLayer(this);
+	m_ImGuiLayer->SetupImGui(this);
 
 	Events::Dispatcher::Subscribe(std::bind(&ImGuiLayer::OnEvent, m_ImGuiLayer, std::placeholders::_1));
 	Events::Dispatcher::Subscribe(std::bind(&Application::OnEvent, this, std::placeholders::_1));
+
+	LoadProject("Test1.yaml");
 }
 
 void Core::Application::PushLayer(Layer* layer)
@@ -67,9 +72,30 @@ Core::Application::~Application()
 		layer->OnDettach();
 		delete layer;
 	}
-
-	Core::ResourceManager::get().Free();
+	m_Layers.clear();
 
 	m_Window->Close();
-	m_Layers.clear();
+	m_Project.registry.Free();
+}
+
+void Core::Application::LoadProject(const std::string& filename)
+{
+	std::ifstream fin(filename);
+	if (fin.is_open())
+	{
+		YAML::Node root = YAML::Load(fin);
+
+		if (root["Project"])
+		{
+			root["Project"] >> m_Project;
+		}
+
+		fin.close();
+
+		m_Window->SetTitle(m_Project.m_Name);
+	}
+	else
+	{
+		LOG_ERROR("Failed to open ", filename, " project file");
+	}
 }

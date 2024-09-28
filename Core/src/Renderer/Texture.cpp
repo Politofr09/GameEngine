@@ -3,16 +3,16 @@
 #include <GL/glew.h>
 #include <stb/stb_image.h>
 
-Core::Gfx::Texture& Core::Gfx::Texture::Create(const std::string &path, const std::string &name, std::string type)
+Core::Gfx::Texture& Core::Gfx::Texture::Create(AssetRegistry& registry, const std::string &path, const std::string &name, std::string type)
 {
 	Texture* texture = new Texture(path, name, type);
 
 	if (texture->Load())
 	{
-		TRACK_RESOURCE(texture);
+		return *texture;	
 	}
 
-	return *texture;
+	return Texture();
 }
 
 Core::Gfx::Texture::Texture()

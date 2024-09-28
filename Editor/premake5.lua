@@ -2,7 +2,7 @@ project "Editor"
     kind "ConsoleApp"
     language "C++"
     cppdialect "C++17"
-
+    
     targetdir "bin/%{cfg.buildcfg}"
     objdir "bin/intermediates/%{cfg.buildcfg}"
 
@@ -12,25 +12,26 @@ project "Editor"
     }
 
     includedirs {
-        "../Core/src",
+        "../Core/src/",
         "../vendor/GLFW/include/",
         "../vendor/GLEW/include/",
         "../vendor/stb/",
         "../vendor/glm/",
         "../vendor/assimp/include/",
+        "../vendor/yaml-cpp/include/",
         "../vendor/"
     }
 
     libdirs {
-        "../vendor/GLFW/bin/GLFW/",
+        "../vendor/GLFW/bin/%{cfg.buildcfg}",
         "../vendor/GLEW/bin/%{cfg.buildcfg}",
-        "../vendor/assimp/bin/assimp/",
+        "../vendor/assimp/bin/%{cfg.buildcfg}",
         "../Core/bin/%{cfg.buildcfg}"
     }
 
     links {
         "Core",
-        "GLEW",
+        "glew",
         "GLFW",
         "assimp",
     }
@@ -48,11 +49,13 @@ project "Editor"
         }
 
     filter "configurations:Debug"
-        defines "DEBUG"
-        symbols "on"
+        symbols "On"
+        optimize "Off"  -- Turn off optimization for debug builds
+		staticruntime "on"
         runtime "Debug"
 
     filter "configurations:Release"
-        defines "RELEASE"
-        optimize "on"
+        symbols "Off"
+        optimize "On"  -- Full optimization for release builds
+		staticruntime "off"
         runtime "Release"

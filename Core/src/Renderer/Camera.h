@@ -39,6 +39,8 @@ namespace Core::Gfx
 
         void OnViewportResize(int width, int height);
 
+        glm::vec3 GetPosition() const { return position; }
+
     private:
         float CalculateHorizontalDistance();
         float CalculateVerticalDistance();

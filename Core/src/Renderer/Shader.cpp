@@ -3,23 +3,21 @@
 
 using namespace Core::Gfx;
 
-Shader &Core::Gfx::Shader::Create(const std::string &vertexPath, const std::string &fragmentPath, const std::string &name)
+Shader& Core::Gfx::Shader::Create(AssetRegistry& registry, const std::string& shaderPath, const std::string &name)
 {
-    Shader* shader = new Shader(vertexPath, fragmentPath, name);
+    Shader* shader = new Shader(shaderPath, name);
 
     if (shader->Load())
     {
-        TRACK_RESOURCE(shader);
+        return *shader;
     }
     
-    return *shader;
+    return Shader();
 }
 
-Shader::Shader(const std::string& vertexPath, const std::string& fragmentPath, const std::string& name)
+Shader::Shader(const std::string& shaderPath, const std::string& name)
 {
-    m_FileDirectory = vertexPath;
-    m_VertexPath = vertexPath;
-    m_FragmentPath = fragmentPath;
+    m_FileDirectory = shaderPath;
     
     m_Name = name;
     if (m_Name.empty()) m_Name = GetType() + std::to_string(ID);
@@ -27,42 +25,54 @@ Shader::Shader(const std::string& vertexPath, const std::string& fragmentPath, c
 
 bool Shader::Load()
 {
-    std::string vertexCode;
-    std::string fragmentCode;
-
-    std::ifstream vShaderFile;
-    std::ifstream fShaderFile;
-
-    try
+    std::ifstream shaderFile(m_FileDirectory);
+    if (!shaderFile.is_open())
     {
-        vShaderFile.open(m_VertexPath);
-        fShaderFile.open(m_FragmentPath);
-
-        if (!vShaderFile.is_open() || !fShaderFile.is_open()) {
-            throw std::runtime_error("Failed to open shader file.");
-        }
-
-        std::stringstream vShaderStream, fShaderStream;
-
-        vShaderStream << vShaderFile.rdbuf();
-        fShaderStream << fShaderFile.rdbuf();
-
-        vShaderFile.close();
-        fShaderFile.close();
-
-        vertexCode = vShaderStream.str();
-        fragmentCode = fShaderStream.str();
-    }
-    catch (std::ifstream::failure e)
-    {
-        Core::Logger::LogError(e.what());
+        Core::Logger::LogError("Failed to open shader file: " + m_FileDirectory);
         return false;
     }
 
-    const char* vShaderCode = vertexCode.c_str();
-    const char* fShaderCode = fragmentCode.c_str();
+    std::string shaderCode;
+    std::stringstream shaderStream;
+    shaderStream << shaderFile.rdbuf();  // Read entire file into stringstream
+    shaderFile.close();
+    shaderCode = shaderStream.str();
 
-    return LoadFromMemory(vShaderCode, fShaderCode);
+    // Prepare to split the shader source code into vertex and fragment
+    std::string vertexSource;
+    std::string fragmentSource;
+
+    std::string delimiterVertex = "#shader vertex";
+    std::string delimiterFragment = "#shader fragment";
+
+    size_t vertexPos = shaderCode.find(delimiterVertex);
+    size_t fragmentPos = shaderCode.find(delimiterFragment);
+
+    // Check that both directives exist in the shader file
+    if (vertexPos == std::string::npos || fragmentPos == std::string::npos)
+    {
+        LOG_ERROR("Shader file missing #shader vertex or #shader fragment directive: " + m_FileDirectory + 
+               "\n Make sure to split your glsl shader with #shader vertex/fragment.");
+        return false;
+    }
+
+    // Ensure that vertex shader comes before fragment shader, swap if necessary
+    if (fragmentPos < vertexPos)
+    {
+        std::swap(vertexPos, fragmentPos);
+        std::swap(delimiterVertex, delimiterFragment);
+    }
+
+    // Extract vertex shader source
+    vertexPos += delimiterVertex.size(); // Move past #shader vertex
+    fragmentPos += delimiterFragment.size(); // Move past #shader fragment
+
+    vertexSource = shaderCode.substr(vertexPos, fragmentPos - vertexPos - delimiterFragment.size());
+
+    // Extract fragment shader source
+    fragmentSource = shaderCode.substr(fragmentPos);
+
+    return LoadFromMemory(vertexSource.c_str(), fragmentSource.c_str());
 }
 
 
@@ -134,7 +144,7 @@ void Shader::End()
 
 void Shader::SetBool(const std::string& uniformName, bool value)
 {
-    glUniform1i(glGetUniformLocation(ID, uniformName.c_str()), (int)value);
+    glUniform1i(glGetUniformLocation(m_RendererID, uniformName.c_str()), (int)value);
     
 }
 

@@ -1,7 +1,8 @@
 #include "Layer.h"
+#include "Application.h"
 
-Core::Layer::Layer(Window* window, const std::string& name)
+Core::Layer::Layer(Application* app, const std::string& name)
 {
-	m_Window = window;
+	m_Application = app;
 	m_Name = name;
 }

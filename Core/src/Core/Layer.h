@@ -12,8 +12,7 @@ namespace Core
 	class Layer
 	{
 	public:
-		
-		Layer(Window* window, const std::string& name = "Layer");
+		Layer(Application* app, const std::string& name = "Layer");
 
 		virtual void OnAttach() = 0;
 		virtual void OnUpdate() = 0;
@@ -29,6 +28,6 @@ namespace Core
 		std::string m_Name;
 
 	protected:
-		Window* m_Window;
+		Application* m_Application;
 	};
 }

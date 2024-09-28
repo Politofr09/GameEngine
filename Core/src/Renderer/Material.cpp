@@ -2,93 +2,84 @@
 
 namespace Core::Gfx
 {
+	// TODO: Expand this as we need more uniforms!
+	// TODO: Make sure to check the correct ShaderType when we add more and more Shading!
+    Material& Material::CreateFromAssimp(AssetRegistry& registry, aiMaterial* mat, const std::string& directory)
+    {
+        Material* material = new Material();
+        aiString str;
 
-	Material::Material(const Shader& shader, const Texture& texture)
-	{
-		m_Shader = shader;
-		m_Texture = texture;
-	}
+        // Load diffuse texture
+        if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &str) == AI_SUCCESS)
+        {
+            material->DiffuseTexture = Texture::Create(registry, directory + "/" + str.C_Str(),
+                "model_texture_diffuse_" + std::string(mat->GetName().C_Str()),
+                "texture_diffuse");
+        }
 
-	void Material::UpdateUniformValues()
-	{
-		m_Shader.Use();
-		for (auto& pair : m_UniformInts)
-			m_Shader.SetInt(pair.first, pair.second);
+        // Load specular texture
+        if (mat->GetTexture(aiTextureType_SPECULAR, 0, &str) == AI_SUCCESS)
+        {
+            material->SpecularTexture = Texture::Create(registry, directory + "/" + str.C_Str(),
+                "model_texture_specular_" + std::string(mat->GetName().C_Str()),
+                "texture_specular");
+        }
 
-		for (auto& pair : m_UniformFloats)
-			m_Shader.SetFloat(pair.first, pair.second);
+        // Load normal map texture
+        if (mat->GetTexture(aiTextureType_NORMALS, 0, &str) == AI_SUCCESS)
+        {
+            material->NormalTexture = Texture::Create(registry, directory + "/" + str.C_Str(),
+                "model_texture_normal_" + std::string(mat->GetName().C_Str()),
+                "texture_normal");
+        }
 
-		for (auto& pair : m_UniformFloat2s)
-			m_Shader.SetVector2(pair.first, pair.second);
+        // Load color and material properties
+        aiColor3D color;
+        if (mat->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
+        {
+            material->Color = glm::vec3(color.r, color.g, color.b);
+        }
 
-		for (auto& pair : m_UniformFloat3s)
-			m_Shader.SetVector3(pair.first, pair.second);
+        if (mat->Get(AI_MATKEY_COLOR_AMBIENT, color) == AI_SUCCESS)
+        {
+            material->Ambient = glm::vec3(color.r, color.g, color.b);
+        }
 
-		for (auto& pair : m_UniformFloat4s)
-			m_Shader.SetVector4(pair.first, pair.second);
+        if (mat->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS)
+        {
+            material->Specular = glm::vec3(color.r, color.g, color.b);
+        }
 
-		for (auto& pair : m_UniformMat4s)
-			m_Shader.SetMatrix(pair.first, pair.second);
-	}
+        float shininess = 0.0f;
+        if (mat->Get(AI_MATKEY_SHININESS, shininess) == AI_SUCCESS)
+        {
+            material->Shininess = shininess;
 
-	void Material::SetInt(const std::string& name, int value)
-	{
-		m_UniformInts[name] = value;
-	}
+            // Assign Phong shading if shininess is set
+            if (shininess > 0.0f)
+            {
+                material->m_ShaderType = ShaderType::PhongShading;
+            }
+            else
+            {
+                material->m_ShaderType = ShaderType::FlatShading;
+            }
+        }
+        else
+        {
+            // Default to FlatShading if no shininess is found
+            material->m_ShaderType = ShaderType::FlatShading;
+        }
+        material->Shininess = 1.0f;
 
-	void Material::SetFloat(const std::string& name, float value)
-	{
-		m_UniformFloats[name] = value;
-	}
+        std::cout << "Material.Color: " << material->Color.x << " " << material->Color.y << " " << material->Color.z << std::endl;
+        std::cout << "Material.Ambient: " << material->Ambient.x << " " << material->Ambient.y << " " << material->Ambient.z << std::endl;
+        std::cout << "Material.Diffuse: " << material->Diffuse.x << " " << material->Diffuse.y << " " << material->Diffuse.z << std::endl;
+        std::cout << "Material.Specular: " << material->Specular.x << " " << material->Specular.y << " " << material->Specular.z << std::endl;
+        std::cout << "Material.Shininess:" << material->Shininess << std::endl;
 
-	void Material::SetVector2(const std::string& name, glm::vec2 value)
-	{
-		m_UniformFloat2s[name] = value;
-	}
-
-	void Material::SetVector3(const std::string& name, glm::vec3 value)
-	{
-		m_UniformFloat3s[name] = value;
-	}
-
-	void Material::SetVector4(const std::string& name, glm::vec4 value)
-	{
-		m_UniformFloat4s[name] = value;
-	}
-
-	void Material::SetMatrix(const std::string& name, glm::mat4 value)
-	{
-		m_UniformMat4s[name] = value;
-	}
-
-	int Material::GetIntUniform(const std::string& name)
-	{
-		return m_UniformInts[name];
-	}
-
-	float Material::GetFloatUniform(const std::string& name)
-	{
-		return m_UniformFloats[name];
-	}
-
-	glm::vec2 Material::GetVec2Uniform(const std::string& name)
-	{
-		return m_UniformFloat2s[name];
-	}
-
-	glm::vec3 Material::GetVec3Uniform(const std::string& name)
-	{
-		return m_UniformFloat3s[name];
-	}
-
-	glm::vec4 Material::GetVec4Uniform(const std::string& name)
-	{
-		return m_UniformFloat4s[name];
-	}
-
-	glm::mat4 Material::GetMatrixUniform(const std::string& name)
-	{
-		return m_UniformMat4s[name];
-	}
+        registry.Track(material);
+        return *material;
+    }
 
 }

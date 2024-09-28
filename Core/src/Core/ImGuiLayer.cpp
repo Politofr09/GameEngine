@@ -3,6 +3,7 @@
 #include <imgui/IconsFontAwesome5.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include "Application.h"
 
 // Define the static symbol "m_Dark" so the linker doesn't shout at my face
 bool Core::ImGuiLayer::m_Dark = true;
@@ -146,7 +147,7 @@ void SetupImGuiStyle(bool bStyleDark_, float alpha)
     style.SelectableTextAlign = ImVec2(0.0f, 0.0f);
 }
 
-void Core::ImGuiLayer::SetupImGui(Window* window, bool dark, bool useRobotoFont)
+void Core::ImGuiLayer::SetupImGui(bool dark, bool useRobotoFont)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -155,7 +156,7 @@ void Core::ImGuiLayer::SetupImGui(Window* window, bool dark, bool useRobotoFont)
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(window->GetHandle(), true);
+    ImGui_ImplGlfw_InitForOpenGL(m_Application->GetWindow()->GetHandle(), true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
     if (useRobotoFont)
@@ -216,7 +217,7 @@ void Core::ImGuiLayer::BeginImGuiContent()
     ImGui::NewFrame();
 
     // Setup dockspace
-    ImGui::SetNextWindowSize(ImVec2(m_Window->GetWidth(), m_Window->GetHeight()));
+    ImGui::SetNextWindowSize(ImVec2(m_Application->GetWindow()->GetWidth(), m_Application->GetWindow()->GetHeight()));
     ImGui::SetNextWindowPos(ImVec2(0, 0));
 
     int windowFlags = ImGuiWindowFlags_MenuBar |    ImGuiWindowFlags_NoDocking

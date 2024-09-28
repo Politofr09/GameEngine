@@ -12,7 +12,7 @@ namespace Core
 	class ImGuiLayer : public Layer
 	{
 	public:
-		ImGuiLayer(Window* window) : Layer(window) {}
+		ImGuiLayer(Application* app) : Layer(app) {}
 
 		// Function accessible so anyone can change the theme
 		static void SwitchTheme(bool dark);
@@ -21,7 +21,7 @@ namespace Core
 		// Is the user controlling the game viewport or just inside the ImGui ui?
 		inline static bool OnTop() { return m_OnTop; }
 		
-		void SetupImGui(Window* window, bool dark = true, bool useRobotoFont = false);
+		void SetupImGui(bool dark = true, bool useRobotoFont = false);
 
 		// Placeholder methods just to override the virtual functions of 'Layer'
 		void OnAttach() override;

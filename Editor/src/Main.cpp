@@ -9,10 +9,10 @@ int main()
 {
     std::unique_ptr<Application> app = std::make_unique<Application>();
 
-    EditorLayer* editorLayer = new EditorLayer(app->GetWindow());
+    EditorLayer* editorLayer = new EditorLayer(app.get());
     app->PushLayer(editorLayer);
 
-    TilemapLayer* tilemapLayer = new TilemapLayer(app->GetWindow());
+    TilemapLayer* tilemapLayer = new TilemapLayer(app.get());
     app->PushLayer(tilemapLayer);
 
     app->Run();

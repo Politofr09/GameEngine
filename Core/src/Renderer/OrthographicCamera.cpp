@@ -46,15 +46,6 @@ namespace Core::Gfx
 
 		float cameraSpeed = 10.0f * Window::GetDeltaTime(); // Adjust speed as needed
 
-		if (Keyboard::IsKeyDown(GLFW_KEY_W))
-			m_Position.y += cameraSpeed;
-		if (Keyboard::IsKeyDown(GLFW_KEY_S))
-			m_Position.y -= cameraSpeed;
-		if (Keyboard::IsKeyDown(GLFW_KEY_A))
-			m_Position.x -= cameraSpeed;
-		if (Keyboard::IsKeyDown(GLFW_KEY_D))
-			m_Position.x += cameraSpeed;
-
 		if (Mouse::IsButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
 		{
 			glm::vec2 delta = Mouse::GetMouseDelta();
@@ -62,7 +53,7 @@ namespace Core::Gfx
 			m_Position.y -= delta.y;
 		}
 
-		m_Zoom += Mouse::GetScrollOffset() * Window::GetDeltaTime();
+		m_Zoom += Mouse::GetScrollOffset() * Window::GetDeltaTime() * 10.0f;
 		m_Zoom = glm::clamp(m_Zoom, 0.001f, 10.0f);
 		
 		SetProjection(0, m_Right, m_Bottom, 0);

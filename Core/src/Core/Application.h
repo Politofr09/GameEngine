@@ -4,6 +4,7 @@
 #include "Events/Event.h"
 #include "Layer.h"
 #include "ImGuiLayer.h"
+#include "Project.h"
 
 #pragma once
 
@@ -13,8 +14,7 @@ namespace Core
 	class Application
 	{
 	public:
-		Application(const std::string& name = "Proton app", int window_width = 1080, int window_height = 720);
-		const std::string& GetName() { return m_Name; }
+		Application(const std::string& name = "No Project opened", int window_width = 1080, int window_height = 720);
 
 		void PushLayer(Layer* layer);
 		void PopLayer(Layer* layer);
@@ -27,13 +27,15 @@ namespace Core
 		~Application();
 
 		inline Window* GetWindow() { return m_Window; }
+		inline Project& GetProject() { return m_Project; }
 
+		void LoadProject(const std::string& filename);
 	private:
 
-		std::string m_Name;
 		Window* m_Window;
 		std::vector<Layer*> m_Layers;
 		ImGuiLayer* m_ImGuiLayer;
+		Project m_Project;
 	};
 
 }

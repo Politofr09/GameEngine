@@ -1,8 +1,9 @@
 #include "TilemapLayer.h"
 #include "CommonUI.h"
 #include <imgui/imgui.h>
-#include "Core/ResourceManager.h"
+#include "Core/AssetRegistry.h"
 #include "Renderer/Font.h"
+#include "Core/Application.h"
 
 using namespace Core;
 using namespace Core::Gfx;
@@ -11,8 +12,8 @@ void TilemapLayer::OnAttach()
 {
 	Core::Events::Dispatcher::Subscribe(std::bind(&TilemapLayer::OnEvent, this, std::placeholders::_1));
 
-    m_Camera = Core::Gfx::OrthographicCamera(0.0f, (float)m_Window->GetWidth(), (float)m_Window->GetHeight(), 0.0f);
-    m_FrameBuffer = FrameBuffer(m_Window->GetWidth(), m_Window->GetHeight());
+    m_Camera = Core::Gfx::OrthographicCamera(0.0f, (float)m_Application->GetWindow()->GetWidth(), (float)m_Application->GetWindow()->GetHeight(), 0.0f);
+    m_FrameBuffer = FrameBuffer(m_Application->GetWindow()->GetWidth(), m_Application->GetWindow()->GetHeight());
 }
 
 void TilemapLayer::OnUpdate()
@@ -34,14 +35,14 @@ void TilemapLayer::OnUpdate()
     
     }
     Renderer2D::End();
-    TextRenderer::Begin(m_Camera);
-    {
-        const char* message = "Tilemap Editor";
-        
-        Font* font = ResourceManager::get().GetFirstByName<Font>("OCR-Font");
-        TextRenderer::DrawTextEx(*font, message, 500, 500, 10, glm::vec3(1.0f));
-    }
-    TextRenderer::End();
+    //TextRenderer::Begin(m_Camera);
+    //{
+    //    const char* message = "Tilemap Editor";
+    //    
+        //Font* font = ResourceManager::get().GetFirstByName<Font>("OCR-Font");
+        //TextRenderer::DrawTextEx(*font, message, 500, 500, 10, glm::vec3(1.0f));
+    //}
+    //TextRenderer::End();
     m_FrameBuffer.UnBind();
 }
 

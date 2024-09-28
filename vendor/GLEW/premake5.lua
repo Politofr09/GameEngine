@@ -1,4 +1,5 @@
 project "GLEW"
+    group "Dependencies"
     kind "StaticLib"
     language "C"
 
@@ -16,8 +17,6 @@ project "GLEW"
         "include"
     }
 
-    defines "GLEW_STATIC"
-
     filter "system:linux"
         pic "On"
 
@@ -25,9 +24,13 @@ project "GLEW"
         defines "_CRT_SECURE_NO_WARNINGS"
 
     filter "configurations:Debug"
+        symbols "On"
+        optimize "Off"  -- Turn off optimization for debug builds
+		staticruntime "on"
         runtime "Debug"
-        symbols "on"
 
     filter "configurations:Release"
+        symbols "Off"
+        optimize "On"  -- Full optimization for release builds
+		staticruntime "off"
         runtime "Release"
-        optimize "on"

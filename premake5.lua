@@ -2,32 +2,34 @@
 workspace "GameEngine"
     configurations { "Debug", "Release" }
     startproject "Editor"
+    staticruntime "on"
+    
+    defines
+    {
+        "GLEW_STATIC",
+        "YAML_CPP_STATIC_DEFINE"    
+    }
 
-    defines "GLEW_STATIC"
+    include "vendor/assimp"
+    include "vendor/GLEW"
+    include "vendor/GLFW"
+    include "vendor/yaml-cpp"
+
+    -- Projects    
+    group "Engine"    
+        include "Core"
+        include "Editor"
 
 	filter "configurations:Debug"
         symbols "On"
         optimize "Off"  -- Turn off optimization for debug builds
-		runtime "Debug"
-		defines "_ITERATOR_DEBUG_LEVEL=2"
+		staticruntime "on"
+        runtime "Debug"
 
     filter "configurations:Release"
         symbols "Off"
         optimize "On"  -- Full optimization for release builds
-		runtime "Release"
-		defines "_ITERATOR_DEBUG_LEVEL=0"
+		staticruntime "off"
+        runtime "Release"
 
     filter ""
-
-    -- Git submodules
-    group "Dependencies"
-        include "vendor/assimp"
-        include "vendor/GLEW"
-        include "vendor/GLFW"
-    group ""
-
-    -- Engine Code
-    group "Engine"
-        include "Core"
-        include "Editor"
-    group ""

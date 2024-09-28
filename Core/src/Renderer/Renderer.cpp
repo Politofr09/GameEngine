@@ -5,6 +5,10 @@
 
 namespace Core::Gfx
 {
+    Camera Renderer::m_ActiveCamera;
+    Light Renderer::m_SceneLight;
+    FlatShading Renderer::m_FlatShading;
+    PhongShading Renderer::m_PhongShading;
 
     void GLClearError()
     {
@@ -20,17 +24,52 @@ namespace Core::Gfx
         }
         return true;
     }
-
-    Camera Renderer::m_ActiveCamera{};
     
     Renderer::Renderer()
     {
     }
 
-    void Renderer::Init()
+    void Renderer::Init(AssetRegistry& registry)
     {
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
         GLCall(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
+
+        m_FlatShading.Load();
+        registry.Track(m_FlatShading.ShaderProgram);
+
+        m_PhongShading.Load();
+        registry.Track(m_PhongShading.ShaderProgram);
+    }
+
+    void Renderer::EnableCulling()
+    {
+        glEnable(GL_CULL_FACE);
+    }
+
+    void Renderer::DisableCulling()
+    {
+        glDisable(GL_CULL_FACE);
+    }
+
+    void Renderer::EnableDepthTesting()
+    {
+        glEnable(GL_DEPTH_TEST);
+    }
+
+    void Renderer::DisableDepthTesting()
+    {
+        glDisable(GL_DEPTH_TEST);
+    }
+
+    void Renderer::EnableWireframeMode()
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+
+    void Renderer::DisableWireframeMode()
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
     void Renderer::SetBackgroundColor(glm::vec3 color)
@@ -48,36 +87,55 @@ namespace Core::Gfx
         m_ActiveCamera = cam;
     }
 
-    //void Renderer::BeginFBO(const Camera& cam, const FrameBuffer& fbo)
-    //{
-    //    fbo.Bind();
-    //    m_ActiveCamera = cam;
-
-    //    // Extract existing FOV from m_ActiveCamera's projection matrix
-    //    float existingFOV = glm::degrees(2.0f * atan(1.0f / m_ActiveCamera.GetProjectionMatrix()[1][1]));
-
-    //    float aspectRatio = (float)fbo.GetWidth() / fbo.GetHeight();
-    //    m_ActiveCamera.SetProjectionMatrix(glm::perspective(glm::radians(existingFOV), aspectRatio, 0.1f, 1000.0f));
-
-    //    glViewport(0, 0, fbo.GetWidth(), fbo.GetHeight());
-    //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the framebuffer
-    //}
-
     void Renderer::End()
     {
     }
 
     void Renderer::DrawModel(Model& model, glm::mat4 transform)
     {
-        Shader shader = model.GetMaterial().GetShader();
-        shader.Use();
-        Texture texture = model.GetMaterial().GetTexture();
-        texture.Bind();
-        glActiveTexture(GL_TEXTURE0);
+        // Retrieve the material and its shader type
+        const Material& material = model.GetMaterial();
 
-        shader.SetMatrix("uView", m_ActiveCamera.GetViewMatrix());
-        shader.SetMatrix("uProjection", m_ActiveCamera.GetProjectionMatrix());
-        shader.SetMatrix("uTransform", transform);
+        // Set up the shader based on the material's shader type
+        switch (material.m_ShaderType)
+        {
+        case ShaderType::FlatShading:
+            m_FlatShading.Apply(material);
+   
+            // Set additional uniforms that are common to all shaders
+            m_FlatShading.ShaderProgram->SetMatrix("uView", m_ActiveCamera.GetViewMatrix());
+            m_FlatShading.ShaderProgram->SetMatrix("uProjection", m_ActiveCamera.GetProjectionMatrix());
+            m_FlatShading.ShaderProgram->SetMatrix("uTransform", transform);
+            break;
+
+        case ShaderType::PhongShading:
+            m_PhongShading.Apply(material);
+
+            // Set additional uniforms that are common to all shaders
+            m_PhongShading.ShaderProgram->SetMatrix("uView", m_ActiveCamera.GetViewMatrix());
+            m_PhongShading.ShaderProgram->SetMatrix("uProjection", m_ActiveCamera.GetProjectionMatrix());
+            m_PhongShading.ShaderProgram->SetMatrix("uTransform", transform);
+            m_PhongShading.ShaderProgram->SetVector3("ligth_position", m_SceneLight.Position);
+            m_PhongShading.ShaderProgram->SetVector3("light_color", m_SceneLight.Color);
+            m_PhongShading.ShaderProgram->SetVector3("view_position", m_ActiveCamera.GetPosition());
+            break;
+
+        case ShaderType::None:
+            m_FlatShading.Apply(material);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            m_FlatShading.ShaderProgram->SetVector3("material_color", glm::vec3(1.0f));
+
+            // Set additional uniforms that are common to all shaders
+            m_FlatShading.ShaderProgram->SetMatrix("uView", m_ActiveCamera.GetViewMatrix());
+            m_FlatShading.ShaderProgram->SetMatrix("uProjection", m_ActiveCamera.GetProjectionMatrix());
+            m_FlatShading.ShaderProgram->SetMatrix("uTransform", transform);
+            break;
+            // Add other shader types as needed
+        }
+        //std::cout << m_SceneLight.Position.x << std::endl;
+        //Texture texture = model.GetMaterial().DiffuseTexture;
+        //texture.Bind();
+        //glActiveTexture(GL_TEXTURE0);
         
         for (auto& mesh : model.GetMeshes())
         {

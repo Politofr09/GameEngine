@@ -124,4 +124,9 @@ namespace Core
     {
         glfwIconifyWindow(_window);
     }
+
+    void Window::SetTitle(const std::string& title)
+    {
+        glfwSetWindowTitle(_window, title.c_str());
+    }
 }

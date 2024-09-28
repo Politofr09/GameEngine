@@ -1,33 +1,33 @@
 #include <string>
-#include "Core/Resource.h"
-#include "Core/ResourceManager.h"
+#include "Core/Asset.h"
+#include "Core/AssetRegistry.h"
 
 #pragma once
 
 namespace Core::Gfx 
 {
 
-	class Texture : public Resource
+	class Texture : public Asset
 	{
 	public:
-		DECLARE_RESOURCE_TYPE("Texture")
+		DECLARE_ASSET_TYPE("Texture")
 
-		static Texture& Create(const std::string& path, const std::string& name = "Texture", std::string type = "texture_diffuse");
+		static Texture& Create(AssetRegistry& registry, const std::string& path, const std::string& name = "Texture", std::string type = "texture_diffuse");
 
 		Texture();
 		// Texture(const Texture& texture);
 
-		// Texture& operator=(const Texture& other)
-		// {
-		// 	this->m_Width = other.m_Width;
-		// 	this->m_Height = other.m_Height;
-		// 	this->m_NrChannels = other.m_NrChannels;
-		// 	this->m_RendererID = other.m_RendererID;
-		// 	this->m_Loaded = other.m_Loaded;
-		// 	this->m_Type = other.m_Type;
+		 Texture& operator=(const Texture& other)
+		 {
+		 	this->m_Width = other.m_Width;
+		 	this->m_Height = other.m_Height;
+		 	this->m_NrChannels = other.m_NrChannels;
+		 	this->m_RendererID = other.m_RendererID;
+		 	this->m_Loaded = other.m_Loaded;
+		 	this->m_Type = other.m_Type;
 
-		// 	return *this;
-		// }
+		 	return *this;
+		 }
 
 		bool Load() override;
 		bool UnLoad() override;

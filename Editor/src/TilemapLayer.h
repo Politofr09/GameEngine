@@ -12,7 +12,7 @@
 class TilemapLayer : public Core::Layer
 {
 public:
-    TilemapLayer(Core::Window* window) : Layer(window) {};
+    TilemapLayer(Core::Application* app) : Layer(app) {};
 	
     void OnAttach() override;
 	void OnUpdate() override;

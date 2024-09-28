@@ -1,10 +1,12 @@
+#pragma once
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
 #include <string>
 #include <ctime>
 
-#pragma once
+#include <yaml-cpp/yaml.h>
+
 
 namespace Core
 {

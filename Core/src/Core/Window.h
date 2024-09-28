@@ -38,6 +38,8 @@ namespace Core
 		void Maximize();
 		void Minimize();
 
+		void SetTitle(const std::string& title);
+
 		static float GetDeltaTime() { return _deltaTime; }
 
 		GLFWwindow* GetHandle() { return _window; }

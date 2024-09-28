@@ -7,16 +7,17 @@
 namespace Core::Gfx
 {
 
-    Font& Font::Create(const std::string &path, int fontSize,const std::string &name)
+    Font& Font::Create(AssetRegistry& registry, const std::string &path, int fontSize,const std::string &name)
     {
         Font* font = new Font(path, fontSize, name);
 
 		if (font->Load())
 		{
-			TRACK_RESOURCE(font);
+			registry.Track(font);
+			return *font;
 		}
 
-		return *font;
+		return Font();
 	}
 
 	Font::Font(const std::string& path, int fontSize, const std::string& name)

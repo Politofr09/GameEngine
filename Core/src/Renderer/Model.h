@@ -2,6 +2,7 @@
 
 #include "Mesh.h"
 #include "Material.h"
+#include "Core/Asset.h"
 
 #include <string>
 #include <vector>
@@ -13,14 +14,17 @@
 namespace Core::Gfx
 {
 
-	class Model
+	class Model : public Asset
 	{
-	public:		
-		Model()
-		{
-			m_Meshes = {};
-			m_Directory = "";
-		}
+	public:
+		DECLARE_ASSET_TYPE("Model")
+
+		static Model& Create(AssetRegistry& registry, const std::string& path, const std::string& name);
+
+		bool Load() override;
+		bool UnLoad() override;
+
+		Model() = default;
 
 		Model(std::vector<Mesh> meshes, std::string directory)
 			: m_Meshes(meshes), m_Directory(directory) {}
@@ -45,19 +49,19 @@ namespace Core::Gfx
 
 		std::vector<Mesh> GetMeshes() { return m_Meshes; }
 		Material& GetMaterial() { return m_Material; }
-		
-		static Model LoadModel(const std::string& path);
+
+	private:
+		Model(AssetRegistry* registry, const std::string& path, const std::string& name);
 
 	private:
 		std::vector<Mesh> m_Meshes;
 		std::vector<Texture> m_LoadedTextures; // We keep track of the loaded textures so we don't load 2 times the same texture
 		std::string m_Directory;
 		Material m_Material;
+		AssetRegistry* m_Registry; // Not ideal but it works
 
 		void ProcessNode(aiNode* node, const aiScene* scene);
 		Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
-		std::vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type);
-		void LoadMaterial(aiMaterial* mat);
 	};
 
 }
