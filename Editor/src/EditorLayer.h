@@ -49,4 +49,7 @@ private:
 
     bool showRenderingSettings = true;
     void ShowRenderingSettings(bool* p_open);
+
+    bool showECSPanel = true;
+    void ShowECSPanel(bool* p_open);
 };

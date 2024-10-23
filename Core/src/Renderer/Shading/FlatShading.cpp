@@ -1,4 +1,5 @@
 #include "FlatShading.h"
+#include "Core/Application.h"
 
 namespace Core::Gfx
 {
@@ -55,11 +56,9 @@ namespace Core::Gfx
         ShaderProgram->Use();
         ShaderProgram->SetVector3("material_color", material.Color);
 
-        if (material.DiffuseTexture.IsLoaded())
-        {
-            material.DiffuseTexture.Bind();
-            glEnable(GL_TEXTURE_2D);
-        }
+        Texture DiffuseTexture = *OPENED_PROJECT.GetRegistry().Get<Texture>(material.DiffuseTextureHandle);
+        DiffuseTexture.Bind();
+        glEnable(GL_TEXTURE_2D);
     }
 
 }

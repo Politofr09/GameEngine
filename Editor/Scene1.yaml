@@ -1,0 +1,11 @@
+Scene: Untitled
+ID: 7746280174807005691
+Entities:
+  - Entity: 15154200380678051099
+    NameComponent: MiEntidad
+    TransformComponent:
+      Position: [0, 0.333000004, -1.83899999]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1.00999999]
+    ModelComponent:
+      ModelHandle: 10450630815221152145

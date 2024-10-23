@@ -21,7 +21,7 @@ namespace Core
 		// Is the user controlling the game viewport or just inside the ImGui ui?
 		inline static bool OnTop() { return m_OnTop; }
 		
-		void SetupImGui(bool dark = true, bool useRobotoFont = false);
+		void SetupImGui(bool dark = true);
 
 		// Placeholder methods just to override the virtual functions of 'Layer'
 		void OnAttach() override;

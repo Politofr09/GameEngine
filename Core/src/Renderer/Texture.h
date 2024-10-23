@@ -12,22 +12,25 @@ namespace Core::Gfx
 	public:
 		DECLARE_ASSET_TYPE("Texture")
 
-		static Texture& Create(AssetRegistry& registry, const std::string& path, const std::string& name = "Texture", std::string type = "texture_diffuse");
+		static AssetHandle Create(const std::string& path, const std::string& name = "Texture", std::string type = "texture_diffuse");
 
-		Texture();
-		// Texture(const Texture& texture);
+		// Default constructor
+		Texture() = default;
+		
+		// Metadata constructor (+ additional required texture type)
+		Texture(const AssetMetadata& metadata, std::string type);
 
-		 Texture& operator=(const Texture& other)
-		 {
-		 	this->m_Width = other.m_Width;
-		 	this->m_Height = other.m_Height;
-		 	this->m_NrChannels = other.m_NrChannels;
-		 	this->m_RendererID = other.m_RendererID;
-		 	this->m_Loaded = other.m_Loaded;
-		 	this->m_Type = other.m_Type;
+		Texture& operator=(const Texture& other)
+		{
+			this->m_Width = other.m_Width;
+			this->m_Height = other.m_Height;
+			this->m_NrChannels = other.m_NrChannels;
+			this->m_RendererID = other.m_RendererID;
+			this->m_Loaded = other.m_Loaded;
+			this->m_Type = other.m_Type;
 
-		 	return *this;
-		 }
+			return *this;
+		}
 
 		bool Load() override;
 		bool UnLoad() override;
@@ -42,18 +45,15 @@ namespace Core::Gfx
 
 		int GetWidth() { return m_Width; }
 		int GetHeight() { return m_Height; }
-		
-	private:
-		Texture(const std::string& filename, const std::string& name, std::string type);
 
 	private:
-		unsigned int m_RendererID; // OpenGL ID
+		unsigned int m_RendererID = 0; // OpenGL ID
 
-		int m_Width;
-		int m_Height;
-		int m_NrChannels;
+		int m_Width = 0;
+		int m_Height = 0;
+		int m_NrChannels = 0;
 
-		std::string m_Type;
+		std::string m_Type = "texture_diffuse";
 	};
 
 }

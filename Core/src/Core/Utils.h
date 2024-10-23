@@ -1,4 +1,5 @@
 #pragma once
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -6,7 +7,7 @@
 #include <ctime>
 
 #include <yaml-cpp/yaml.h>
-
+#include <glm/glm.hpp>
 
 namespace Core
 {
@@ -86,5 +87,11 @@ public:
 #define LOG_WARNING(x) Core::Logger::LogWarning(x, __FILE__, __LINE__)
 #define LOG_INFO(x) Core::Logger::LogInfo(x, __FILE__, __LINE__)
 #define LOG_DEBUG(x) Core::Logger::LogDebug(x, __FILE__, __LINE__)
+
+YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec2& v);
+YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec3& v);
+YAML::Emitter& operator<<(YAML::Emitter& out, const glm::vec4& v);
+
+glm::vec3 YAMLToVec3(const YAML::Node& node);
 
 }

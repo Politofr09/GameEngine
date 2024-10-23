@@ -1,0 +1,37 @@
+Assets:
+  - Font: 15393345832641666498
+    Name: OCR-Font
+    Path: res/ocr-a-extended.ttf
+    Size: 100
+  - Material: 8752537221469699726
+    Name: 3DMonkey_material
+    Path: res/Monkey.obj
+    DiffuseTexture: 15814714117585069395
+    SpecularTexture: 0
+    NormalTexture: 0
+  - Material: 7248227055861326831
+    Name: Bunny_material
+    Path: res/bunny.obj
+    DiffuseTexture: 7841575841953732288
+    SpecularTexture: 0
+    NormalTexture: 0
+  - Texture: 7841575841953732288
+    Name: WaterTexture
+    Path: res/water.jpg
+    Type: texture_diffuse
+  - Texture: 15814714397585069395
+    Name: Texture
+    Path: res/Monkey.png
+    Type: texture_diffuse
+  - Model: 16801593650545335947
+    Name: 3DMonkey
+    Path: res/Monkey.obj
+    Material: 7248227055861326831
+  - Model: 10450630815221152145
+    Name: Bunny
+    Path: res/bunny.obj
+    Material: 7248227055861326831
+  - Texture: 16456710713235987244
+    Name: Texture
+    Path: res/BunnyTexture.png
+    Type: texture_diffuse

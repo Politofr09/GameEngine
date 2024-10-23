@@ -25,30 +25,19 @@ namespace Core
 		std::string m_Author;
 		UUID id;
 
-		AssetRegistry registry; // TODO: Serialize this
-		Scene scene;			// TODO: Serialize this
+		void Serialize(const std::string& path);
+		bool Deserialize(const std::string& path);
 
-		friend YAML::Emitter& operator<<(YAML::Emitter& out, const Project& p)
-		{
-			out << YAML::BeginMap;
-			out << YAML::Key << "Project" << YAML::Value << YAML::BeginMap;
-			out << YAML::Key << "name" << YAML::Value << p.m_Name;
-			out << YAML::Key << "author" << YAML::Value << p.m_Author;
-			out << YAML::Key << "id" << YAML::Value << p.id;
-			out << YAML::EndMap;
-			out << YAML::EndMap;
-			return out;
-		}
+		AssetRegistry& GetRegistry() { return m_AssetRegistry; }
+		Scene& GetScene() { return m_Scene; }
 
-		// Deserialization operator
-		friend void operator>>(const YAML::Node& node, Project& p)
-		{
-			p.m_Name = node["name"].as<std::string>();
-			p.m_Author = node["author"].as<std::string>();
-			p.id = node["id"].as<uint64_t>();
-		}
+	private:
+		AssetRegistry m_AssetRegistry;
+		std::string m_AssetRegistryPath = "";
 
-
+		// TODO make senes a vector so we can have more than one scene in one project
+		Scene m_Scene;
+		std::string m_ScenePath = "";
 	};
 
 }

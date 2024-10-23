@@ -1,6 +1,7 @@
 #include "UUID.h"
 
 #include <string>
+#include <yaml-cpp/yaml.h>
 
 #pragma once
 
@@ -9,6 +10,17 @@ namespace Core
 // Similar to the DECLARE_EVENT_TYPE macro. Does the same but with assets!
 #define DECLARE_ASSET_TYPE(asset) static constexpr DescriptorType descriptor = asset; \
 								  virtual DescriptorType GetType() const override { return descriptor; }
+
+    // Look at it like an intermediary representation of an asset.
+    // When we load from disk, an empty asset gets created with the required metadata.
+    // When we access the asset, if it's not loaded, we look at the metadata and reconstruct the asset
+    struct AssetMetadata
+    {
+        std::string Name;
+        std::string Path;
+        UUID ID;
+    };
+
     class Asset
     {
     public:
@@ -16,16 +28,17 @@ namespace Core
         Asset()
         {
             m_Loaded = false;
-            m_FileDirectory = "";
-            m_Name = "Asset-" + std::to_string(ID);
+            //name --> "Asset-" + std::to_string();
+        }
+
+        Asset(const AssetMetadata& metadata)
+        {
+            m_Metadata = metadata;
         }
 
         Asset& operator=(const Asset& other)
         {
-            this->ID = other.ID;
-            this->m_FileDirectory = other.m_FileDirectory;
-            this->m_Name = other.m_Name;
-            this->m_Loaded = other.m_Loaded;
+            this->m_Metadata = other.m_Metadata;
             return *this;
         }
 
@@ -33,23 +46,29 @@ namespace Core
 
 		virtual DescriptorType GetType() const = 0;
 
-        const std::string& GetName() { return m_Name; }
-        void SetName(const std::string& name) { m_Name = name; }
+        //virtual void Serialize(YAML::Emitter& out) = 0;
+        ////virtual void Deserialize(YAML::Node& node) = 0;
 
-        const std::string& GetFileDirectory() { return m_FileDirectory; }
+        const std::string& GetName() { return m_Metadata.Name; }
+        void SetName(const std::string& name) { m_Metadata.Name = name; }
+
+        const std::string& GetPath() { return m_Metadata.Path; }
 
         bool IsLoaded() const { return m_Loaded; }
-        UUID ID;
-        
+
+        UUID GetID() { return m_Metadata.ID; }
+
     protected:
         virtual bool Load() = 0;
         virtual bool UnLoad() = 0;
 
     protected:
-        std::string m_Name;
-        std::string m_FileDirectory;
-        bool m_Loaded;        
+        AssetMetadata m_Metadata;
+
+        bool m_Loaded = false;
         // size_t m_MemoryUsage; // Don't know if this will be used
+
+        friend class AssetRegistry;
     };
 
 }

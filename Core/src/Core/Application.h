@@ -11,9 +11,13 @@
 namespace Core
 {
 
+#define OPENED_PROJECT Core::Application::s_CurrentProject
+
 	class Application
 	{
 	public:
+		static Project s_CurrentProject;
+
 		Application(const std::string& name = "No Project opened", int window_width = 1080, int window_height = 720);
 
 		void PushLayer(Layer* layer);
@@ -27,7 +31,6 @@ namespace Core
 		~Application();
 
 		inline Window* GetWindow() { return m_Window; }
-		inline Project& GetProject() { return m_Project; }
 
 		void LoadProject(const std::string& filename);
 	private:
@@ -35,7 +38,7 @@ namespace Core
 		Window* m_Window;
 		std::vector<Layer*> m_Layers;
 		ImGuiLayer* m_ImGuiLayer;
-		Project m_Project;
+		std::string m_OpenedProjectPath;
 	};
 
 }

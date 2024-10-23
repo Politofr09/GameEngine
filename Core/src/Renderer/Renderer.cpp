@@ -3,6 +3,8 @@
 #include "Events/WindowEvents.h"
 #include <iostream>
 
+#include "Core/Application.h"
+
 namespace Core::Gfx
 {
     Camera Renderer::m_ActiveCamera;
@@ -29,17 +31,17 @@ namespace Core::Gfx
     {
     }
 
-    void Renderer::Init(AssetRegistry& registry)
+    void Renderer::Init()
     {
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
         GLCall(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
 
         m_FlatShading.Load();
-        registry.Track(m_FlatShading.ShaderProgram);
+        //registry.Track(m_FlatShading.ShaderProgram);
 
         m_PhongShading.Load();
-        registry.Track(m_PhongShading.ShaderProgram);
+        //registry.Track(m_PhongShading.ShaderProgram);
     }
 
     void Renderer::EnableCulling()
@@ -94,7 +96,7 @@ namespace Core::Gfx
     void Renderer::DrawModel(Model& model, glm::mat4 transform)
     {
         // Retrieve the material and its shader type
-        const Material& material = model.GetMaterial();
+        auto& material = *OPENED_PROJECT.GetRegistry().Get<Material>(model.GetMaterialHandle());
 
         // Set up the shader based on the material's shader type
         switch (material.m_ShaderType)
@@ -143,6 +145,25 @@ namespace Core::Gfx
             mesh.GetIndexBuffer().Bind();
 
             GLCall(glDrawElements(GL_TRIANGLES, mesh.GetIndexBuffer().GetCount(), GL_UNSIGNED_INT, nullptr));
+        }
+    }
+
+    void Renderer::RenderScene(Scene& scene)
+    {
+        using namespace Ecs;
+        ECS registry = scene.GetRegistry();
+
+        // Todo: batch all models by their shading type
+        auto view = registry.GetView<TransformComponent, ModelComponent>();
+        for (auto e : view)
+        {
+            auto& transformComponent = registry.GetComponent<TransformComponent>(e);
+            auto& modelComponent = registry.GetComponent<ModelComponent>(e);
+            if (modelComponent.ModelHandle == 0) continue;
+
+            auto& model = *OPENED_PROJECT.GetRegistry().Get<Model>(modelComponent.ModelHandle);
+
+            DrawModel(model, transformComponent); // Use of mat4 operator (nice)
         }
     }
 

@@ -3,32 +3,34 @@
 
 using namespace Core::Gfx;
 
-Shader& Core::Gfx::Shader::Create(AssetRegistry& registry, const std::string& shaderPath, const std::string &name)
+Shader& Core::Gfx::Shader::Create(AssetRegistry& registry, const std::string& path, const std::string &name)
 {
-    Shader* shader = new Shader(shaderPath, name);
+    AssetMetadata metadata
+    {
+        name,
+        path,
+        UUID()
+    };
+    Shader* shader = new Shader(metadata);
 
     if (shader->Load())
     {
+        registry.Track(shader);
         return *shader;
     }
     
     return Shader();
 }
 
-Shader::Shader(const std::string& shaderPath, const std::string& name)
-{
-    m_FileDirectory = shaderPath;
-    
-    m_Name = name;
-    if (m_Name.empty()) m_Name = GetType() + std::to_string(ID);
-}
+Shader::Shader(const AssetMetadata& metadata)
+    : Asset(metadata) {}
 
 bool Shader::Load()
 {
-    std::ifstream shaderFile(m_FileDirectory);
+    std::ifstream shaderFile(m_Metadata.Path);
     if (!shaderFile.is_open())
     {
-        Core::Logger::LogError("Failed to open shader file: " + m_FileDirectory);
+        Core::Logger::LogError("Failed to open shader file: " + m_Metadata.Path);
         return false;
     }
 
@@ -51,7 +53,7 @@ bool Shader::Load()
     // Check that both directives exist in the shader file
     if (vertexPos == std::string::npos || fragmentPos == std::string::npos)
     {
-        LOG_ERROR("Shader file missing #shader vertex or #shader fragment directive: " + m_FileDirectory + 
+        LOG_ERROR("Shader file missing #shader vertex or #shader fragment directive: " + m_Metadata.Path +
                "\n Make sure to split your glsl shader with #shader vertex/fragment.");
         return false;
     }
@@ -127,7 +129,7 @@ bool Shader::LoadFromMemory(const char *vertexSource, const char *fragmentSource
     glDeleteShader(vertexShaderID);
     glDeleteShader(fragmentShaderID);
 
-    LOG_INFO("Shader " + m_Name + " loaded.");
+    LOG_INFO("Shader " + m_Metadata.Name + " loaded.");
 
     return m_Loaded = true;
 }

@@ -7,6 +7,7 @@
 #include "Camera.h"
 #include "FrameBuffer.h"
 #include "Light.h"
+#include "Core/Scene.h"
 
 #include "Shading/FlatShading.h"
 #include "Shading/PhongShading.h"
@@ -27,7 +28,7 @@ namespace Core::Gfx
     public:
         Renderer();
 
-        static void Init(AssetRegistry& registry);
+        static void Init();
 
         static void SetBackgroundColor(glm::vec3 color);
 
@@ -38,9 +39,10 @@ namespace Core::Gfx
 
         static void SetLight(const Light& light) { m_SceneLight = light; }
 
-        // TODO: Make models have materials and materials have reference to shader programs. E.g. model.GetMaterials()[0].GetShader().Use();
         static void DrawModel(Model& model, glm::mat4 transform);
-    
+
+        static void RenderScene(Scene& scene);
+
         static void OnViewportResize(int width, int height); // Call this when window / framebuffer changes
 
         // Settings

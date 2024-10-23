@@ -1,85 +1,154 @@
 #include "Material.h"
+#include "Utils.h"
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include "Core/Application.h"
+
+#include <filesystem>
 
 namespace Core::Gfx
 {
 	// TODO: Expand this as we need more uniforms!
 	// TODO: Make sure to check the correct ShaderType when we add more and more Shading!
-    Material& Material::CreateFromAssimp(AssetRegistry& registry, aiMaterial* mat, const std::string& directory)
+    AssetHandle Material::Create(const std::string& path, const std::string& name)
     {
-        Material* material = new Material();
-        aiString str;
+        std::cout << "Creating material" << std::endl;
 
-        // Load diffuse texture
-        if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &str) == AI_SUCCESS)
+        AssetMetadata metadata
         {
-            material->DiffuseTexture = Texture::Create(registry, directory + "/" + str.C_Str(),
-                "model_texture_diffuse_" + std::string(mat->GetName().C_Str()),
-                "texture_diffuse");
+            name,
+            path,
+            UUID()
+        };
+
+        Material* material = new Material(metadata, 0, 0, 0);
+        
+        if (material->Load())
+        {
+            return OPENED_PROJECT.GetRegistry().Track(material);
         }
 
-        // Load specular texture
-        if (mat->GetTexture(aiTextureType_SPECULAR, 0, &str) == AI_SUCCESS)
+        return 0;
+    }
+
+    bool Material::Load()
+    {
+        Assimp::Importer importer;
+        const aiScene* scene = importer.ReadFile(m_Metadata.Path, aiProcess_Triangulate | aiProcess_FlipUVs);
+
+        if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
-            material->SpecularTexture = Texture::Create(registry, directory + "/" + str.C_Str(),
-                "model_texture_specular_" + std::string(mat->GetName().C_Str()),
-                "texture_specular");
+            LOG_ERROR("ERROR::ASSIMP::" + std::string(importer.GetErrorString()));
+            return false;
         }
 
-        // Load normal map texture
-        if (mat->GetTexture(aiTextureType_NORMALS, 0, &str) == AI_SUCCESS)
-        {
-            material->NormalTexture = Texture::Create(registry, directory + "/" + str.C_Str(),
-                "model_texture_normal_" + std::string(mat->GetName().C_Str()),
-                "texture_normal");
-        }
+        m_AssimpSrcMaterial = scene->mMaterials[scene->mMeshes[0]->mMaterialIndex]; // TODO: support multiple materials per model...
 
-        // Load color and material properties
         aiColor3D color;
-        if (mat->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
+        if (m_AssimpSrcMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
         {
-            material->Color = glm::vec3(color.r, color.g, color.b);
+            Color = glm::vec3(color.r, color.g, color.b);
         }
 
-        if (mat->Get(AI_MATKEY_COLOR_AMBIENT, color) == AI_SUCCESS)
+        if (m_AssimpSrcMaterial->Get(AI_MATKEY_COLOR_AMBIENT, color) == AI_SUCCESS)
         {
-            material->Ambient = glm::vec3(color.r, color.g, color.b);
+            Ambient = glm::vec3(color.r, color.g, color.b);
         }
 
-        if (mat->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS)
+        if (m_AssimpSrcMaterial->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS)
         {
-            material->Specular = glm::vec3(color.r, color.g, color.b);
+            Specular = glm::vec3(color.r, color.g, color.b);
         }
 
         float shininess = 0.0f;
-        if (mat->Get(AI_MATKEY_SHININESS, shininess) == AI_SUCCESS)
+        if (m_AssimpSrcMaterial->Get(AI_MATKEY_SHININESS, shininess) == AI_SUCCESS)
         {
-            material->Shininess = shininess;
+            Shininess = shininess;
 
             // Assign Phong shading if shininess is set
             if (shininess > 0.0f)
             {
-                material->m_ShaderType = ShaderType::PhongShading;
+                m_ShaderType = ShaderType::PhongShading;
             }
             else
             {
-                material->m_ShaderType = ShaderType::FlatShading;
+                m_ShaderType = ShaderType::FlatShading;
             }
         }
         else
         {
             // Default to FlatShading if no shininess is found
-            material->m_ShaderType = ShaderType::FlatShading;
+            m_ShaderType = ShaderType::FlatShading;
         }
-        material->Shininess = 1.0f;
+        Shininess = 1.0f;
 
-        std::cout << "Material.Color: " << material->Color.x << " " << material->Color.y << " " << material->Color.z << std::endl;
-        std::cout << "Material.Ambient: " << material->Ambient.x << " " << material->Ambient.y << " " << material->Ambient.z << std::endl;
-        std::cout << "Material.Diffuse: " << material->Diffuse.x << " " << material->Diffuse.y << " " << material->Diffuse.z << std::endl;
-        std::cout << "Material.Specular: " << material->Specular.x << " " << material->Specular.y << " " << material->Specular.z << std::endl;
-        std::cout << "Material.Shininess:" << material->Shininess << std::endl;
+        // Create textures that might not be registered
+        // To check if a texture already exists we don't have uuid (the material is beeing imported, it doesn't exist in the registry)
+        // so we could just check if there is a texture with the same path
+        aiString str;
+        std::string modelDirectory = std::filesystem::path(GetPath()).parent_path().string() + "/";
 
-        registry.Track(material);
-        return *material;
+        // Attempt to retrieve existing diffuse from registry
+        if (m_AssimpSrcMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &str) == AI_SUCCESS)
+        {
+            AssetHandle existingDiffuse = OPENED_PROJECT.GetRegistry().FindByPath<Texture>(std::string(modelDirectory + str.C_Str()));
+            if (existingDiffuse != 0)
+            {
+                DiffuseTextureHandle = existingDiffuse;
+            }
+            else
+            {
+                DiffuseTextureHandle = Texture::Create(
+                    modelDirectory + str.C_Str(),
+                    "Texture",
+                    "texture_diffuse"
+                );
+            }
+        }
+
+        if (m_AssimpSrcMaterial->GetTexture(aiTextureType_SPECULAR, 0, &str) == AI_SUCCESS)
+        {
+            AssetHandle existingSpecular = OPENED_PROJECT.GetRegistry().FindByPath<Texture>(std::string(modelDirectory + str.C_Str()));
+            if (existingSpecular != 0)
+            {
+                SpecularTextureHandle = existingSpecular;
+            }
+            else
+            {
+                SpecularTextureHandle = Texture::Create(
+                    modelDirectory + str.C_Str(),
+                    "Texture",
+                    "texture_specular"
+                );
+            }
+        }
+
+        // Attempt to retrieve existing normals from registry
+        if (m_AssimpSrcMaterial->GetTexture(aiTextureType_NORMALS, 0, &str) == AI_SUCCESS)
+        {
+            AssetHandle existingNormal = OPENED_PROJECT.GetRegistry().FindByPath<Texture>(std::string(modelDirectory + str.C_Str()));
+            if (existingNormal != 0)
+            {
+                NormalTextureHandle = existingNormal;
+            }
+            else
+            {
+                NormalTextureHandle = Texture::Create(
+                    modelDirectory + str.C_Str(),
+                    "Texture",
+                    "texture_normal"
+                );
+            }
+        }
+
+        m_Loaded = true;
+
+        return true;
     }
+
+    Material::Material(const AssetMetadata& metadata, AssetHandle diffuseTexture, AssetHandle specularTexture, AssetHandle normalTexture)
+    : Asset(metadata), DiffuseTextureHandle(diffuseTexture), SpecularTextureHandle(specularTexture), NormalTextureHandle(normalTexture) {}
 
 }

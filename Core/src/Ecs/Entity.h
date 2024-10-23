@@ -9,8 +9,8 @@ namespace Core::Ecs
 	class Entity
 	{
 	public:
-		Entity(UUID id, ECS& ecs, const std::string& name = "Unnamed Entity")
-			: m_EntityID(id), m_ECS(ecs), m_Name(name) {}
+		Entity(UUID id, ECS& ecs)
+			: m_EntityID(id), m_ECS(ecs) {}
 
 		template <typename T>
 		void AddComponent(T& component)
@@ -30,15 +30,20 @@ namespace Core::Ecs
 			m_ECS.RemoveComponent<T>(m_EntityID);
 		}
 
-		void SetName(const std::string& name) { m_Name = name; }
-		const std::string& GetName() { return m_Name; }
+		template <typename T>
+		bool HasComponent()
+		{
+			return m_ECS.HasComponent<T>(m_EntityID);
+		}
+
+		void SetName(const std::string& name) { GetComponent<NameComponent>().Name = name; }
+		const std::string& GetName() { return GetComponent<NameComponent>().Name; }
 
 		UUID GetID() { return m_EntityID; }
 
 	private:
 		ECS& m_ECS;
 		UUID m_EntityID;
-		std::string m_Name;
 	};
 
 }

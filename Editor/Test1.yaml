@@ -1,4 +1,6 @@
 Project:
-  name: Amazing game
-  author: NoAuthorYet:)
-  id: 13154290387678551093
+  Name: Mygame
+  Author: Paul Tomas
+  ID: 15712277678541233756
+  Scene: Scene1.yaml
+  AssetDef: AssetDef.yaml

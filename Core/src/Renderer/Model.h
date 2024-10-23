@@ -19,7 +19,7 @@ namespace Core::Gfx
 	public:
 		DECLARE_ASSET_TYPE("Model")
 
-		static Model& Create(AssetRegistry& registry, const std::string& path, const std::string& name);
+		static AssetHandle Create(const std::string& path, const std::string& name);
 
 		bool Load() override;
 		bool UnLoad() override;
@@ -29,36 +29,39 @@ namespace Core::Gfx
 		Model(std::vector<Mesh> meshes, std::string directory)
 			: m_Meshes(meshes), m_Directory(directory) {}
 		
+		
+		Model(const AssetMetadata& metadata, AssetHandle material);
+		
 		Model(const Model& other)
 		{
 			m_Directory = other.m_Directory;
-			m_LoadedTextures = other.m_LoadedTextures;
-			m_Material = other.m_Material;
+			m_MaterialHandle = other.m_MaterialHandle;
 			m_Meshes = other.m_Meshes;
 		}
 
 		Model& operator=(const Model& other)
 		{
 			m_Directory = other.m_Directory;
-			m_LoadedTextures = other.m_LoadedTextures;
-			m_Material = other.m_Material;
+			m_MaterialHandle = other.m_MaterialHandle;
 			m_Meshes = other.m_Meshes;
 
 			return *this;
 		}
 
 		std::vector<Mesh> GetMeshes() { return m_Meshes; }
-		Material& GetMaterial() { return m_Material; }
+		AssetHandle GetMaterialHandle() const { return m_MaterialHandle; }
+		void SetMaterialHandle(AssetHandle handle) { m_MaterialHandle = handle; }
+
+		aiMaterial* GetAssimpMaterial() { return m_AiMaterial; }
 
 	private:
-		Model(AssetRegistry* registry, const std::string& path, const std::string& name);
 
 	private:
 		std::vector<Mesh> m_Meshes;
-		std::vector<Texture> m_LoadedTextures; // We keep track of the loaded textures so we don't load 2 times the same texture
-		std::string m_Directory;
-		Material m_Material;
-		AssetRegistry* m_Registry; // Not ideal but it works
+		std::string m_Directory; // Relative path for material / texture references
+
+		AssetHandle m_MaterialHandle;
+		aiMaterial* m_AiMaterial = nullptr;
 
 		void ProcessNode(aiNode* node, const aiScene* scene);
 		Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);

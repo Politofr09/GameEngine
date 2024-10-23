@@ -5,34 +5,52 @@
 
 #include "Model.h"
 #include "Core/Utils.h"
+#include "Core/Application.h"
 
 namespace Core::Gfx
 {
 
-	Model& Model::Create(AssetRegistry& registry, const std::string& path, const std::string& name)
+	AssetHandle Model::Create(const std::string& path, const std::string& name)
 	{
-		Model* model = new Model(&registry, path, name);
+		std::cout << "Creating model" << std::endl;
+
+		AssetMetadata metadata
+		{
+			name,
+			path,
+			UUID()
+		};
+		// Provide dummy asset handle
+		Model* model = new Model(metadata, 0);
 
 		if (model->Load())
 		{
-			registry.Track(model);
-			return *model;
+			// Check if we can retrieve material from the registry to avoid duplication
+			// Materials actually point to a full 3d model / scene file
+			// Thus we can check if there is a material with the same path
+
+			if (AssetHandle handle = OPENED_PROJECT.GetRegistry().FindByPath<Material>(model->GetPath()) != 0)
+			{
+				model->SetMaterialHandle(handle);
+			}
+			else
+			{
+				model->SetMaterialHandle(Material::Create(model->GetPath(), model->GetName() + "_material"));
+			}
+
+			return OPENED_PROJECT.GetRegistry().Track(model);
 		}
 
-		return Model();
+		return 0;
 	}
 
-	Model::Model(AssetRegistry* registry, const std::string& path, const std::string& name)
-	{
-		m_Registry = registry;
-		m_Directory = path;
-		m_Name = name;
-	}
+	Model::Model(const AssetMetadata& metadata, AssetHandle material)
+		: Asset(metadata), m_MaterialHandle(material) {}
 
 	bool Model::Load()
 	{
 		Assimp::Importer importer;
-		const aiScene* scene = importer.ReadFile(m_Directory, aiProcess_FlipUVs | aiProcess_Triangulate);
+		const aiScene* scene = importer.ReadFile(m_Metadata.Path, aiProcess_FlipUVs | aiProcess_Triangulate);
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		{
@@ -40,10 +58,12 @@ namespace Core::Gfx
 			return false;
 		}
 
-		m_Directory = m_Directory.substr(0, m_Directory.find_last_of('/'));
+		m_Directory = m_Metadata.Path.substr(0, m_Metadata.Path.find_last_of('/'));
 
 		// Process recursively root node
 		ProcessNode(scene->mRootNode, scene);
+
+		m_Loaded = true;
 
 		return true;
 	}
@@ -58,9 +78,9 @@ namespace Core::Gfx
 		for (unsigned int i = 0; i < node->mNumMeshes; i++)
 		{
 			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+			m_AiMaterial = scene->mMaterials[mesh->mMaterialIndex];
 
-			m_Material = Material::CreateFromAssimp(*m_Registry, material, m_Directory);
+			//m_Material = Material::CreateFromAssimp(*m_Registry, material, m_Directory);
 			m_Meshes.push_back(ProcessMesh(mesh, scene));
 		}
 		for (unsigned int i = 0; i < node->mNumChildren; i++)

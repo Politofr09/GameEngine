@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Core/UUID.h"
+#include "Core/Utils.h"
+#include "Common.h"
+#include "VisualComponents.h"
 
 #include <bitset>
 #include <typeindex>
@@ -20,6 +23,14 @@ namespace Core::Ecs
 	class ECS
 	{
 	public:
+		ECS()
+		{
+			RegisterComponent<NameComponent>();
+			RegisterComponent<TransformComponent>();
+			RegisterComponent<ModelComponent>();
+			RegisterComponent<TextureComponent>();
+		}
+
 		using EntityID = uint64_t;
 		typedef std::bitset<MAX_COMPONENTS> ComponentMask;
 
@@ -107,6 +118,7 @@ namespace Core::Ecs
 			}
 		}
 
+		EntityID CreateEntityWithID(EntityID id);
 		EntityID CreateEntity();
 
 		void RemoveEntity(EntityID entity);
@@ -157,11 +169,21 @@ namespace Core::Ecs
 			}
 		}
 
-		//template <typename T>
-		//bool HasComponent(EntityID id)
-		//{
-		//	return GetComponent() !=
-		//}
+		template <typename T>
+		bool HasComponent(EntityID entity)
+		{
+			const size_t componentIndex = GetComponentIndex<T>();
+
+			// Find the entity in the entity masks
+			auto it = std::find_if(m_EntityMasks.begin(), m_EntityMasks.end(),
+				[entity](const EntityDesc& e) { return e.id == entity; });
+
+			if (it != m_EntityMasks.end() && it->mask.test(componentIndex))
+			{
+				return true;
+			}
+			return false;
+		}
 
 		template<typename T>
 		T& GetComponent(EntityID entity)
@@ -218,6 +240,13 @@ namespace Core::Ecs
 		}
 
 		void Tick(float dt);
+
+		template<typename Func>
+		void each(Func&& func) {
+			for (const auto& entityDesc : m_EntityMasks) {
+				func(entityDesc.id);
+			}
+		}
 
 	private:
 		template<typename T>

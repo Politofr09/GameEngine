@@ -1,4 +1,5 @@
 #include "PhongShading.h"
+#include "Core/Application.h"
 
 namespace Core::Gfx
 {
@@ -91,13 +92,12 @@ namespace Core::Gfx
         ShaderProgram->SetFloat("material_shininess", material.Shininess);
         ShaderProgram->SetVector3("material_color", material.Color);
 
+        Texture DiffuseTexture = *OPENED_PROJECT.GetRegistry().Get<Texture>(material.DiffuseTextureHandle);
+
         // Bind diffuse texture if loaded
-        if (material.DiffuseTexture.IsLoaded())
-        {
-            material.DiffuseTexture.Bind();
-            glActiveTexture(GL_TEXTURE0);
-            ShaderProgram->SetInt("material_diffuse_texture", 0);
-        }
+        DiffuseTexture.Bind();
+        glActiveTexture(GL_TEXTURE0);
+        ShaderProgram->SetInt("material_diffuse_texture", 0);
 	}
 
 }

@@ -25,9 +25,10 @@ namespace Core::Gfx
 	public:
 		DECLARE_ASSET_TYPE("Font")
 
-		static Font& Create(AssetRegistry& registry, const std::string& path, int fontSize, const std::string& name = "Font");
+		static AssetHandle Create(const std::string& path, const std::string& name, int fontSize);
 
 		Font() = default;
+		Font(const AssetMetadata& metadata, int fontSize);
 
 		bool Load() override;
 		bool UnLoad() override;		
@@ -40,7 +41,6 @@ namespace Core::Gfx
 		glm::ivec2 MeasureText(const std::string& text, float scale) const;
 
 	private:
-		Font(const std::string& path, int fontSize, const std::string& name);
 		std::unordered_map<char, Character> m_Characters;
 		stbtt_bakedchar m_BakedChars[128]{}; // ASCII 32..126 is 95 glyphs
 		unsigned int m_TextureID = 0;

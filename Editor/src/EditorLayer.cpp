@@ -15,15 +15,19 @@
 #include "Renderer/TextRenderer.h"
 #include "Core/Application.h"
 
+#include "Ecs/ECS.h"
+
 #include "CommonUI.h"
 
 using namespace Core::Gfx;
 
-Model model1;
-Model model2;
-Font* font;
+// Temporary
+// Will be soon removed (finally!)
+Core::AssetHandle modelhandle1;
+Core::AssetHandle modelhandle2;
+Core::AssetHandle fonthandle;
 Light light;
-Texture* texture;
+Core::AssetHandle texturehandle;
 
 void EditorLayer::OnAttach()
 {
@@ -31,31 +35,22 @@ void EditorLayer::OnAttach()
 	Core::Events::Dispatcher::Subscribe(std::bind(&EditorLayer::OnEvent, this, std::placeholders::_1));
 	
     // Setup OpenGL renderer
-    Renderer::Init(m_Application->GetProject().registry);
+    Renderer::Init();
     Renderer2D::Init();
     TextRenderer::Init();
 
-    //shader = &Shader::Create("res/FlatShader.glsl", "MyFlatShader");
-    //m_Application->GetProject().registry.Track(shader);
+    // This shit is all (hopefully) temporary. Once serialization is *fully* added all of this manual shitty asset loading will be gone.
+    //modelhandle1 = Model::Create("res/Monkey.obj", "3DMonkey");
+    //modelhandle2 = Model::Create("res/bunny.obj", "Bunny");
 
-    //model1 = Model::LoadModel("res/Monkey.obj");
-    model1 = Model::Create(m_Application->GetProject().registry, "res/Monkey.obj", "monkey3D");
-
-    model2 = Model::Create(m_Application->GetProject().registry, "res/bunny.obj", "bunny");
-
-    model2.GetMaterial().m_ShaderType = ShaderType::PhongShading;
-    // TODO: Track model, mesh, material assets.
+    //texturehandle = Texture::Create("res/water.jpg", "WaterTexture");
+    //
+    //fonthandle = Font::Create("res/ocr-a-extended.ttf", "OCR-Font", 100);
 
     /**** Setup the camera(s) ****/
     m_Cam.SetAspectRatio((float)m_Application->GetWindow()->GetWidth() / m_Application->GetWindow()->GetHeight());
     m_Cam2d = Core::Gfx::OrthographicCamera(0.0f, (float)m_Application->GetWindow()->GetWidth(), (float)m_Application->GetWindow()->GetHeight(), 0.0f);
 
-    texture = &Texture::Create(m_Application->GetProject().registry, "res/water.jpg");
-    m_Application->GetProject().registry.Track(texture);
-
-
-    font = &Font::Create(m_Application->GetProject().registry, "res/ocr-a-extended.ttf", 100, "OCR-Font");
-    
     m_FrameBuffer = FrameBuffer(m_Application->GetWindow()->GetWidth(), m_Application->GetWindow()->GetHeight());
 
     light = Light();
@@ -67,10 +62,9 @@ void EditorLayer::OnUpdate()
 {
     // UpdateCameraController();
     //shader->SetFloat("uTime", (float)glfwGetTime());
-
     m_FrameBuffer.Bind();
     Renderer::OnViewportResize(m_FrameBuffer.GetWidth(), m_FrameBuffer.GetHeight());
-    Renderer::SetBackgroundColor({0.2f, 0.3f, 0.3f});
+    Renderer::SetBackgroundColor({ 0.2f, 0.3f, 0.3f });
     Renderer::Clear();
     Renderer::Begin(m_Cam);
     {
@@ -78,28 +72,38 @@ void EditorLayer::OnUpdate()
 
         glm::mat4 trans = glm::mat4(1);
 
-        Renderer::DrawModel(model1, trans);
-        
-        trans = glm::translate(trans, glm::vec3(10, 0, 0)); 
-        Renderer::DrawModel(model2, trans);
+        //auto& model1 = *OPENED_PROJECT.GetRegistry().Get<Model>(modelhandle1);
+        //Renderer::DrawModel(model1, trans);
+
+        //trans = glm::translate(trans, glm::vec3(10, 0, 0));
+
+        //auto& model2 = *OPENED_PROJECT.GetRegistry().Get<Model>(modelhandle2);
+        //Renderer::DrawModel(model2, trans);
+
+        // Eventually this will be more complex, we will have a list of scenes that we can edit with the editor layer
+        Renderer::RenderScene(OPENED_PROJECT.GetScene());
     }
     Renderer::End();
 
-    TextRenderer::Begin(m_Cam2d);
-    {
-        std::string message = "Frametime " + std::to_string(m_Application->GetWindow()->GetDeltaTime()) + "ms";
-        
-        glm::ivec2 offset = font->MeasureText(message, FONT_SCALE);
-        float x = m_FrameBuffer.GetWidth() - offset.x - 10;
-        float y = offset.y + 10;
-        TextRenderer::DrawTextEx(*font, message, x, y, FONT_SCALE, glm::vec3(sin(glfwGetTime()), cos(glfwGetTime()), 1));
-    }
-    TextRenderer::End();
+    //TextRenderer::Begin(m_Cam2d);
+    //{
+    //    auto& font = *OPENED_PROJECT.GetRegistry().Get<Font>(fonthandle);
+
+    //    std::string message = "Frametime " + std::to_string(m_Application->GetWindow()->GetDeltaTime()) + "ms";
+
+    //    glm::ivec2 offset = font.MeasureText(message, FONT_SCALE);
+    //    float x = m_FrameBuffer.GetWidth() - offset.x - 10;
+    //    float y = offset.y + 10;
+    //    TextRenderer::DrawTextEx(font, message, x, y, FONT_SCALE, glm::vec3(sin(glfwGetTime()), cos(glfwGetTime()), 1));
+    //}
+    //TextRenderer::End();
     m_FrameBuffer.UnBind();
 }
 
 void EditorLayer::OnImGuiRender()
 {
+    // ImGui content
+    //ImGui::Begin("Menubar", (bool*)0, ImGuiWindowFlags_MenuBar);
     if (ImGui::BeginMenuBar())
     {
         if (ImGui::BeginMenu("File"))
@@ -128,20 +132,20 @@ void EditorLayer::OnImGuiRender()
             ImGui::MenuItem("Toggle Asset Registry", NULL, &showAssetRegistry);
             ImGui::MenuItem("Toggle Material Editor", NULL, &showMaterialEditor);
             ImGui::MenuItem("Toggle Statistics", NULL, &showRenderingSettings);
-
+            ImGui::MenuItem("Toggle ECS panel", NULL, &showECSPanel);
             ImGui::EndMenu();
         }
 
         ImGui::EndMenuBar();
     }
 
-    // ImGui content
     ImGui::ShowDemoWindow();
 
     if (showCameraControl)      ShowCameraControlImgui(&showCameraControl);
     if (showAssetRegistry)      ShowAssetRegistry(&showAssetRegistry);
     if (showMaterialEditor)     ShowMaterialEditor(&showMaterialEditor);
     if (showThemeSwitcher)      ShowThemeSwitcher(&showThemeSwitcher);
+    if (showECSPanel)           ShowECSPanel(&showECSPanel);
     if (showRenderingSettings)  ShowRenderingSettings(&showRenderingSettings);
 
     static ImVec2 availableSpace = ImVec2();
@@ -155,13 +159,13 @@ void EditorLayer::OnImGuiRender()
             m_Cam.OnViewportResize((int)availableSpace.x, (int)availableSpace.y);
             m_Cam2d.OnViewportResize((int)availableSpace.x, (int)availableSpace.y);
         }
-        
+
         m_FrameBuffer.SetPosition(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y + 6);
 
         ImVec2 min = ImGui::GetCursorScreenPos();
         ImVec2 max = ImVec2(min.x + availableSpace.x, min.y + availableSpace.y);
         ImGui::GetWindowDrawList()->AddRect(min, max, ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)), 6.0f, ImDrawFlags_RoundCornersAll, 6.0f);
-        
+
         ImGui::BeginChild("Viewport", availableSpace, false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoMove);
         DisplayRoundedImage((ImTextureID)m_FrameBuffer.GetTextureID(), ImVec2(m_FrameBuffer.GetWidth(), m_FrameBuffer.GetHeight()), 6.0f, ImVec2(0, 1), ImVec2(1, 0));
         if (ImGui::IsWindowHovered())
@@ -180,7 +184,7 @@ void EditorLayer::ShowCameraControlImgui(bool* p_open)
 
     if (ImGui::Begin("Switch perspective", p_open))
     {
-        
+
         static float in_FOV = 75.0F;
         if (ImGui::SliderFloat("FOV", &in_FOV, 30.0f, 120.0f))
         {
@@ -219,7 +223,7 @@ void EditorLayer::ShowCameraControlImgui(bool* p_open)
 
         ImGui::GetWindowDrawList()->AddLine(ImVec2(startPos.x + size.x / 2, endPos.y - nearDistance * 25.0f), ImVec2(startPos.x - size.x / 2, endPos.y - nearDistance * 25.0f), col1, 2.0f);
         ImGui::GetWindowDrawList()->AddLine(ImVec2(startPos.x + size.x / 2, endPos.y - farDistance / 10.0f), ImVec2(startPos.x - size.x / 2, endPos.y - farDistance / 10.0f), col1, 2.0f);
-        
+
         ImGui::GetWindowDrawList()->AddLine(ImVec2(startPos.x, endPos.y), ImVec2(startPos.x + farHeight / 2, startPos.y - 25), col2, 2.0f);
         ImGui::GetWindowDrawList()->AddLine(ImVec2(startPos.x, endPos.y), ImVec2(startPos.x - farHeight / 2, startPos.y - 25), col2, 2.0f);
     }
@@ -258,7 +262,7 @@ void EditorLayer::ShowAssetRegistry(bool* p_open)
 
     if (ImGui::Begin("Asset Registry", p_open))
     {
-        ImGui::Text("Number of assets: %i", m_Application->GetProject().registry.GetAllResources().size());
+        ImGui::Text("Number of assets: %i", OPENED_PROJECT.GetRegistry().GetAllResources().size());
         if (ImGui::BeginTable("Resource Table", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
         {
             // Set up column headers
@@ -269,35 +273,51 @@ void EditorLayer::ShowAssetRegistry(bool* p_open)
             ImGui::TableHeadersRow();
 
             // Populate the table with resource data
-            for (const auto& resource : m_Application->GetProject().registry.GetAllResources())
+            for (const auto& pair : OPENED_PROJECT.GetRegistry().GetAllResources())
             {
+                uint64_t assetID = pair.first;
+                
+
                 ImGui::TableNextRow();
 
                 // Asset Name
                 ImGui::TableSetColumnIndex(0);
-                ImGui::TextUnformatted(resource->GetName().c_str());
+                ImGui::Button(pair.second->GetName().c_str());
+                //ImGui::PushID(static_cast<int>(assetID));
+
+                // Drag and drop asset ids
+                if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+                {
+                    std::string item_name = "ASSET_DND_" + std::string(pair.second->GetType());
+                    ImGui::SetDragDropPayload(item_name.c_str(), &assetID, sizeof(assetID));
+
+                    // Display the asset ID in the UI
+                    ImGui::Text("%s: %llu", pair.second->GetType(), assetID); // Use %llu for printing uint64_t
+
+                    ImGui::EndDragDropSource();
+                }
+                //ImGui::PopID();
 
                 // Asset Type
                 ImGui::TableSetColumnIndex(1);
-                ImGui::TextUnformatted(resource->GetType());
-
+                ImGui::TextUnformatted(pair.second->GetType());
                 // Asset ID
                 ImGui::TableSetColumnIndex(2);
-                ImGui::Text("%x", resource->ID);
+                ImGui::Text("%x", assetID);
 
                 // Preview
                 ImGui::TableSetColumnIndex(3);
-                if (std::string(resource->GetType()) == "Texture")
+                if (std::string(pair.second->GetType()) == "Texture")
                 {
-                    Texture* tex = dynamic_cast<Texture*>(resource);
+                    Texture* tex = OPENED_PROJECT.GetRegistry().Get<Texture>(assetID);
                     ImGui::Image((ImTextureID)(intptr_t)tex->GetID(), { 100.0f, 100.0f });
                 }
                 else
                 {
                     ImGui::Text("No preview");
                 }
-            }
 
+            }
             ImGui::EndTable();
         }
     }
@@ -310,34 +330,35 @@ void EditorLayer::ShowMaterialEditor(bool* p_open)
 
     if (ImGui::Begin("Material editor", p_open))
     {
-        Material* material = &model2.GetMaterial();
-
+        Model& model = *OPENED_PROJECT.GetRegistry().Get<Model>(modelhandle1);
+        Material& material = *OPENED_PROJECT.GetRegistry().Get<Material>(model.GetMaterialHandle());
+        
         // Shader Type Selector
         const char* shaderTypes[] = { "None", "FlatShading", "PhongShading" }; // Update with your actual shader types
-        static int currentShaderType = static_cast<int>(material->m_ShaderType);
+        static int currentShaderType = static_cast<int>(material.m_ShaderType);
         if (ImGui::Combo("Shader Type", &currentShaderType, shaderTypes, IM_ARRAYSIZE(shaderTypes)))
         {
-            material->m_ShaderType = static_cast<ShaderType>(currentShaderType);
+            material.m_ShaderType = static_cast<ShaderType>(currentShaderType);
         }
 
         // Color Slider
-        ImGui::ColorEdit3("Color", &material->Color[0]);
+        ImGui::ColorEdit3("Color", &material.Color[0]);
 
         // Ambient Slider
-        ImGui::ColorEdit3("Ambient", &material->Ambient[0]);
+        ImGui::ColorEdit3("Ambient", &material.Ambient[0]);
 
         // Diffuse Slider
-        ImGui::ColorEdit3("Diffuse", &material->Diffuse[0]);
+        ImGui::ColorEdit3("Diffuse", &material.Diffuse[0]);
 
         // Specular Slider
-        ImGui::ColorEdit3("Specular", &material->Specular[0]);
-
+        ImGui::ColorEdit3("Specular", &material.Specular[0]);
+        
         // Shininess Slider
-        ImGui::SliderFloat("Shininess", &material->Shininess, 0.01f, 128.0f);
+        ImGui::SliderFloat("Shininess", &material.Shininess, 0.01f, 128.0f);
 
         // Light settings
         ImGui::SliderFloat3("Light Position", glm::value_ptr(light.Position), -500.0f, 500.0f);
-        std::cout << light.Position.x << std::endl;
+        //std::cout << light.Position.x << std::endl;
         Renderer::SetLight(light);
     }
     ImGui::End();
@@ -347,7 +368,7 @@ void EditorLayer::ShowRenderingSettings(bool* p_open)
 {
     if (ImGui::Begin("Rendering settings", p_open))
     {
-        static int numFrames = 100;
+        static int numFrames = 1200;
         static std::vector<float> frameTimes(numFrames);
         static std::vector<float> frameRates(numFrames);
         static int currentIndex = 0;
@@ -454,7 +475,154 @@ void EditorLayer::ShowRenderingSettings(bool* p_open)
     ImGui::End();
 }
 
+void EditorLayer::ShowECSPanel(bool* p_open)
+{
+    using namespace Core::Ecs;
+    if (ImGui::Begin("ECS", p_open))
+    {
+        ECS& registry = OPENED_PROJECT.GetScene().GetRegistry();
 
+        registry.each([&](ECS::EntityID e) 
+        {
+            Entity entity{ e, registry };
+            ImGui::Text("Entity %u", entity.GetID());
+            if (ImGui::TreeNode(entity.GetName().c_str()))
+            {
+                // Show the components of the entity
+                ImGui::Text("Components:");
+
+                if (entity.HasComponent<TransformComponent>() && ImGui::TreeNode("TransformComponent"))
+                {
+                    auto& t = entity.GetComponent<TransformComponent>();
+
+                    // Use sliders for position, rotation, and scale
+                    ImGui::SliderFloat3("Position", &t.Position.x, -10.0f, 10.0f);
+                    ImGui::SliderFloat3("Rotation", &t.Rotation.x, -180.0f, 180.0f);
+                    ImGui::SliderFloat3("Scale", &t.Scale.x, 0.1f, 10.0f);
+                    
+                    ImGui::TreePop();
+                }
+
+                if (entity.HasComponent<ModelComponent>() && ImGui::TreeNode("ModelComponent"))
+                {
+                    auto& m = entity.GetComponent<ModelComponent>();
+
+                    ImGui::Text("Model: %llu", m.ModelHandle);
+
+                    // Accept payload from drag and drop imgui (only model ids)
+                    if (ImGui::BeginDragDropTarget())
+                    {
+                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_DND_Model"))
+                        {
+                            Core::AssetHandle handle = *(uint64_t*)payload->Data;
+                            m.ModelHandle = handle;
+                        }
+                        ImGui::EndDragDropTarget();
+                    }
+
+                    auto model = OPENED_PROJECT.GetRegistry().Get<Core::Gfx::Model>(m.ModelHandle);
+                    auto material = OPENED_PROJECT.GetRegistry().Get<Core::Gfx::Material>(model->GetMaterialHandle());
+
+                    ImGui::Text("Material: %llu", model->GetMaterialHandle());
+
+                    // Accept payload from drag and drop imgui (only model ids)
+                    if (ImGui::BeginDragDropTarget() && m.ModelHandle != 0)
+                    {
+                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_DND_Material"))
+                        {
+                            Core::AssetHandle handle = *(uint64_t*)payload->Data;
+                            model->SetMaterialHandle(handle);
+                        }
+                        ImGui::EndDragDropTarget();
+                    }
+
+                    if (ImGui::TreeNode("Material editor") && m.ModelHandle != 0)
+                    {
+                        // Shader Type Selector
+                        const char* shaderTypes[] = { "None", "FlatShading", "PhongShading" }; // Update with your actual shader types
+                        static int currentShaderType = static_cast<int>(material->m_ShaderType);
+                        if (ImGui::Combo("Shader Type", &currentShaderType, shaderTypes, IM_ARRAYSIZE(shaderTypes)))
+                        {
+                            material->m_ShaderType = static_cast<ShaderType>(currentShaderType);
+                        }
+
+                        // Color Slider
+                        ImGui::ColorEdit3("Color", &material->Color[0]);
+
+                        // Ambient Slider
+                        ImGui::ColorEdit3("Ambient", &material->Ambient[0]);
+
+                        // Diffuse Slider
+                        ImGui::ColorEdit3("Diffuse", &material->Diffuse[0]);
+
+                        // Specular Slider
+                        ImGui::ColorEdit3("Specular", &material->Specular[0]);
+
+                        // Shininess Slider
+                        ImGui::SliderFloat("Shininess", &material->Shininess, 0.01f, 128.0f);
+                        
+                        // Textures
+                        ImGui::Text("DiffuseTexture: %llu", material->DiffuseTextureHandle);
+                        if (ImGui::BeginDragDropTarget())
+                        {
+                            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_DND_Texture"))
+                            {
+                                Core::AssetHandle handle = *(uint64_t*)payload->Data;
+                                material->DiffuseTextureHandle = handle;
+                            }
+                            ImGui::EndDragDropTarget();
+                        }
+
+                        ImGui::TreePop();
+                    }
+
+                    ImGui::TreePop();
+                }
+                
+                ImGui::TreePop();
+                ImGui::SetCursorPosX(25);
+                if (ImGui::Button("Add Component", ImVec2(150.0f, 40.0f)))
+                {
+                    ImVec2 button_pos = ImGui::GetItemRectMin();  // Get top-left corner of button
+                    ImVec2 button_size = ImGui::GetItemRectSize(); // Get button size
+                    ImGui::SetNextWindowPos(ImVec2(button_pos.x, button_pos.y + button_size.y)); // Set position directly below the button
+                    ImGui::OpenPopup("AddComponentPopup");
+                }
+
+            }
+
+            // Dropdown menu logic
+            if (ImGui::BeginPopup("AddComponentPopup"))
+            {
+                auto& ECS_Registry = OPENED_PROJECT.GetScene().GetRegistry();
+                if (ImGui::MenuItem("TransformComponent"))
+                {
+                    // Add TransformComponent to the selected entity
+                    if (!ECS_Registry.HasComponent<TransformComponent>(e))
+                    {
+                        TransformComponent transform{};
+                        transform.Position = { 0.0f, 0.0f, 0.0f };
+                        transform.Rotation = { 0.0f, 0.0f, 0.0f };
+                        transform.Scale = { 1.0f, 1.0f, 1.0f };
+
+                        ECS_Registry.AddComponent<TransformComponent>(e, transform);
+                    }
+                }
+
+                if (ImGui::MenuItem("ModelComponent"))
+                {
+                    if (!ECS_Registry.HasComponent<ModelComponent>(e))
+                    {
+                        ECS_Registry.AddComponent<ModelComponent>(e, ModelComponent{ 0 });
+                    }
+                }
+
+                ImGui::EndPopup();
+            }
+        });
+    }
+    ImGui::End();
+}
 
 void EditorLayer::OnEvent(Core::Events::Event* event)
 {

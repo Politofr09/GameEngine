@@ -3,36 +3,40 @@
 #include <GL/glew.h>
 #include <iostream>
 #include <vector>
+#include "Application.h"
 
 namespace Core::Gfx
 {
 
-    Font& Font::Create(AssetRegistry& registry, const std::string &path, int fontSize,const std::string &name)
+    AssetHandle Font::Create(const std::string &path, const std::string &name, int fontSize)
     {
-        Font* font = new Font(path, fontSize, name);
+		AssetMetadata metadata
+		{
+			name,
+			path,
+			UUID()
+		};
+        Font* font = new Font(metadata, fontSize);
 
 		if (font->Load())
 		{
-			registry.Track(font);
-			return *font;
+			return OPENED_PROJECT.GetRegistry().Track(font);
 		}
 
-		return Font();
+		return 0;
 	}
 
-	Font::Font(const std::string& path, int fontSize, const std::string& name)
+	Font::Font(const AssetMetadata& metadata, int fontSize)
+		: Asset(metadata), m_Size(fontSize)
 	{
-		m_FileDirectory = path;
-		m_Size = fontSize;
-		m_Name = name;
 	}
 
     bool Font::Load()
     {
-		std::ifstream file(m_FileDirectory, std::ios::binary | std::ios::ate);
+		std::ifstream file(m_Metadata.Path, std::ios::binary | std::ios::ate);
 		if (!file.is_open())
 		{
-			throw std::runtime_error("Failed, to open font file: " + m_FileDirectory);
+			throw std::runtime_error("Failed, to open font file: " + m_Metadata.Path);
 			return false;
 		}
 
@@ -42,7 +46,7 @@ namespace Core::Gfx
 		std::vector<unsigned char> fontData(size);
 		if (!file.read(reinterpret_cast<char*>(fontData.data()), size))
 		{
-			throw std::runtime_error("Failed to read font file: " + m_FileDirectory);
+			throw std::runtime_error("Failed to read font file: " + m_Metadata.Path);
 			return false;
 		}
 
@@ -81,6 +85,8 @@ namespace Core::Gfx
 
 			m_Characters.insert({ c, ch });
 		}
+		
+		m_Loaded = true;
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 

@@ -28,14 +28,13 @@ namespace Core::Gfx
 	public:
 		DECLARE_ASSET_TYPE("Shader")
 
-		static Shader& Create(AssetRegistry& registry, const std::string& shaderPath, const std::string& name);
+		static Shader& Create(AssetRegistry& registry, const std::string& path, const std::string& name);
 
+		// Default constructor
 		Shader() = default;
-		//Shader& operator=(const Shader& other)
-		//{
-		//	this->m_RendererID = other.m_RendererID;
-		//	return *this;
-		//}
+
+		// Metadata constructor (for (de)serializing)
+		Shader(const AssetMetadata& metadata);
 
 		bool Load() override;
 		bool UnLoad() override;
@@ -55,11 +54,9 @@ namespace Core::Gfx
 		void SetVector4(const std::string& uniformName, glm::vec4 value);
 		void SetMatrix(const std::string& uniformName, glm::mat4 value);
 	
-	private:
-		Shader(const std::string& shaderPath, const std::string& name);
 
 	private:
-		unsigned int m_RendererID;
+		unsigned int m_RendererID = 0;
 	};
 
 }
