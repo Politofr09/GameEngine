@@ -2,6 +2,7 @@
 #include <imgui/imgui.h>
 #include <imgui/IconsFontAwesome5.h>
 #include <tinyfiledialogs/tinyfiledialogs.h>
+#include <filesystem>
 
 #include "EditorLayer.h"
 #include "Core/Keyboard.h"
@@ -147,6 +148,7 @@ void EditorLayer::OnImGuiRender()
     if (showThemeSwitcher)      ShowThemeSwitcher(&showThemeSwitcher);
     if (showECSPanel)           ShowECSPanel(&showECSPanel);
     if (showRenderingSettings)  ShowRenderingSettings(&showRenderingSettings);
+    if (showContentBrowser)     ShowContentBrowser(&showContentBrowser);
 
     static ImVec2 availableSpace = ImVec2();
     ImGui::GetStyle().WindowPadding = { 1.5f, 1.5f };
@@ -276,7 +278,6 @@ void EditorLayer::ShowAssetRegistry(bool* p_open)
             for (const auto& pair : OPENED_PROJECT.GetRegistry().GetAllResources())
             {
                 uint64_t assetID = pair.first;
-                
 
                 ImGui::TableNextRow();
 
@@ -303,7 +304,7 @@ void EditorLayer::ShowAssetRegistry(bool* p_open)
                 ImGui::TextUnformatted(pair.second->GetType());
                 // Asset ID
                 ImGui::TableSetColumnIndex(2);
-                ImGui::Text("%x", assetID);
+                ImGui::Text("%llu", assetID);
 
                 // Preview
                 ImGui::TableSetColumnIndex(3);
@@ -394,9 +395,9 @@ void EditorLayer::ShowRenderingSettings(bool* p_open)
 
 
         ImGui::TextColored(ImVec4(0.05f, 1, 0.1f, 1), "Stats");
-        ImGui::PlotLines("Frame Times (ms)", frameTimes.data(), numFrames, currentIndex, nullptr, 0.0f, *std::max_element(frameTimes.begin(), frameTimes.end()), ImVec2(80, 30));
+        ImGui::PlotLines("Frame Times (ms)", frameTimes.data(), numFrames, currentIndex, nullptr, 0.0f, 50, ImVec2(80, 30));
         ImGui::SameLine();
-        ImGui::PlotLines("Frame Rates (FPS)", frameRates.data(), numFrames, currentIndex, nullptr, 0.0f, *std::max_element(frameRates.begin(), frameRates.end()), ImVec2(80, 30));
+        ImGui::PlotLines("Frame Rates (FPS)", frameRates.data(), numFrames, currentIndex, nullptr, 0.0f, 1000, ImVec2(80, 30));
 
         // Delta Time
         ImGui::Text("Delta Time: ");
@@ -623,6 +624,135 @@ void EditorLayer::ShowECSPanel(bool* p_open)
     }
     ImGui::End();
 }
+
+void EditorLayer::ShowContentBrowser(bool* p_open)
+{
+    if (ImGui::Begin("Content Browser", p_open))
+    {
+        static char directoryBuf[128] = "res";
+
+        ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x / 10 );
+
+        if (ImGui::Button(ICON_FA_ARROW_LEFT " Back"))
+        {
+            std::string pathStr = directoryBuf;
+
+            size_t pos = pathStr.find_last_of("/\\");
+
+            if (pos != std::string::npos)
+            {
+                pathStr = pathStr.substr(0, pos);
+            }
+
+            if (pathStr.empty())
+                pathStr = "res";
+
+            std::strncpy(directoryBuf, pathStr.c_str(), sizeof(directoryBuf) - 1);
+            directoryBuf[sizeof(directoryBuf) - 1] = '\0';
+        }
+
+        ImGui::SameLine();
+        ImGui::InputText("Directory", directoryBuf, sizeof(directoryBuf));
+
+        ImGui::SameLine();
+        if (ImGui::Button(ICON_FA_FOLDER))
+        {
+            const char* dir = tinyfd_selectFolderDialog("Select a directory", "/res");
+            if (dir)
+            {
+                std::strncpy(directoryBuf, dir, sizeof(directoryBuf) - 1);
+                directoryBuf[sizeof(directoryBuf) - 1] = '\0';
+            }
+        }
+
+        if (ImGui::IsItemHovered())
+        {
+            if (ImGui::BeginTooltip())
+            {
+                ImGui::Text("Select folder");
+                ImGui::EndTooltip();
+            }
+        }
+
+        if (std::filesystem::exists(directoryBuf))
+        {
+            ImGui::BeginChild("Folders", ImVec2(ImGui::GetContentRegionAvail().x / 5, ImGui::GetContentRegionAvail().y), true);
+            
+            // Recursive lambda for child window; only folders
+            std::function<void(const char*)> FolderRecursive = [&](const char* directory)
+            {
+                for (const auto& entry : std::filesystem::directory_iterator(directory))
+                {
+                    if (entry.is_directory())
+                    {
+                        std::string folderName = entry.path().filename().string();
+                        if (ImGui::TreeNode(folderName.c_str()))
+                        {
+                            FolderRecursive(entry.path().string().c_str());
+                            ImGui::TreePop();
+                        }
+                    }
+                }
+            };
+
+            FolderRecursive(directoryBuf);
+            ImGui::EndChild();
+
+            // Main thumbnail view
+            ImGui::SameLine();
+            ImGui::BeginChild("Content", ImVec2(0, ImGui::GetContentRegionAvail().y), true);
+            
+            float contentWidth = ImGui::GetContentRegionAvail().x;
+            int columns = static_cast<int>(contentWidth / 100);
+            if (columns < 1) columns = 1;
+
+
+            ImGui::Columns(columns, nullptr, false);
+
+            for (const auto& entry : std::filesystem::directory_iterator(directoryBuf))
+            {
+                std::string fileName = entry.path().filename().string();
+
+                const char* icon = ICON_FA_QUESTION;
+                if (entry.is_directory()) icon = ICON_FA_FOLDER;
+                
+                const std::string ext = entry.path().extension().string();
+                if (ext == ".jpg" || ext == ".png") icon = ICON_FA_FILE_IMAGE;
+                if (ext == ".ttf") icon = ICON_FA_FILE_ARCHIVE;
+                if (ext == ".glsl") icon = ICON_FA_FILE_CODE;
+
+                if (ImGui::Button(icon, ImVec2(100, 100)))
+                {
+                    std::strncpy(directoryBuf, entry.path().string().c_str(), sizeof(directoryBuf) - 1);
+                    directoryBuf[sizeof(directoryBuf) - 1] = '\0';
+                }
+
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::BeginTooltip();
+                    ImGui::Text("%s", fileName.c_str());
+                    ImGui::EndTooltip();
+                }
+
+                ImGui::TextWrapped(fileName.c_str());
+
+                ImGui::NextColumn();
+            }
+
+            ImGui::Columns(1);  // End the column layout
+            ImGui::EndChild();
+        }
+        else
+        {
+            ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x / 20);
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
+            ImGui::Text("Please enter a valid directory!");
+            ImGui::PopStyleColor();
+        }
+    }
+    ImGui::End();
+}
+
 
 void EditorLayer::OnEvent(Core::Events::Event* event)
 {

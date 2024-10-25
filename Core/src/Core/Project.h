@@ -31,6 +31,8 @@ namespace Core
 		AssetRegistry& GetRegistry() { return m_AssetRegistry; }
 		Scene& GetScene() { return m_Scene; }
 
+		std::string GetPath() const { return m_ScenePath; }
+
 	private:
 		AssetRegistry m_AssetRegistry;
 		std::string m_AssetRegistryPath = "";

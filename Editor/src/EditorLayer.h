@@ -34,7 +34,7 @@ private:
     //void UpdateCameraController();
     void DrawViewportImGui();
 
-    // UI:
+    // UI: (BIG TODO: EditorLayer is like 700 lines...)
     bool showCameraControl = true;
     void ShowCameraControlImgui(bool* p_open);
 
@@ -52,4 +52,7 @@ private:
 
     bool showECSPanel = true;
     void ShowECSPanel(bool* p_open);
+
+    bool showContentBrowser = true;
+    void ShowContentBrowser(bool* p_open);
 };

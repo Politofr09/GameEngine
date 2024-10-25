@@ -4,4 +4,4 @@ newmtl MAT_F42C3C
 	 Ks 0.752941 0.752941 0.752941
 	 illum 4.59083e-304
 	 Ns 8
-	 map_Kd zebra-atlas.jpg
+	 map_Kd ../Textures/zebra-atlas.jpg
