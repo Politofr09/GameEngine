@@ -23,7 +23,7 @@ project "Editor"
     }
 
     libdirs {
-        "../vendor/GLFW/bin/%{cfg.buildcfg}",
+        "../vendor/GLFW/bin/glfw/",
         "../vendor/GLEW/bin/%{cfg.buildcfg}",
         "../vendor/assimp/bin/%{cfg.buildcfg}",
         "../Core/bin/%{cfg.buildcfg}"
@@ -31,8 +31,8 @@ project "Editor"
 
     links {
         "Core",
+        "glfw",
         "glew",
-        "GLFW",
         "assimp",
     }
 

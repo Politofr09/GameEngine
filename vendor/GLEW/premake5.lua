@@ -1,5 +1,4 @@
 project "GLEW"
-    group "Dependencies"
     kind "StaticLib"
     language "C"
 

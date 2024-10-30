@@ -10,15 +10,15 @@ workspace "GameEngine"
         "YAML_CPP_STATIC_DEFINE"    
     }
 
-    include "vendor/assimp"
-    include "vendor/GLEW"
-    include "vendor/GLFW"
-    include "vendor/yaml-cpp"
-
-    -- Projects    
     group "Engine"    
         include "Core"
         include "Editor"
+        
+    group "Dependencies"
+        include "vendor/GLEW"
+        include "vendor/GLFW"
+        include "vendor/yaml-cpp"
+        include "vendor/assimp"
 
 	filter "configurations:Debug"
         symbols "On"
