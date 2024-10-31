@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <fstream>
 
+#include "Instrumentor.h"
+
 namespace Core
 {
 
@@ -11,6 +13,8 @@ namespace Core
 
 	Application::Application(const std::string& name, int window_width, int window_height)
 	{
+		CORE_PROFILE_BEGIN_SESSION("App", "ProfilingResults.json");
+
 		s_Instance = this;
 		m_Window = new Window(window_width, window_height, name);
 
@@ -81,6 +85,8 @@ namespace Core
 
 		m_Window->Close();
 		m_CurrentProject.GetRegistry().Free();
+
+		CORE_PROFILE_END_SESSION();
 	}
 
 	void Application::LoadProject(const std::string& filename)

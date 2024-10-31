@@ -11,6 +11,7 @@
 #include "Core/Mouse.h"
 #include "Core/AssetRegistry.h"
 #include "Core/Application.h"
+#include "Core/Instrumentor.h"
 #include "Events/Event.h"
 
 #include "Renderer/Renderer.h"
@@ -27,6 +28,8 @@ using namespace Core;
 
 void EditorLayer::OnAttach()
 {
+    CORE_PROFILE_FUNCTION();
+
     // Setup event
 	Events::Dispatcher::Subscribe(std::bind(&EditorLayer::OnEvent, this, std::placeholders::_1));
 	
@@ -47,6 +50,8 @@ static int FONT_SCALE = 3;
 
 void EditorLayer::OnUpdate()
 {
+    //CORE_PROFILE_FUNCTION();
+
     // UpdateCameraController();
     //shader->SetFloat("uTime", (float)glfwGetTime());
     Renderer::SetBackgroundColor({ 0.2f, 0.3f, 0.3f });
@@ -65,6 +70,8 @@ void EditorLayer::OnImGuiRender()
 {
     // ImGui content
     //ImGui::Begin("Menubar", (bool*)0, ImGuiWindowFlags_MenuBar);
+    //CORE_PROFILE_FUNCTION();
+
     if (ImGui::BeginMenuBar())
     {
         if (ImGui::BeginMenu("File"))
@@ -140,8 +147,6 @@ void EditorLayer::OnImGuiRender()
 
 void EditorLayer::ShowCameraControlImgui(bool* p_open)
 {
-    //if (!p_open) return;
-
     if (ImGui::Begin("Switch perspective", p_open))
     {
 

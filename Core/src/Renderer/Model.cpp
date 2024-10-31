@@ -6,41 +6,13 @@
 #include "Model.h"
 #include "Core/Utils.h"
 #include "Core/Application.h"
-
-#include <chrono>
-
-class Timer
-{
-public:
-	Timer() { Reset(); }
-	void Reset() { m_Start = std::chrono::high_resolution_clock::now(); }
-	float Elapsed() const { return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - m_Start).count() * 0.001f * 0.001f; }
-	float ElapsedMillis() const { return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - m_Start).count() * 0.001f; }
-private:
-	std::chrono::time_point<std::chrono::high_resolution_clock> m_Start;
-};
-
-class ScopedTimer
-{
-public:
-	ScopedTimer(std::string_view name) : m_Name(name) {}
-	~ScopedTimer()
-	{
-		float time = m_Timer.ElapsedMillis();
-		std::cout << m_Name << " - " << time << "ms\n";
-	}
-private:
-	Timer m_Timer;
-	std::string m_Name;
-};
+#include "Core/Instrumentor.h"
 
 namespace Core::Gfx
 {
 
 	AssetHandle Model::Create(const std::string& path, const std::string& name)
 	{
-		std::cout << "Creating model" << std::endl;
-
 		AssetMetadata metadata
 		{
 			name,
@@ -76,11 +48,10 @@ namespace Core::Gfx
 
 	bool Model::Load()
 	{
-		
-		ScopedTimer* timer = new ScopedTimer("Model assimp loading");
+		CORE_PROFILE_FUNCTION();
+
 		Assimp::Importer importer;
 		const aiScene* scene = importer.ReadFile(m_Metadata.Path, aiProcess_FlipUVs | aiProcess_Triangulate | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph);
-		delete timer;
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		{
@@ -123,10 +94,6 @@ namespace Core::Gfx
 	{
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
-		
-
-		{
-		ScopedTimer timer("for loop");
 
 		vertices.reserve(mesh->mNumVertices);
 		for (unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -166,7 +133,6 @@ namespace Core::Gfx
 			indices.emplace_back(mesh->mFaces[i].mIndices[0]);
 			indices.emplace_back(mesh->mFaces[i].mIndices[1]);
 			indices.emplace_back(mesh->mFaces[i].mIndices[2]);
-		}
 		}
 
 		return Mesh(vertices, indices);

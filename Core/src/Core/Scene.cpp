@@ -3,6 +3,8 @@
 #include "Utils.h"
 #include "Ecs/Common.h"
 #include "Ecs/VisualComponents.h"
+#include "Instrumentor.h"
+
 #include <fstream>
 
 namespace Core
@@ -48,9 +50,10 @@ namespace Core
 		return entity;
 	}
 
-
 	void Scene::Serialize(const std::string& path)
 	{
+		CORE_PROFILE_FUNCTION();
+
 		YAML::Emitter out;
 		out << YAML::BeginMap; // Root map
 		{
@@ -75,6 +78,8 @@ namespace Core
 
 	bool Scene::Deserialize(const std::string& path)
 	{
+		CORE_PROFILE_FUNCTION();
+
 		YAML::Node data;
 		try
 		{

@@ -1,4 +1,6 @@
 #include "Project.h"
+#include "Instrumentor.h"
+
 #include <fstream>
 
 namespace Core
@@ -6,6 +8,8 @@ namespace Core
 
 	void Project::Serialize(const std::string& path)
 	{
+		CORE_PROFILE_FUNCTION();
+
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 		out << YAML::Key << "Project" << YAML::Value << YAML::BeginMap;
@@ -26,6 +30,8 @@ namespace Core
 
 	bool Project::Deserialize(const std::string& path)
 	{
+		CORE_PROFILE_FUNCTION();
+
 		YAML::Node data;
 		try
 		{

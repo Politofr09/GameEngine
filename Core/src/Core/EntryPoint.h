@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Application.h"
+#include "Application.h"
 
 extern Core::Application* Core::CreateApplication(ApplicationCommandLineArgs args);
 
@@ -14,6 +14,7 @@ int main(int argc, char** argv)
     // Create application instance and run it
     auto application = Core::CreateApplication(args);
     application->Run();
+    delete application;
 
     return 0;
 }
