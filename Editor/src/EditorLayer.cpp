@@ -5,10 +5,10 @@
 #include <filesystem>
 
 #include "EditorLayer.h"
+#include "ImGuiLayer.h"
 
 #include "Core/Keyboard.h"
 #include "Core/Mouse.h"
-#include "ImGuiLayer.h"
 #include "Core/AssetRegistry.h"
 #include "Core/Application.h"
 #include "Events/Event.h"
@@ -25,31 +25,15 @@
 using namespace Core::Gfx;
 using namespace Core;
 
-// Temporary
-// Will be soon removed (finally!)
-Core::AssetHandle modelhandle1;
-Core::AssetHandle modelhandle2;
-Core::AssetHandle fonthandle;
-Light light;
-Core::AssetHandle texturehandle;
-
 void EditorLayer::OnAttach()
 {
     // Setup event
 	Events::Dispatcher::Subscribe(std::bind(&EditorLayer::OnEvent, this, std::placeholders::_1));
 	
-    // Setup OpenGL renderer
-    Renderer::Init();
+    // Setup *OpenGL* renderer
+    Renderer::Init(Application::Get()->GetWindow()->GetWidth(), Application::Get()->GetWindow()->GetHeight());
     Renderer2D::Init();
     TextRenderer::Init();
-
-    // This shit is all (hopefully) temporary. Once serialization is *fully* added all of this manual shitty asset loading will be gone.
-    //modelhandle1 = Model::Create("res/Monkey.obj", "3DMonkey");
-    //modelhandle2 = Model::Create("res/bunny.obj", "Bunny");
-
-    //texturehandle = Texture::Create("res/water.jpg", "WaterTexture");
-    //
-    //fonthandle = Font::Create("res/ocr-a-extended.ttf", "OCR-Font", 100);
 
     /**** Setup the camera(s) ****/
     int width = Application::Get()->GetWindow()->GetWidth();
@@ -57,10 +41,6 @@ void EditorLayer::OnAttach()
 
     m_Cam.SetAspectRatio((float)width / height);
     m_Cam2d = Core::Gfx::OrthographicCamera(0.0f, (float)width, (float)height, 0.0f);
-
-    m_FrameBuffer = FrameBuffer(width, height);
-
-    light = Light();
 }
 
 static int FONT_SCALE = 3;
@@ -69,42 +49,16 @@ void EditorLayer::OnUpdate()
 {
     // UpdateCameraController();
     //shader->SetFloat("uTime", (float)glfwGetTime());
-    m_FrameBuffer.Bind();
-    Renderer::OnViewportResize(m_FrameBuffer.GetWidth(), m_FrameBuffer.GetHeight());
     Renderer::SetBackgroundColor({ 0.2f, 0.3f, 0.3f });
     Renderer::Clear();
     Renderer::Begin(m_Cam);
     {
         Renderer::Clear();
 
-        glm::mat4 trans = glm::mat4(1);
-
-        //auto& model1 = *OPENED_PROJECT.GetRegistry().Get<Model>(modelhandle1);
-        //Renderer::DrawModel(model1, trans);
-
-        //trans = glm::translate(trans, glm::vec3(10, 0, 0));
-
-        //auto& model2 = *OPENED_PROJECT.GetRegistry().Get<Model>(modelhandle2);
-        //Renderer::DrawModel(model2, trans);
-
         // Eventually this will be more complex, we will have a list of scenes that we can edit with the editor layer
         Renderer::RenderScene(Application::Get()->GetCurrentProject().GetScene());
     }
     Renderer::End();
-
-    //TextRenderer::Begin(m_Cam2d);
-    //{
-    //    auto& font = *OPENED_PROJECT.GetRegistry().Get<Font>(fonthandle);
-
-    //    std::string message = "Frametime " + std::to_string(m_Application->GetWindow()->GetDeltaTime()) + "ms";
-
-    //    glm::ivec2 offset = font.MeasureText(message, FONT_SCALE);
-    //    float x = m_FrameBuffer.GetWidth() - offset.x - 10;
-    //    float y = offset.y + 10;
-    //    TextRenderer::DrawTextEx(font, message, x, y, FONT_SCALE, glm::vec3(sin(glfwGetTime()), cos(glfwGetTime()), 1));
-    //}
-    //TextRenderer::End();
-    m_FrameBuffer.UnBind();
 }
 
 void EditorLayer::OnImGuiRender()
@@ -137,7 +91,6 @@ void EditorLayer::OnImGuiRender()
             ImGui::MenuItem("Toggle Camera Controll", NULL, &showCameraControl);
             ImGui::MenuItem("Toggle Theme Switcher", NULL, &showThemeSwitcher);
             ImGui::MenuItem("Toggle Asset Registry", NULL, &showAssetRegistry);
-            ImGui::MenuItem("Toggle Material Editor", NULL, &showMaterialEditor);
             ImGui::MenuItem("Toggle Statistics", NULL, &showRenderingSettings);
             ImGui::MenuItem("Toggle ECS panel", NULL, &showECSPanel);
             ImGui::EndMenu();
@@ -150,7 +103,6 @@ void EditorLayer::OnImGuiRender()
 
     if (showCameraControl)      ShowCameraControlImgui(&showCameraControl);
     if (showAssetRegistry)      ShowAssetRegistry(&showAssetRegistry);
-    if (showMaterialEditor)     ShowMaterialEditor(&showMaterialEditor);
     if (showThemeSwitcher)      ShowThemeSwitcher(&showThemeSwitcher);
     if (showECSPanel)           ShowECSPanel(&showECSPanel);
     if (showRenderingSettings)  ShowRenderingSettings(&showRenderingSettings);
@@ -163,19 +115,19 @@ void EditorLayer::OnImGuiRender()
         if (availableSpace.x != ImGui::GetContentRegionAvail().x || availableSpace.y != ImGui::GetContentRegionAvail().y)
         {
             availableSpace = ImGui::GetContentRegionAvail();
-            m_FrameBuffer.Resize((int)availableSpace.x, (int)availableSpace.y);
+            Renderer::OnViewportResize((int)availableSpace.x, (int)availableSpace.y);
             m_Cam.OnViewportResize((int)availableSpace.x, (int)availableSpace.y);
             m_Cam2d.OnViewportResize((int)availableSpace.x, (int)availableSpace.y);
         }
-
-        m_FrameBuffer.SetPosition(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y + 6);
 
         ImVec2 min = ImGui::GetCursorScreenPos();
         ImVec2 max = ImVec2(min.x + availableSpace.x, min.y + availableSpace.y);
         ImGui::GetWindowDrawList()->AddRect(min, max, ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)), 6.0f, ImDrawFlags_RoundCornersAll, 6.0f);
 
+        FrameBuffer fb = Renderer::GetFramebuffer();
+
         ImGui::BeginChild("Viewport", availableSpace, false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoMove);
-        DisplayRoundedImage((ImTextureID)m_FrameBuffer.GetTextureID(), ImVec2(m_FrameBuffer.GetWidth(), m_FrameBuffer.GetHeight()), 6.0f, ImVec2(0, 1), ImVec2(1, 0));
+        DisplayRoundedImage((ImTextureID)fb.GetTextureID(), ImVec2(fb.GetWidth(), fb.GetHeight()), 6.0f, ImVec2(0, 1), ImVec2(1, 0));
         if (ImGui::IsWindowHovered())
         {
             m_Cam.Move();
@@ -196,7 +148,7 @@ void EditorLayer::ShowCameraControlImgui(bool* p_open)
         static float in_FOV = 75.0F;
         if (ImGui::SliderFloat("FOV", &in_FOV, 30.0f, 120.0f))
         {
-            float aspectRatio = m_FrameBuffer.GetAspectRatio();
+            float aspectRatio = Renderer::GetFramebuffer().GetAspectRatio();
             m_Cam.SetProjectionMatrix(glm::perspective(glm::radians(in_FOV), aspectRatio, 0.01f, 1000.0f));
             //shader->SetMatrix("uProjection", m_Cam.GetProjectionMatrix());
         }
@@ -205,7 +157,7 @@ void EditorLayer::ShowCameraControlImgui(bool* p_open)
         if (ImGui::Button("Reset"))
         {
             in_FOV = 75.0F;
-            float aspectRatio = m_FrameBuffer.GetAspectRatio();
+            float aspectRatio = Renderer::GetFramebuffer().GetAspectRatio();
             m_Cam.SetProjectionMatrix(glm::perspective(glm::radians(in_FOV), aspectRatio, 0.01f, 1000.0f));
             //shader->SetMatrix("uProjection", m_Cam.GetProjectionMatrix());
         }
@@ -327,48 +279,6 @@ void EditorLayer::ShowAssetRegistry(bool* p_open)
             }
             ImGui::EndTable();
         }
-    }
-    ImGui::End();
-}
-
-void EditorLayer::ShowMaterialEditor(bool* p_open)
-{
-    //if (!p_open) return;
-
-    if (ImGui::Begin("Material editor", p_open))
-    {
-        auto& registry = Application::Get()->GetCurrentProject().GetRegistry();
-
-        Model& model = *registry.Get<Model>(modelhandle1);
-        Material& material = *registry.Get<Material>(model.GetMaterialHandle());
-        
-        // Shader Type Selector
-        const char* shaderTypes[] = { "None", "FlatShading", "PhongShading" }; // Update with your actual shader types
-        static int currentShaderType = static_cast<int>(material.m_ShaderType);
-        if (ImGui::Combo("Shader Type", &currentShaderType, shaderTypes, IM_ARRAYSIZE(shaderTypes)))
-        {
-            material.m_ShaderType = static_cast<ShaderType>(currentShaderType);
-        }
-
-        // Color Slider
-        ImGui::ColorEdit3("Color", &material.Color[0]);
-
-        // Ambient Slider
-        ImGui::ColorEdit3("Ambient", &material.Ambient[0]);
-
-        // Diffuse Slider
-        ImGui::ColorEdit3("Diffuse", &material.Diffuse[0]);
-
-        // Specular Slider
-        ImGui::ColorEdit3("Specular", &material.Specular[0]);
-        
-        // Shininess Slider
-        ImGui::SliderFloat("Shininess", &material.Shininess, 0.01f, 128.0f);
-
-        // Light settings
-        ImGui::SliderFloat3("Light Position", glm::value_ptr(light.Position), -500.0f, 500.0f);
-        //std::cout << light.Position.x << std::endl;
-        Renderer::SetLight(light);
     }
     ImGui::End();
 }

@@ -11,6 +11,7 @@ namespace Core::Gfx
     Light Renderer::m_SceneLight;
     FlatShading Renderer::m_FlatShading;
     PhongShading Renderer::m_PhongShading;
+    FrameBuffer Renderer::m_Framebuffer;
 
     void GLClearError()
     {
@@ -31,7 +32,7 @@ namespace Core::Gfx
     {
     }
 
-    void Renderer::Init()
+    void Renderer::Init(int width, int height)
     {
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
@@ -42,6 +43,8 @@ namespace Core::Gfx
 
         m_PhongShading.Load();
         //registry.Track(m_PhongShading.ShaderProgram);
+
+        m_Framebuffer.Create(width, height);
     }
 
     void Renderer::EnableCulling()
@@ -87,10 +90,12 @@ namespace Core::Gfx
     void Renderer::Begin(const Camera& cam)
     {
         m_ActiveCamera = cam;
+        m_Framebuffer.Bind();
     }
 
     void Renderer::End()
     {
+        m_Framebuffer.UnBind();
     }
 
     void Renderer::DrawModel(Model& model, glm::mat4 transform)
@@ -134,11 +139,7 @@ namespace Core::Gfx
             break;
             // Add other shader types as needed
         }
-        //std::cout << m_SceneLight.Position.x << std::endl;
-        //Texture texture = model.GetMaterial().DiffuseTexture;
-        //texture.Bind();
-        //glActiveTexture(GL_TEXTURE0);
-        
+
         for (auto& mesh : model.GetMeshes())
         {
             mesh.GetVertexArray().Bind();
@@ -169,6 +170,7 @@ namespace Core::Gfx
 
     void Renderer::OnViewportResize(int width, int height)
     {
+        m_Framebuffer.Resize(width, height);
         glViewport(0, 0, width, height);
     }
 

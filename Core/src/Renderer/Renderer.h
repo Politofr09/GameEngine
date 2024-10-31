@@ -28,7 +28,7 @@ namespace Core::Gfx
     public:
         Renderer();
 
-        static void Init();
+        static void Init(int width, int height);
 
         static void SetBackgroundColor(glm::vec3 color);
 
@@ -44,6 +44,7 @@ namespace Core::Gfx
         static void RenderScene(Scene& scene);
 
         static void OnViewportResize(int width, int height); // Call this when window / framebuffer changes
+        static FrameBuffer& GetFramebuffer() { return m_Framebuffer; }
 
         // Settings
         static void EnableCulling();
@@ -56,6 +57,7 @@ namespace Core::Gfx
         static void DisableWireframeMode();
 
     private:
+        static FrameBuffer m_Framebuffer;
         static Camera m_ActiveCamera;
         static Light m_SceneLight;
         static FlatShading m_FlatShading;

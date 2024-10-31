@@ -5,7 +5,6 @@
 #include "Renderer/Shader.h"
 #include "Renderer/Camera.h"
 #include "Renderer/OrthographicCamera.h"
-#include "Renderer/FrameBuffer.h"
 #include "Core/Utils.h"
 #include "Events/InputEvents.h"
 #include "Events/WindowEvents.h"
@@ -29,7 +28,6 @@ public:
 private:
     Core::Gfx::Camera m_Cam;
     Core::Gfx::OrthographicCamera m_Cam2d;
-    Core::Gfx::FrameBuffer m_FrameBuffer;
 
     //void UpdateCameraController();
     void DrawViewportImGui();
@@ -43,9 +41,6 @@ private:
 
     bool showAssetRegistry = true;
     void ShowAssetRegistry(bool* p_open);
-
-    bool showMaterialEditor = true;
-    void ShowMaterialEditor(bool* p_open);
 
     bool showRenderingSettings = true;
     void ShowRenderingSettings(bool* p_open);
