@@ -27,7 +27,7 @@ namespace Core::Gfx
         
         if (material->Load())
         {
-            return OPENED_PROJECT.GetRegistry().Track(material);
+            return Application::Get()->GetCurrentProject().GetRegistry().Track(material);
         }
 
         return 0;
@@ -93,7 +93,7 @@ namespace Core::Gfx
         // Attempt to retrieve existing diffuse from registry
         if (m_AssimpSrcMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &str) == AI_SUCCESS)
         {
-            AssetHandle existingDiffuse = OPENED_PROJECT.GetRegistry().FindByPath<Texture>(std::string(modelDirectory + str.C_Str()));
+            AssetHandle existingDiffuse = Application::Get()->GetCurrentProject().GetRegistry().FindByPath<Texture>(std::string(modelDirectory + str.C_Str()));
             if (existingDiffuse != 0)
             {
                 DiffuseTextureHandle = existingDiffuse;
@@ -110,7 +110,7 @@ namespace Core::Gfx
 
         if (m_AssimpSrcMaterial->GetTexture(aiTextureType_SPECULAR, 0, &str) == AI_SUCCESS)
         {
-            AssetHandle existingSpecular = OPENED_PROJECT.GetRegistry().FindByPath<Texture>(std::string(modelDirectory + str.C_Str()));
+            AssetHandle existingSpecular = Application::Get()->GetCurrentProject().GetRegistry().FindByPath<Texture>(std::string(modelDirectory + str.C_Str()));
             if (existingSpecular != 0)
             {
                 SpecularTextureHandle = existingSpecular;
@@ -128,7 +128,7 @@ namespace Core::Gfx
         // Attempt to retrieve existing normals from registry
         if (m_AssimpSrcMaterial->GetTexture(aiTextureType_NORMALS, 0, &str) == AI_SUCCESS)
         {
-            AssetHandle existingNormal = OPENED_PROJECT.GetRegistry().FindByPath<Texture>(std::string(modelDirectory + str.C_Str()));
+            AssetHandle existingNormal = Application::Get()->GetCurrentProject().GetRegistry().FindByPath<Texture>(std::string(modelDirectory + str.C_Str()));
             if (existingNormal != 0)
             {
                 NormalTextureHandle = existingNormal;

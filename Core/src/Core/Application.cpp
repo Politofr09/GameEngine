@@ -7,17 +7,13 @@
 namespace Core
 {
 
-	Project Application::s_CurrentProject;
+	Application* Application::s_Instance = nullptr;
 
 	Application::Application(const std::string& name, int window_width, int window_height)
 	{
-
+		s_Instance = this;
 		m_Window = new Window(window_width, window_height, name);
 
-		m_ImGuiLayer = new ImGuiLayer(this);
-		m_ImGuiLayer->SetupImGui(this);
-
-		Events::Dispatcher::Subscribe(std::bind(&ImGuiLayer::OnEvent, m_ImGuiLayer, std::placeholders::_1));
 		Events::Dispatcher::Subscribe(std::bind(&Application::OnEvent, this, std::placeholders::_1));
 
 		LoadProject("Test1.yaml");
@@ -49,20 +45,23 @@ namespace Core
 				layer->OnUpdate();
 			}
 
-			// ImGui
-			m_ImGuiLayer->BeginImGuiContent();
+			//// ImGui
+			//m_ImGuiLayer->BeginImGuiContent();
 
-			for (auto& layer : m_Layers)
-			{
-				layer->OnImGuiRender();
-			}
+			//for (auto& layer : m_Layers)
+			//{
+			//	layer->OnImGuiRender();
+			//}
 
-			m_ImGuiLayer->EndImGuiContent();
+			//m_ImGuiLayer->EndImGuiContent();
+
+			// Client specific logic
+			Update();
+
 			Events::Dispatcher::ProcessEvents();
 			m_Window->Update();
 		}
 
-		s_CurrentProject.Serialize(m_OpenedProjectPath);
 	}
 
 	void Application::OnEvent(Events::Event* event)
@@ -71,7 +70,7 @@ namespace Core
 
 	Application::~Application()
 	{
-		delete m_ImGuiLayer;
+		m_CurrentProject.Serialize(m_OpenedProjectPath);
 
 		for (auto& layer : m_Layers)
 		{
@@ -81,14 +80,14 @@ namespace Core
 		m_Layers.clear();
 
 		m_Window->Close();
-		s_CurrentProject.GetRegistry().Free();
+		m_CurrentProject.GetRegistry().Free();
 	}
 
 	void Application::LoadProject(const std::string& filename)
 	{
 		m_OpenedProjectPath = filename;
-		s_CurrentProject.Deserialize(m_OpenedProjectPath);
-		m_Window->SetTitle(s_CurrentProject.m_Name);
+		m_CurrentProject.Deserialize(m_OpenedProjectPath);
+		m_Window->SetTitle(m_CurrentProject.m_Name);
 	}
 
 }

@@ -20,7 +20,13 @@ namespace Core::Gfx
 	class Mesh
 	{
 	public:
-		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices);
+		Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices);
+		Mesh(Mesh& other)
+		{
+			va = other.va;
+			vb = other.vb;
+			ib = other.ib;
+		}
 
 		VertexArray GetVertexArray() { return va; }
 		VertexBuffer GetVertexBuffer() { return vb; }
@@ -36,7 +42,7 @@ namespace Core::Gfx
 		}
 
 	private:
-		void SetupMesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices);
+		void SetupMesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices);
 		VertexArray va;
 		VertexBuffer vb;
 		IndexBuffer ib;

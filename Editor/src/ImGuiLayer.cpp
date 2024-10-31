@@ -3,11 +3,11 @@
 #include <imgui/IconsFontAwesome5.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include "Application.h"
+#include "Core/Application.h"
 
 // Define the static symbol "m_Dark" so the linker doesn't shout at my face
-bool Core::ImGuiLayer::m_Dark = true;
-bool Core::ImGuiLayer::m_OnTop = false;
+bool ImGuiLayer::m_Dark = true;
+bool ImGuiLayer::m_OnTop = false;
 
 void SetupImGuiStyle(bool bStyleDark_, float alpha)
 {
@@ -157,7 +157,7 @@ void SetupImGuiStyle(bool bStyleDark_, float alpha)
     style.SelectableTextAlign = ImVec2(0.0f, 0.0f);
 }
 
-void Core::ImGuiLayer::SetupImGui(bool dark)
+void ImGuiLayer::SetupImGui(bool dark)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -166,7 +166,7 @@ void Core::ImGuiLayer::SetupImGui(bool dark)
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 
     // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(m_Application->GetWindow()->GetHandle(), true);
+    ImGui_ImplGlfw_InitForOpenGL(Core::Application::Get()->GetWindow()->GetHandle(), true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
     //io.Fonts->AddFontDefault();
@@ -187,34 +187,34 @@ void Core::ImGuiLayer::SetupImGui(bool dark)
     m_Dark = dark;
 }
 
-void Core::ImGuiLayer::OnAttach()
+void ImGuiLayer::OnAttach()
 {
 }
 
-void Core::ImGuiLayer::OnUpdate()
+void ImGuiLayer::OnUpdate()
 {
 }
 
-void Core::ImGuiLayer::OnImGuiRender()
+void ImGuiLayer::OnImGuiRender()
 {
 }
 
-void Core::ImGuiLayer::OnEvent(Core::Events::Event* event)
+void ImGuiLayer::OnEvent(Core::Events::Event* event)
 {
 }
 
-void Core::ImGuiLayer::OnDettach()
+void ImGuiLayer::OnDettach()
 {
 }
 
-void Core::ImGuiLayer::SwitchTheme(bool dark)
+void ImGuiLayer::SwitchTheme(bool dark)
 {
     m_Dark = dark;
     SetupImGuiStyle(dark, 1.0f);
 }
 
 // Start new ImGui frame
-void Core::ImGuiLayer::BeginImGuiContent()
+void ImGuiLayer::BeginImGuiContent()
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -241,7 +241,7 @@ void Core::ImGuiLayer::BeginImGuiContent()
     else
     {
         ImGui::SetNextWindowPos(ImVec2(0, 0));
-        ImGui::SetNextWindowSize(ImVec2(m_Application->GetWindow()->GetWidth(), m_Application->GetWindow()->GetHeight()));
+        ImGui::SetNextWindowSize(ImVec2(Core::Application::Get()->GetWindow()->GetWidth(), Core::Application::Get()->GetWindow()->GetHeight()));
     }
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
@@ -261,7 +261,7 @@ void Core::ImGuiLayer::BeginImGuiContent()
 
 
 // Render ImGui
-void Core::ImGuiLayer::EndImGuiContent()
+void ImGuiLayer::EndImGuiContent()
 {
     ImGui::End();
 
@@ -273,7 +273,7 @@ void Core::ImGuiLayer::EndImGuiContent()
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-Core::ImGuiLayer::~ImGuiLayer()
+ImGuiLayer::~ImGuiLayer()
 {
     ImGui_ImplGlfw_Shutdown();
     ImGui_ImplOpenGL3_Shutdown();

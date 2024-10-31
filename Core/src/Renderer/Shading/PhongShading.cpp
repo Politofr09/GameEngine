@@ -92,7 +92,7 @@ namespace Core::Gfx
         ShaderProgram->SetFloat("material_shininess", material.Shininess);
         ShaderProgram->SetVector3("material_color", material.Color);
 
-        Texture DiffuseTexture = *OPENED_PROJECT.GetRegistry().Get<Texture>(material.DiffuseTextureHandle);
+        Texture DiffuseTexture = *Application::Get()->GetCurrentProject().GetRegistry().Get<Texture>(material.DiffuseTextureHandle);
 
         // Bind diffuse texture if loaded
         DiffuseTexture.Bind();

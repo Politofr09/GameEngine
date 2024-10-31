@@ -5,10 +5,12 @@
 #include <filesystem>
 
 #include "EditorLayer.h"
+
 #include "Core/Keyboard.h"
 #include "Core/Mouse.h"
-#include "Core/ImGuiLayer.h"
+#include "ImGuiLayer.h"
 #include "Core/AssetRegistry.h"
+#include "Core/Application.h"
 #include "Events/Event.h"
 
 #include "Renderer/Renderer.h"
@@ -21,6 +23,7 @@
 #include "CommonUI.h"
 
 using namespace Core::Gfx;
+using namespace Core;
 
 // Temporary
 // Will be soon removed (finally!)
@@ -33,7 +36,7 @@ Core::AssetHandle texturehandle;
 void EditorLayer::OnAttach()
 {
     // Setup event
-	Core::Events::Dispatcher::Subscribe(std::bind(&EditorLayer::OnEvent, this, std::placeholders::_1));
+	Events::Dispatcher::Subscribe(std::bind(&EditorLayer::OnEvent, this, std::placeholders::_1));
 	
     // Setup OpenGL renderer
     Renderer::Init();
@@ -49,10 +52,13 @@ void EditorLayer::OnAttach()
     //fonthandle = Font::Create("res/ocr-a-extended.ttf", "OCR-Font", 100);
 
     /**** Setup the camera(s) ****/
-    m_Cam.SetAspectRatio((float)m_Application->GetWindow()->GetWidth() / m_Application->GetWindow()->GetHeight());
-    m_Cam2d = Core::Gfx::OrthographicCamera(0.0f, (float)m_Application->GetWindow()->GetWidth(), (float)m_Application->GetWindow()->GetHeight(), 0.0f);
+    int width = Application::Get()->GetWindow()->GetWidth();
+    int height = Application::Get()->GetWindow()->GetHeight();
 
-    m_FrameBuffer = FrameBuffer(m_Application->GetWindow()->GetWidth(), m_Application->GetWindow()->GetHeight());
+    m_Cam.SetAspectRatio((float)width / height);
+    m_Cam2d = Core::Gfx::OrthographicCamera(0.0f, (float)width, (float)height, 0.0f);
+
+    m_FrameBuffer = FrameBuffer(width, height);
 
     light = Light();
 }
@@ -82,7 +88,7 @@ void EditorLayer::OnUpdate()
         //Renderer::DrawModel(model2, trans);
 
         // Eventually this will be more complex, we will have a list of scenes that we can edit with the editor layer
-        Renderer::RenderScene(OPENED_PROJECT.GetScene());
+        Renderer::RenderScene(Application::Get()->GetCurrentProject().GetScene());
     }
     Renderer::End();
 
@@ -111,7 +117,7 @@ void EditorLayer::OnImGuiRender()
         {
             if (ImGui::MenuItem("Exit"))
             {
-                m_Application->GetWindow()->Close();
+                Application::Get()->GetWindow()->Close();
             }
             if (ImGui::MenuItem("Open"))
             {
@@ -120,7 +126,7 @@ void EditorLayer::OnImGuiRender()
 
                 if (path)
                 {
-                    m_Application->LoadProject(path);
+                    Application::Get()->LoadProject(path);
                 }
             }
             ImGui::EndMenu();
@@ -215,7 +221,7 @@ void EditorLayer::ShowCameraControlImgui(bool* p_open)
         float halfFOV = glm::radians(in_FOV) / 2.0f;
         float nearDistance = 0.0f;
         float farDistance = 1000.0f;
-        float aspectRatio = (float)m_Application->GetWindow()->GetWidth() / m_Application->GetWindow()->GetHeight();
+        float aspectRatio = (float)Application::Get()->GetWindow()->GetWidth() / Application::Get()->GetWindow()->GetHeight();
 
         float nearHeight = tan(halfFOV) * nearDistance / 20.0f;
         float farHeight = tan(halfFOV) * farDistance / 20.0f;
@@ -240,7 +246,7 @@ void EditorLayer::ShowThemeSwitcher(bool* p_open)
     {
         if (ImGui::Button("Switch to dark/light mode"))
         {
-            Core::ImGuiLayer::SwitchTheme(!Core::ImGuiLayer::IsDarkThemed());
+            ImGuiLayer::SwitchTheme(!ImGuiLayer::IsDarkThemed());
         }
 
         // ImGui::Text(ICON_FA_PAINT_BRUSH "  Paint"           );
@@ -264,7 +270,7 @@ void EditorLayer::ShowAssetRegistry(bool* p_open)
 
     if (ImGui::Begin("Asset Registry", p_open))
     {
-        ImGui::Text("Number of assets: %i", OPENED_PROJECT.GetRegistry().GetAllResources().size());
+        ImGui::Text("Number of assets: %i", Application::Get()->GetCurrentProject().GetRegistry().GetAllResources().size());
         if (ImGui::BeginTable("Resource Table", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
         {
             // Set up column headers
@@ -275,7 +281,7 @@ void EditorLayer::ShowAssetRegistry(bool* p_open)
             ImGui::TableHeadersRow();
 
             // Populate the table with resource data
-            for (const auto& pair : OPENED_PROJECT.GetRegistry().GetAllResources())
+            for (const auto& pair : Application::Get()->GetCurrentProject().GetRegistry().GetAllResources())
             {
                 uint64_t assetID = pair.first;
 
@@ -310,7 +316,7 @@ void EditorLayer::ShowAssetRegistry(bool* p_open)
                 ImGui::TableSetColumnIndex(3);
                 if (std::string(pair.second->GetType()) == "Texture")
                 {
-                    Texture* tex = OPENED_PROJECT.GetRegistry().Get<Texture>(assetID);
+                    Texture* tex = Application::Get()->GetCurrentProject().GetRegistry().Get<Texture>(assetID);
                     ImGui::Image((ImTextureID)(intptr_t)tex->GetID(), { 100.0f, 100.0f });
                 }
                 else
@@ -331,8 +337,10 @@ void EditorLayer::ShowMaterialEditor(bool* p_open)
 
     if (ImGui::Begin("Material editor", p_open))
     {
-        Model& model = *OPENED_PROJECT.GetRegistry().Get<Model>(modelhandle1);
-        Material& material = *OPENED_PROJECT.GetRegistry().Get<Material>(model.GetMaterialHandle());
+        auto& registry = Application::Get()->GetCurrentProject().GetRegistry();
+
+        Model& model = *registry.Get<Model>(modelhandle1);
+        Material& material = *registry.Get<Material>(model.GetMaterialHandle());
         
         // Shader Type Selector
         const char* shaderTypes[] = { "None", "FlatShading", "PhongShading" }; // Update with your actual shader types
@@ -375,7 +383,7 @@ void EditorLayer::ShowRenderingSettings(bool* p_open)
         static int currentIndex = 0;
         static float totalFrameTime = 0.0f;
 
-        float deltaTime = m_Application->GetWindow()->GetDeltaTime();
+        float deltaTime = Application::Get()->GetWindow()->GetDeltaTime();
 
         totalFrameTime -= frameTimes[currentIndex];
         frameTimes[currentIndex] = deltaTime;
@@ -481,7 +489,7 @@ void EditorLayer::ShowECSPanel(bool* p_open)
     using namespace Core::Ecs;
     if (ImGui::Begin("ECS", p_open))
     {
-        ECS& registry = OPENED_PROJECT.GetScene().GetRegistry();
+        ECS& registry = Application::Get()->GetCurrentProject().GetScene().GetRegistry();
 
         registry.each([&](ECS::EntityID e) 
         {
@@ -521,8 +529,8 @@ void EditorLayer::ShowECSPanel(bool* p_open)
                         ImGui::EndDragDropTarget();
                     }
 
-                    auto model = OPENED_PROJECT.GetRegistry().Get<Core::Gfx::Model>(m.ModelHandle);
-                    auto material = OPENED_PROJECT.GetRegistry().Get<Core::Gfx::Material>(model->GetMaterialHandle());
+                    auto model = Application::Get()->GetCurrentProject().GetRegistry().Get<Core::Gfx::Model>(m.ModelHandle);
+                    auto material = Application::Get()->GetCurrentProject().GetRegistry().Get<Core::Gfx::Material>(model->GetMaterialHandle());
 
                     ImGui::Text("Material: %llu", model->GetMaterialHandle());
 
@@ -595,7 +603,7 @@ void EditorLayer::ShowECSPanel(bool* p_open)
             // Dropdown menu logic
             if (ImGui::BeginPopup("AddComponentPopup"))
             {
-                auto& ECS_Registry = OPENED_PROJECT.GetScene().GetRegistry();
+                auto& ECS_Registry = Application::Get()->GetCurrentProject().GetScene().GetRegistry();
                 if (ImGui::MenuItem("TransformComponent"))
                 {
                     // Add TransformComponent to the selected entity

@@ -3,42 +3,56 @@
 #include "Window.h"
 #include "Events/Event.h"
 #include "Layer.h"
-#include "ImGuiLayer.h"
 #include "Project.h"
 
 #pragma once
 
+int main(int argc, char** argv);
+
 namespace Core
 {
+	struct ApplicationCommandLineArgs
+	{
+		int Count = 0;
+		char** Args = nullptr;
 
-#define OPENED_PROJECT Core::Application::s_CurrentProject
+		const char* operator[](int index) const
+		{
+			ASSERT(index < Count);
+			return Args[index];
+		}
+	};
 
 	class Application
 	{
 	public:
-		static Project s_CurrentProject;
-
 		Application(const std::string& name = "No Project opened", int window_width = 1080, int window_height = 720);
 
 		void PushLayer(Layer* layer);
 		void PopLayer(Layer* layer);
+		
 		void Run();
+		virtual void Update() = 0;
 
-		///*IMPORTANT: BEFORE CASTING EVENT WITH static_cast CHECK IF IT'S MATCHING THE EXPECTED TYPE
-		/// Event.GetType() = "myExpectedEvent" AND THEN CAST.
 		void OnEvent(Events::Event*);
 
 		~Application();
 
 		inline Window* GetWindow() { return m_Window; }
-
+		inline Project& GetCurrentProject() { return m_CurrentProject; }
+		static Application* Get() { return s_Instance; }
 		void LoadProject(const std::string& filename);
-	private:
 
+	protected:
 		Window* m_Window;
 		std::vector<Layer*> m_Layers;
-		ImGuiLayer* m_ImGuiLayer;
+		Project m_CurrentProject;
 		std::string m_OpenedProjectPath;
+
+		static Application* s_Instance;
 	};
+
+	// Defined in the client (Editor / Runtime)
+	Application* CreateApplication(ApplicationCommandLineArgs args);
 
 }

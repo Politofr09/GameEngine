@@ -96,7 +96,7 @@ namespace Core::Gfx
     void Renderer::DrawModel(Model& model, glm::mat4 transform)
     {
         // Retrieve the material and its shader type
-        auto& material = *OPENED_PROJECT.GetRegistry().Get<Material>(model.GetMaterialHandle());
+        auto& material = *Application::Get()->GetCurrentProject().GetRegistry().Get<Material>(model.GetMaterialHandle());
 
         // Set up the shader based on the material's shader type
         switch (material.m_ShaderType)
@@ -161,7 +161,7 @@ namespace Core::Gfx
             auto& modelComponent = registry.GetComponent<ModelComponent>(e);
             if (modelComponent.ModelHandle == 0) continue;
 
-            auto& model = *OPENED_PROJECT.GetRegistry().Get<Model>(modelComponent.ModelHandle);
+            auto& model = *Application::Get()->GetCurrentProject().GetRegistry().Get<Model>(modelComponent.ModelHandle);
 
             DrawModel(model, transformComponent); // Use of mat4 operator (nice)
         }

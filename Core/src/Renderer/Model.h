@@ -53,7 +53,6 @@ namespace Core::Gfx
 		void SetMaterialHandle(AssetHandle handle) { m_MaterialHandle = handle; }
 
 		aiMaterial* GetAssimpMaterial() { return m_AiMaterial; }
-
 	private:
 
 	private:
@@ -62,6 +61,7 @@ namespace Core::Gfx
 
 		AssetHandle m_MaterialHandle;
 		aiMaterial* m_AiMaterial = nullptr;
+		
 
 		void ProcessNode(aiNode* node, const aiScene* scene);
 		Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);

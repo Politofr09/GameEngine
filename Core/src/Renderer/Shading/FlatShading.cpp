@@ -56,7 +56,7 @@ namespace Core::Gfx
         ShaderProgram->Use();
         ShaderProgram->SetVector3("material_color", material.Color);
 
-        Texture DiffuseTexture = *OPENED_PROJECT.GetRegistry().Get<Texture>(material.DiffuseTextureHandle);
+        Texture DiffuseTexture = *Application::Get()->GetCurrentProject().GetRegistry().Get<Texture>(material.DiffuseTextureHandle);
         DiffuseTexture.Bind();
         glEnable(GL_TEXTURE_2D);
     }

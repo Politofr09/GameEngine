@@ -20,7 +20,7 @@ namespace Core::Gfx
 
 		if (texture->Load())
 		{
-			return OPENED_PROJECT.GetRegistry().Track(texture);
+			return Application::Get()->GetCurrentProject().GetRegistry().Track(texture);
 		}
 
 		return 0;

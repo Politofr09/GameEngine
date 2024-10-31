@@ -20,7 +20,7 @@ namespace Core::Gfx
 
 		if (font->Load())
 		{
-			return OPENED_PROJECT.GetRegistry().Track(font);
+			return Application::Get()->GetCurrentProject().GetRegistry().Track(font);
 		}
 
 		return 0;

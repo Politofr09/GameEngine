@@ -6,13 +6,13 @@
 
 namespace Core
 {
-	// Forward declaration
-	class Application;
+	//// Forward declaration
+	//class Application;
 
 	class Layer
 	{
 	public:
-		Layer(Application* app, const std::string& name = "Layer");
+		Layer(const std::string& name = "Layer");
 
 		virtual void OnAttach() = 0;
 		virtual void OnUpdate() = 0;
@@ -26,8 +26,5 @@ namespace Core
 
 	private:
 		std::string m_Name;
-
-	protected:
-		Application* m_Application;
 	};
 }

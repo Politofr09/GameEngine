@@ -18,7 +18,7 @@
 class EditorLayer : public Core::Layer
 {
 public:
-    EditorLayer(Core::Application* app) : Layer(app) {};
+    EditorLayer() : Layer("EditorLayer") {};
 	
     void OnAttach() override;
 	void OnUpdate() override;

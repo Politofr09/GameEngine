@@ -7,6 +7,33 @@
 #include "Core/Utils.h"
 #include "Core/Application.h"
 
+#include <chrono>
+
+class Timer
+{
+public:
+	Timer() { Reset(); }
+	void Reset() { m_Start = std::chrono::high_resolution_clock::now(); }
+	float Elapsed() const { return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - m_Start).count() * 0.001f * 0.001f; }
+	float ElapsedMillis() const { return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - m_Start).count() * 0.001f; }
+private:
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_Start;
+};
+
+class ScopedTimer
+{
+public:
+	ScopedTimer(std::string_view name) : m_Name(name) {}
+	~ScopedTimer()
+	{
+		float time = m_Timer.ElapsedMillis();
+		std::cout << m_Name << " - " << time << "ms\n";
+	}
+private:
+	Timer m_Timer;
+	std::string m_Name;
+};
+
 namespace Core::Gfx
 {
 
@@ -29,7 +56,7 @@ namespace Core::Gfx
 			// Materials actually point to a full 3d model / scene file
 			// Thus we can check if there is a material with the same path
 
-			if (AssetHandle handle = OPENED_PROJECT.GetRegistry().FindByPath<Material>(model->GetPath()) != 0)
+			if (AssetHandle handle = Application::Get()->GetCurrentProject().GetRegistry().FindByPath<Material>(model->GetPath()) != 0)
 			{
 				model->SetMaterialHandle(handle);
 			}
@@ -38,7 +65,7 @@ namespace Core::Gfx
 				model->SetMaterialHandle(Material::Create(model->GetPath(), model->GetName() + "_material"));
 			}
 
-			return OPENED_PROJECT.GetRegistry().Track(model);
+			return Application::Get()->GetCurrentProject().GetRegistry().Track(model);
 		}
 
 		return 0;
@@ -49,16 +76,19 @@ namespace Core::Gfx
 
 	bool Model::Load()
 	{
+		
+		ScopedTimer* timer = new ScopedTimer("Model assimp loading");
 		Assimp::Importer importer;
-		const aiScene* scene = importer.ReadFile(m_Metadata.Path, aiProcess_FlipUVs | aiProcess_Triangulate);
+		const aiScene* scene = importer.ReadFile(m_Metadata.Path, aiProcess_FlipUVs | aiProcess_Triangulate | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph);
+		delete timer;
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		{
 			LOG_ERROR("ERROR::ASSIMP::" + std::string(importer.GetErrorString()));
 			return false;
 		}
-
 		m_Directory = m_Metadata.Path.substr(0, m_Metadata.Path.find_last_of('/'));
+		
 
 		// Process recursively root node
 		ProcessNode(scene->mRootNode, scene);
@@ -93,10 +123,12 @@ namespace Core::Gfx
 	{
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
+		
+
+		{
+		ScopedTimer timer("for loop");
 
 		vertices.reserve(mesh->mNumVertices);
-		indices.reserve(mesh->mNumFaces * 3);
-
 		for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 		{
 			Vertex vertex{};
@@ -124,15 +156,17 @@ namespace Core::Gfx
 			}
 			vertex.TexCoords = texCoord;
 
-			vertices.push_back(vertex);
+			vertices.emplace_back(vertex);
 		}
 
 		// Process the indices
-		for (unsigned int i = 0; i < mesh->mNumFaces; i++)
+		indices.reserve(mesh->mNumFaces * 3);
+		for (unsigned int i = 0; i < mesh->mNumFaces; ++i) 
 		{
-			aiFace face = mesh->mFaces[i];
-			for (unsigned int j = 0; j < face.mNumIndices; j++)
-				indices.push_back(face.mIndices[j]);
+			indices.emplace_back(mesh->mFaces[i].mIndices[0]);
+			indices.emplace_back(mesh->mFaces[i].mIndices[1]);
+			indices.emplace_back(mesh->mFaces[i].mIndices[2]);
+		}
 		}
 
 		return Mesh(vertices, indices);
