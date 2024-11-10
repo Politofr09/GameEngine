@@ -33,15 +33,15 @@ void EditorLayer::OnAttach()
     // Setup event
 	Events::Dispatcher::Subscribe(std::bind(&EditorLayer::OnEvent, this, std::placeholders::_1));
 	
-    // Setup *OpenGL* renderer
-    Renderer::Init(Application::Get()->GetWindow()->GetWidth(), Application::Get()->GetWindow()->GetHeight());
-    Renderer2D::Init();
-    TextRenderer::Init();
-
-    /**** Setup the camera(s) ****/
     int width = Application::Get()->GetWindow()->GetWidth();
     int height = Application::Get()->GetWindow()->GetHeight();
 
+    // Setup *OpenGL* renderer
+    Renderer::Init(width, height);
+    Renderer2D::Init(width, height);
+    TextRenderer::Init();
+
+    /**** Setup the camera(s) ****/
     m_Cam.SetAspectRatio((float)width / height);
     m_Cam2d = Core::Gfx::OrthographicCamera(0.0f, (float)width, (float)height, 0.0f);
 }
@@ -50,20 +50,46 @@ static int FONT_SCALE = 3;
 
 void EditorLayer::OnUpdate()
 {
-    //CORE_PROFILE_FUNCTION();
-
     // UpdateCameraController();
     //shader->SetFloat("uTime", (float)glfwGetTime());
     Renderer::SetBackgroundColor({ 0.2f, 0.3f, 0.3f });
     Renderer::Clear();
-    Renderer::Begin(m_Cam);
+    Renderer::BeginScene(m_Cam);
     {
         Renderer::Clear();
 
         // Eventually this will be more complex, we will have a list of scenes that we can edit with the editor layer
         Renderer::RenderScene(Application::Get()->GetCurrentProject().GetScene());
     }
-    Renderer::End();
+    Renderer::EndScene();
+
+    // Testing Renderer2D
+    Renderer2D::Begin(m_Cam2d);
+    {
+        Renderer::Clear();
+
+        auto& registry = Application::Get()->GetCurrentProject().GetScene().GetRegistry();
+        auto& view = registry.GetView<Ecs::TransformComponent, Ecs::SpriteComponent>();
+        for (auto e : view)
+        {
+            auto& t = registry.GetComponent<Ecs::TransformComponent>(e);
+            auto& s = registry.GetComponent<Ecs::SpriteComponent>(e);
+
+            if (s.TextureHandle)
+            {
+                Texture* texture = Application::Get()->GetCurrentProject().GetRegistry().Get<Texture>(s.TextureHandle);
+
+                Renderer2D::DrawQuadTextured(glm::vec3(t.Position), glm::vec2(t.Scale.x, t.Scale.y), s.Color,
+                    *texture
+                );
+            }
+            else
+            {
+                Renderer2D::DrawQuad(glm::vec3(t.Position), glm::vec2(t.Scale.x, t.Scale.y), s.Color);
+            }
+        }
+    }
+    Renderer2D::End();
 }
 
 void EditorLayer::OnImGuiRender()
@@ -123,6 +149,7 @@ void EditorLayer::OnImGuiRender()
         {
             availableSpace = ImGui::GetContentRegionAvail();
             Renderer::OnViewportResize((int)availableSpace.x, (int)availableSpace.y);
+            Renderer2D::OnViewportResize((int)availableSpace.x, (int)availableSpace.y);
             m_Cam.OnViewportResize((int)availableSpace.x, (int)availableSpace.y);
             m_Cam2d.OnViewportResize((int)availableSpace.x, (int)availableSpace.y);
         }
@@ -131,7 +158,7 @@ void EditorLayer::OnImGuiRender()
         ImVec2 max = ImVec2(min.x + availableSpace.x, min.y + availableSpace.y);
         ImGui::GetWindowDrawList()->AddRect(min, max, ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)), 6.0f, ImDrawFlags_RoundCornersAll, 6.0f);
 
-        FrameBuffer fb = Renderer::GetFramebuffer();
+        FrameBuffer fb = Renderer2D::GetFramebuffer();
 
         ImGui::BeginChild("Viewport", availableSpace, false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoMove);
         DisplayRoundedImage((ImTextureID)fb.GetTextureID(), ImVec2(fb.GetWidth(), fb.GetHeight()), 6.0f, ImVec2(0, 1), ImVec2(1, 0));
@@ -399,6 +426,7 @@ void EditorLayer::ShowRenderingSettings(bool* p_open)
     ImGui::End();
 }
 
+// We have some serious work to do on this specific panel...
 void EditorLayer::ShowECSPanel(bool* p_open)
 {
     using namespace Core::Ecs;
@@ -406,28 +434,33 @@ void EditorLayer::ShowECSPanel(bool* p_open)
     {
         ECS& registry = Application::Get()->GetCurrentProject().GetScene().GetRegistry();
 
+        if (ImGui::Button("Add Entity"))
+        {
+            registry.AddComponent<NameComponent>(registry.CreateEntity(), NameComponent{ "Entity" });
+        }
+
         registry.each([&](ECS::EntityID e) 
         {
             Entity entity{ e, registry };
-            ImGui::Text("Entity %u", entity.GetID());
-            if (ImGui::TreeNode(entity.GetName().c_str()))
+            std::string nodeName = entity.GetName() + " (" + std::to_string(e) + ")";
+            if (ImGui::TreeNode(nodeName.c_str()))
             {
                 // Show the components of the entity
                 ImGui::Text("Components:");
 
-                if (entity.HasComponent<TransformComponent>() && ImGui::TreeNode("TransformComponent"))
+                if (entity.HasComponent<TransformComponent>() && ImGui::TreeNode("Transform"))
                 {
                     auto& t = entity.GetComponent<TransformComponent>();
 
                     // Use sliders for position, rotation, and scale
-                    ImGui::SliderFloat3("Position", &t.Position.x, -10.0f, 10.0f);
-                    ImGui::SliderFloat3("Rotation", &t.Rotation.x, -180.0f, 180.0f);
-                    ImGui::SliderFloat3("Scale", &t.Scale.x, 0.1f, 10.0f);
-                    
+                    ImGui::DragFloat3("Position", &t.Position.x, 0.1f);
+                    ImGui::DragFloat3("Rotation", &t.Rotation.x);
+                    ImGui::DragFloat3("Scale", &t.Scale.x, 0.1f);
+
                     ImGui::TreePop();
                 }
 
-                if (entity.HasComponent<ModelComponent>() && ImGui::TreeNode("ModelComponent"))
+                if (entity.HasComponent<ModelComponent>() && ImGui::TreeNode("Model"))
                 {
                     auto& m = entity.GetComponent<ModelComponent>();
 
@@ -503,6 +536,28 @@ void EditorLayer::ShowECSPanel(bool* p_open)
                     ImGui::TreePop();
                 }
                 
+                if (entity.HasComponent<SpriteComponent>() && ImGui::TreeNode("Sprite"))
+                {
+                    auto& s = entity.GetComponent<SpriteComponent>();
+                    ImGui::Text("Texture: %llu", s.TextureHandle);
+                   
+                    // Accept payload from drag and drop imgui (only model ids)
+                    if (ImGui::BeginDragDropTarget())
+                    {
+                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_DND_Texture"))
+                        {
+                            Core::AssetHandle handle = *(uint64_t*)payload->Data;
+                            s.TextureHandle = handle;
+                        }
+                        ImGui::EndDragDropTarget();
+                    }
+                    
+                    // Use sliders for position, rotation, and scale
+                    ImGui::ColorEdit4("Color", &s.Color.x);
+
+                    ImGui::TreePop();
+                }
+
                 ImGui::TreePop();
                 ImGui::SetCursorPosX(25);
                 if (ImGui::Button("Add Component", ImVec2(150.0f, 40.0f)))
@@ -519,7 +574,7 @@ void EditorLayer::ShowECSPanel(bool* p_open)
             if (ImGui::BeginPopup("AddComponentPopup"))
             {
                 auto& ECS_Registry = Application::Get()->GetCurrentProject().GetScene().GetRegistry();
-                if (ImGui::MenuItem("TransformComponent"))
+                if (ImGui::MenuItem("Transform"))
                 {
                     // Add TransformComponent to the selected entity
                     if (!ECS_Registry.HasComponent<TransformComponent>(e))
@@ -533,11 +588,19 @@ void EditorLayer::ShowECSPanel(bool* p_open)
                     }
                 }
 
-                if (ImGui::MenuItem("ModelComponent"))
+                if (ImGui::MenuItem("Model"))
                 {
                     if (!ECS_Registry.HasComponent<ModelComponent>(e))
                     {
                         ECS_Registry.AddComponent<ModelComponent>(e, ModelComponent{ 0 });
+                    }
+                }
+
+                if (ImGui::MenuItem("Sprite"))
+                { 
+                    if (!ECS_Registry.HasComponent<SpriteComponent>(e))
+                    {
+                        ECS_Registry.AddComponent<SpriteComponent>(e, SpriteComponent{ 0, glm::vec4(1.0f) });
                     }
                 }
 

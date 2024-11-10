@@ -49,14 +49,15 @@ namespace Core
         //virtual void Serialize(YAML::Emitter& out) = 0;
         ////virtual void Deserialize(YAML::Node& node) = 0;
 
-        const std::string& GetName() { return m_Metadata.Name; }
+        const std::string& GetName() const { return m_Metadata.Name; }
         void SetName(const std::string& name) { m_Metadata.Name = name; }
 
-        const std::string& GetPath() { return m_Metadata.Path; }
+        const std::string& GetPath() const { return m_Metadata.Path; }
 
         bool IsLoaded() const { return m_Loaded; }
 
-        UUID GetID() { return m_Metadata.ID; }
+        UUID GetID() const { return m_Metadata.ID; }
+        
 
     protected:
         virtual bool Load() = 0;

@@ -2,7 +2,6 @@
 
 #include "Utils.h"
 #include "Ecs/Common.h"
-#include "Ecs/VisualComponents.h"
 #include "Instrumentor.h"
 
 #include <fstream>
@@ -41,6 +40,16 @@ namespace Core
 		}
 		glm::vec3(0.0f);
 	}
+
+	glm::vec4 YAMLToVec4(const YAML::Node& node)
+	{
+		if (node.IsSequence() && node.size() == 4)
+		{
+			return glm::vec4(node[0].as<float>(), node[1].as<float>(), node[2].as<float>(), node[3].as<float>());
+		}
+		glm::vec4(0.0f);
+	}
+
 
 	Entity Scene::CreateEntity(const std::string& name)
 	{
@@ -152,13 +161,14 @@ namespace Core
 			out << YAML::EndMap;
 		}
 
-		if (entity.HasComponent<TextureComponent>())
+		if (entity.HasComponent<SpriteComponent>())
 		{
-			out << YAML::Key << "TextureComponent";
+			out << YAML::Key << "SpriteComponent";
 			out << YAML::BeginMap;
 			{
-				auto& t = entity.GetComponent<TextureComponent>();
-				out << YAML::Key << "ModelHandle" << YAML::Value << t.TextureHandle;
+				auto& s = entity.GetComponent<SpriteComponent>();
+				out << YAML::Key << "TextureHandle" << YAML::Value << s.TextureHandle;
+				out << YAML::Key << "Color" << YAML::Value << s.Color;
 			}
 			out << YAML::EndMap;
 		}
@@ -199,13 +209,14 @@ namespace Core
 			entity.AddComponent<ModelComponent>(m);
 		}
 
-		if (auto textureNode = node["TextureComponent"])
+		if (auto spriteNode = node["SpriteComponent"])
 		{
-			TextureComponent t{};
+			SpriteComponent s{};
 
-			t.TextureHandle = textureNode["TextureHandle"].as<uint64_t>();
+			s.TextureHandle = spriteNode["TextureHandle"].as<uint64_t>();
+			s.Color = YAMLToVec4(spriteNode["Color"]);
 
-			entity.AddComponent<TextureComponent>(t);
+			entity.AddComponent<SpriteComponent>(s);
 		}
 
 		return true;

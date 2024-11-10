@@ -5,6 +5,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/euler_angles.hpp>
 
+#include "Core/AssetRegistry.h"
+
 namespace Core::Ecs
 {
 
@@ -75,16 +77,16 @@ namespace Core::Ecs
 		}
 	};
 
-	struct ColorComponent
+	struct ModelComponent
 	{
-		float r;
-		float g;
-		float b;
-		float a;
+		AssetHandle ModelHandle;
+	};
 
-		operator glm::vec4() const { return glm::vec4(r, g, b, a); }
+	struct SpriteComponent
+	{
+		AssetHandle TextureHandle;
+		glm::vec4	Color;
 	};
 
 	// TODO: Add more of them! Fill this file with components!!!
-
 }

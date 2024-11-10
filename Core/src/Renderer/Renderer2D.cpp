@@ -4,212 +4,296 @@
 namespace Core::Gfx
 {
 
-	// Resolve external symbols
-	OrthographicCamera Renderer2D::m_ActiveCamera;
-	Shader Renderer2D::m_Shader;
-
-	VertexArray  Renderer2D::m_QuadVAO;
-	VertexBuffer Renderer2D::m_QuadVBO;
-
-	Texture Renderer2D::m_PixelDummy;
-
-	void Renderer2D::Init()
+	struct QuadVertex
 	{
+		glm::vec3 Position;
+		glm::vec4 Color;
+		glm::vec2 TexCoord;
+		float	  TexIndex;
+	};
+
+	struct Renderer2DData
+	{
+		static const uint32_t MaxQuads = 20000;
+		static const uint32_t MaxVertices = MaxQuads * 4;
+		static const uint32_t MaxIndices =	MaxQuads * 6;
+
+		/* 31 usable because of white dummy pixel texture
+		 * OpenGL-compliant gpus need to provide at least 16 texture slots per shader call.
+		 * In the worst case we have 15 usable slots. 
+		**********************************************************************************/
+		static const uint32_t MaxTextureSlots = 32;
+		std::array<Texture, MaxTextureSlots> TextureSlots;
+		uint32_t TextureSlotIndex = 1; // 0 for pixel dummy texture
+
+		OrthographicCamera ActiveCamera;
+		FrameBuffer Framebuffer;
+
+		Shader QuadShader;
+
+		VertexArray QuadVertexArray;
+		VertexBuffer QuadVertexBuffer;
+
+		Texture PixelDummy; // When drawing only shapes we multiply a white pixel just for having the same shader
+	
+		uint32_t QuadIndexCount = 0;
+		QuadVertex* QuadVertexBufferBase = nullptr;
+		QuadVertex* QuadVertexBufferPtr = nullptr;
+	};
+
+	static Renderer2DData s_Data;
+
+	void Renderer2D::Init(unsigned int width, unsigned int height)
+	{
+		s_Data.Framebuffer.Create(width, height);
+
+		// TODO: Load this from the disk idk why I put it  here... 
 		// Make the shader
 		const char* vertexShaderSource = R"(
 			#version 330 core
-			layout (location = 0) in vec2 a_Position;
+			layout (location = 0) in vec3 a_Position;
+			layout (location = 1) in vec4 a_Color;
+			layout (location = 2) in vec2 a_TexCoord;
+			layout (location = 3) in float a_TexIndex;
 
-			out vec2 TexCoord;
+			out vec2 v_TexCoord;
+			out vec4 v_Color;
+			out float v_TexIndex;
 
-			uniform mat4 uTransform;
-			uniform mat4 uProjection;
-			uniform mat4 uView;
+			uniform mat4 u_Projection;
+			uniform mat4 u_View;
 
-			uniform vec2 uTexCoordOffset;
-			uniform vec2 uTexCoordScaling;
- 
 			void main()
 			{
-				TexCoord = a_Position;
-				TexCoord += uTexCoordOffset;
-				TexCoord *= uTexCoordScaling;
-				gl_Position = uProjection * uView * uTransform * vec4(a_Position, 0.0, 1.0);
+				v_TexCoord = a_TexCoord;
+				v_Color = a_Color;
+				v_TexIndex = a_TexIndex;
+
+				vec4 scaledPosition = vec4(a_Position, 1.0);
+				gl_Position = u_Projection * u_View * scaledPosition;
 			}
 		)";
 
 		const char* fragmentShaderSource = R"(
 			#version 330 core
-			in vec2 TexCoord;
+			in vec2 v_TexCoord;
+			in vec4 v_Color;
+			in float v_TexIndex;
+
 			out vec4 color;
 			
-			uniform sampler2D image;
-			uniform vec3 uColor;
+			uniform sampler2D u_Textures[32];
 
 			void main()
 			{
-				color = texture(image, TexCoord) * vec4(uColor, 1.0);
+				color = texture(u_Textures[int(v_TexIndex)], v_TexCoord) * vec4(v_Color);
 			}
 		)";
 
-		m_Shader.LoadFromMemory(vertexShaderSource, fragmentShaderSource);
+		s_Data.QuadShader.LoadFromMemory(vertexShaderSource, fragmentShaderSource);
 
-		m_QuadVAO.Init();
-		float vertices[] = {
-			// Positions
-			0.0f, 1.0f,
-			1.0f, 0.0f,
-			0.0f, 0.0f,
+		// Vertex buffer setup
+		s_Data.QuadVertexArray.Init();
+		BufferLayout layout;
+		layout.Push<float>(3);	// Position
+		layout.Push<float>(4);	// Color
+		layout.Push<float>(2);	// TexCoords
+		layout.Push<float>(1);	// TexIndex
 
-			0.0f, 1.0f,
-			1.0f, 1.0f,
-			1.0f, 0.0f,		
-			
-		};
+		s_Data.QuadVertexBuffer = VertexBuffer(s_Data.MaxIndices * sizeof(QuadVertex));
+		s_Data.QuadVertexArray.AddBuffer(s_Data.QuadVertexBuffer, layout);
 
-		BufferLayout quad_layout;
-		quad_layout.Push<float>(2);
-		m_QuadVBO = VertexBuffer(vertices, sizeof(vertices));
-		m_QuadVAO.AddBuffer(m_QuadVBO, quad_layout);
+		s_Data.QuadVertexBufferBase = new QuadVertex[s_Data.MaxVertices];
+
+		unsigned int* quadIndices = new unsigned int[s_Data.MaxIndices];
+
+		unsigned int offset = 0;
+		for (unsigned int i = 0; i < s_Data.MaxIndices; i += 6)
+		{
+			quadIndices[i + 0] = offset + 0;
+			quadIndices[i + 1] = offset + 1;
+			quadIndices[i + 2] = offset + 2;
+
+			quadIndices[i + 3] = offset + 2;
+			quadIndices[i + 4] = offset + 3;
+			quadIndices[i + 5] = offset + 0;
+
+			offset += 4;
+		}
+		IndexBuffer ib(quadIndices, s_Data.MaxIndices);
+		s_Data.QuadVertexArray.SetIndexBuffer(ib);
+		delete[] quadIndices; // Warning: not thread safe
 
 		// Init dummy pixel white texture
 		unsigned int whitePixel = 0xFFFFFF;
 		unsigned char* whitePixelPtr = reinterpret_cast<unsigned char*>(&whitePixel);
-		m_PixelDummy.LoadFromMemory(1, 1, 3, whitePixelPtr);
+		s_Data.PixelDummy.LoadFromMemory(1, 1, 3, whitePixelPtr);
+		s_Data.TextureSlots[0] = s_Data.PixelDummy;
 	}
 
-	void Renderer2D::SendUniforms(glm::mat4 transform, glm::vec3 tint,  glm::vec2 uvOffset, glm::vec2 uvScaling)
+	void Renderer2D::OnViewportResize(int width, int height)
 	{
-		m_Shader.SetMatrix("uProjection", m_ActiveCamera.GetProjectionMatrix());
-		m_Shader.SetMatrix("uView", m_ActiveCamera.GetViewMatrix());
-		m_Shader.SetMatrix("uTransform", transform);
-		m_Shader.SetVector3("uColor", tint);
-		m_Shader.SetVector2("uTexCoordOffset", uvOffset);
-		m_Shader.SetVector2("uTexCoordScaling", uvScaling);
+		s_Data.Framebuffer.Resize(width, height);
+		glViewport(0, 0, width, height);
+	}
+
+	void Renderer2D::SendUniforms()
+	{
+		s_Data.QuadShader.SetMatrix("u_Projection", s_Data.ActiveCamera.GetProjectionMatrix());
+		s_Data.QuadShader.SetMatrix("u_View", s_Data.ActiveCamera.GetViewMatrix());
 	}
 
     void Renderer2D::Begin(const OrthographicCamera& camera)
 	{
-		m_ActiveCamera = camera;
-		m_Shader.Use();
+		s_Data.ActiveCamera = camera;
+		s_Data.Framebuffer.Bind();
 
-		// Get the projection matrix from the camera
-		const glm::mat4& projectionMatrix = camera.GetProjectionMatrix();
+		s_Data.QuadShader.Use();
+		SendUniforms();
 
-		float bottom = (1 - projectionMatrix[1][3]) / projectionMatrix[1][1];
-		float top = -(1 + projectionMatrix[1][3]) / projectionMatrix[1][1];
-		float left = -(1 + projectionMatrix[0][3]) / projectionMatrix[0][0];
-		float right = (1 - projectionMatrix[0][3]) / projectionMatrix[0][0];
-
-		float window_width = abs(right - left);
-		float window_height = abs(top - bottom);
+		StartBatch();
+	
+		glDisable(GL_CULL_FACE);
 	}
 
+	void Renderer2D::StartBatch()
+	{
+		s_Data.QuadVertexBufferPtr = s_Data.QuadVertexBufferBase;
+		s_Data.QuadIndexCount = 0;
+		s_Data.TextureSlotIndex = 1;
+	}
+
+	void Renderer2D::NextBatch()
+	{
+	}
+	
 	void Renderer2D::End()
 	{
+		Flush();
+		s_Data.Framebuffer.UnBind();
 	}
 
-	void Renderer2D::DrawTexture(Texture& texture, glm::vec2 position, glm::vec2 scale, float rotation, glm::vec3 tint)
+	void Renderer2D::Flush()
 	{
-		// Prepare transformation matrix
-		glm::mat4 transform = glm::mat4(1.0f);
-		transform = glm::translate(transform, glm::vec3(position, 0.0f));
-		transform = glm::rotate(transform, glm::radians(rotation), glm::vec3(0, 0, 1.0f));
-		transform = glm::scale(transform, glm::vec3(scale * 100.0f, 1.0f));
+		s_Data.QuadVertexArray.Bind();
+		size_t dataSize = (uint8_t*)s_Data.QuadVertexBufferPtr - (uint8_t*)s_Data.QuadVertexBufferBase;
+		s_Data.QuadVertexBuffer.UpdateData(s_Data.QuadVertexBufferBase, dataSize);
 
-		// Set shader's uniforms
-		SendUniforms(transform, tint);
+		// Bind textures
+		for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
+			s_Data.TextureSlots[i].Bind(i); // Bind specifying a slot
 
-		// Bind texture
-		texture.Bind();
-		glEnable(GL_TEXTURE_2D);
-		
-		// Draw quad vertex buffer
-		m_QuadVAO.Bind();
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		// Execute draw call
+		glDrawElements(GL_TRIANGLES, s_Data.QuadIndexCount, GL_UNSIGNED_INT, nullptr);
 	}
 
-    void Renderer2D::DrawTextureRect(Texture &texture, glm::vec2 position, glm::vec4 rectangle, glm::vec2 scale, float rotation, glm::vec3 tint)
-    {
-		glm::mat4 transform = glm::mat4(1.0f);
-		transform = glm::translate(transform, glm::vec3(position, 0.0f));
-		transform = glm::rotate(transform, glm::radians(rotation), glm::vec3(0, 0, 1.0f));
-		transform = glm::scale(transform, glm::vec3(scale * 100.0f, 1.0f));
-
-		SendUniforms(transform, tint, { rectangle.x / texture.GetWidth(), rectangle.y / texture.GetHeight() }, { rectangle.z / texture.GetWidth(), rectangle.a / texture.GetHeight() });
-		
-		// Bind texture
-		texture.Bind();
-		glEnable(GL_TEXTURE_2D);
-		
-		// Draw quad vertex buffer
-		m_QuadVAO.Bind();
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-    }
-
-    void Renderer2D::DrawRectangle(glm::vec2 position, glm::vec2 size, glm::vec3 color)
+	void Renderer2D::DrawQuad(glm::vec3& position, glm::vec2& size, glm::vec4& color)
 	{
-		glm::mat4 transform = glm::mat4(1.0f);
-		transform = glm::translate(transform, glm::vec3(position, 0.0f));
-		transform = glm::scale(transform, glm::vec3(size, 1.0f));
-
-		SendUniforms(transform, color);
-		
-		// Bound the dummy white texture
-		m_PixelDummy.Bind();
-
-		// Draw quad vertex buffer
-		m_QuadVAO.Bind();
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-	}
-
-	void Renderer2D::DrawLine(glm::vec2 start, glm::vec2 end, glm::vec3 color)
-	{
-		SendUniforms(glm::mat4(1.0f), color);
-
-		// Make sure no texture is bound
-		m_PixelDummy.Bind();
-
-		glBegin(GL_LINES);
-			glVertex2f(start.x, start.y);
-			glVertex2f(end.x, end.y);
-		glEnd();
-	}
-
-    void Renderer2D::DrawPolygon(const std::vector<float> &vertices, glm::vec2 position, glm::vec2 scale, glm::vec3 color)
-    {
-		// Transform uniform setup
-		glm::mat4 transform(1.0f);
-		transform = glm::translate(transform, glm::vec3(position, 0.0f));
-		transform = glm::scale(transform, glm::vec3(scale, 0.0f));
-
-		SendUniforms(transform, color);
-
-		m_PixelDummy.Bind();
-
-		glBegin(GL_POLYGON);
-
-		for (int i = 0; i < vertices.size(); i+=2)
+		if (s_Data.QuadIndexCount + 6 > s_Data.MaxIndices ||
+			(s_Data.QuadVertexBufferPtr - s_Data.QuadVertexBufferBase) + 4 > s_Data.MaxVertices)
 		{
-			glVertex2f(vertices[i], vertices[i + 1]);
+			Flush();
+			StartBatch();
 		}
 
-		glEnd();
-	}
-    std::vector<float> Renderer2D::GeneratePolygonVertices(int numSides, float radius)
-	{
-		std::vector<float> vertices;
-		float angleStep = glm::radians(360.0f / numSides);
+		s_Data.QuadVertexBufferPtr->Position = position;
+		s_Data.QuadVertexBufferPtr->Color = color;
+		s_Data.QuadVertexBufferPtr->TexCoord = { 0.0f, 0.0f };
+		s_Data.QuadVertexBufferPtr->TexIndex = 0.0f;
+		s_Data.QuadVertexBufferPtr++;
 
-		for (int i = 0; i < numSides; ++i)
+		s_Data.QuadVertexBufferPtr->Position = { position.x + size.x, position.y, position.z };
+		s_Data.QuadVertexBufferPtr->Color = color;
+		s_Data.QuadVertexBufferPtr->TexCoord = { 1.0f, 0.0f };
+		s_Data.QuadVertexBufferPtr->TexIndex = 0.0f;
+		s_Data.QuadVertexBufferPtr++;
+
+		s_Data.QuadVertexBufferPtr->Position = { position.x + size.x, position.y + size.y, position.z };
+		s_Data.QuadVertexBufferPtr->Color = color;
+		s_Data.QuadVertexBufferPtr->TexCoord = { 1.0f, 1.0f };
+		s_Data.QuadVertexBufferPtr->TexIndex = 0.0f;
+		s_Data.QuadVertexBufferPtr++;
+
+		s_Data.QuadVertexBufferPtr->Position = { position.x, position.y + size.y, position.z };
+		s_Data.QuadVertexBufferPtr->Color = color;
+		s_Data.QuadVertexBufferPtr->TexCoord = { 0.0f, 1.0f };
+		s_Data.QuadVertexBufferPtr->TexIndex = 0.0f;
+		s_Data.QuadVertexBufferPtr++;
+
+		s_Data.QuadIndexCount += 6;
+	}
+
+	void Renderer2D::DrawQuad(glm::vec2& position, glm::vec2& size, glm::vec4& color)
+	{
+		DrawQuad(glm::vec3{ position.x, position.y, 0.0f }, size, color);
+	}
+
+	void Renderer2D::DrawQuadTextured(glm::vec3& position, glm::vec2& size, glm::vec4& color, const Texture& texture)
+	{
+		// Check if the batch should be restarted based on index limits
+		if (s_Data.QuadIndexCount + 6 > s_Data.MaxIndices ||
+			(s_Data.QuadVertexBufferPtr - s_Data.QuadVertexBufferBase) + 4 > s_Data.MaxVertices)
 		{
-			float angle = i * angleStep;
-			float x = radius * cos(angle);
-			float y = radius * sin(angle);
-			vertices.push_back(x);
-			vertices.push_back(y);
+			Flush();
+			StartBatch();
 		}
 
-		return vertices;
+		// Check if texture is already bound, if not add it
+		float texIndex = 0.0f;
+		for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
+		{
+			if (s_Data.TextureSlots[i].GetID() == texture.GetID())
+			{
+				texIndex = (float)i;
+				break;
+			}
+		}
+
+		if (texIndex == 0.0f)
+		{
+			if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
+			{
+				Flush();
+				StartBatch();
+			}
+
+			texIndex = (float)s_Data.TextureSlotIndex;
+		}
+
+		s_Data.TextureSlots[s_Data.TextureSlotIndex - 1] = texture;
+		s_Data.TextureSlotIndex++;
+
+		// Define quad vertices
+		s_Data.QuadVertexBufferPtr->Position = position;
+		s_Data.QuadVertexBufferPtr->Color = color;
+		s_Data.QuadVertexBufferPtr->TexCoord = { 0.0f, 0.0f };
+		s_Data.QuadVertexBufferPtr->TexIndex = texIndex;
+		s_Data.QuadVertexBufferPtr++;
+
+		s_Data.QuadVertexBufferPtr->Position = { position.x + size.x, position.y, position.z };
+		s_Data.QuadVertexBufferPtr->Color = color;
+		s_Data.QuadVertexBufferPtr->TexCoord = { 1.0f, 0.0f };
+		s_Data.QuadVertexBufferPtr->TexIndex = texIndex;
+		s_Data.QuadVertexBufferPtr++;
+
+		s_Data.QuadVertexBufferPtr->Position = { position.x + size.x, position.y + size.y, position.z };
+		s_Data.QuadVertexBufferPtr->Color = color;
+		s_Data.QuadVertexBufferPtr->TexCoord = { 1.0f, 1.0f };
+		s_Data.QuadVertexBufferPtr->TexIndex = texIndex;
+		s_Data.QuadVertexBufferPtr++;
+
+		s_Data.QuadVertexBufferPtr->Position = { position.x, position.y + size.y, position.z };
+		s_Data.QuadVertexBufferPtr->Color = color;
+		s_Data.QuadVertexBufferPtr->TexCoord = { 0.0f, 1.0f };
+		s_Data.QuadVertexBufferPtr->TexIndex = texIndex;
+		s_Data.QuadVertexBufferPtr++;
+
+		s_Data.QuadIndexCount += 6;
 	}
+
+	FrameBuffer& Renderer2D::GetFramebuffer()
+	{
+		return s_Data.Framebuffer;
+	}
+
 }

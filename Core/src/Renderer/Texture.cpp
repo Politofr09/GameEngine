@@ -101,9 +101,10 @@ namespace Core::Gfx
 		m_Loaded = true;
 	}
 
-	void Texture::Bind() const
+	void Texture::Bind(uint32_t slot) const
 	{
-		glBindTexture(GL_TEXTURE_2D, m_RendererID);
+		//glBindTexture(GL_TEXTURE_2D, m_RendererID);
+		glBindTextureUnit(slot, m_RendererID);
 	}
 
 	void Texture::UnBind() const

@@ -34,8 +34,6 @@ namespace Core::Gfx
 
     void Renderer::Init(int width, int height)
     {
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
         GLCall(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
 
         m_FlatShading.Load();
@@ -87,13 +85,15 @@ namespace Core::Gfx
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    void Renderer::Begin(const Camera& cam)
+    void Renderer::BeginScene(const Camera& cam)
     {
         m_ActiveCamera = cam;
         m_Framebuffer.Bind();
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
     }
 
-    void Renderer::End()
+    void Renderer::EndScene()
     {
         m_Framebuffer.UnBind();
     }
@@ -143,7 +143,7 @@ namespace Core::Gfx
         for (auto& mesh : model.GetMeshes())
         {
             mesh.GetVertexArray().Bind();
-            mesh.GetIndexBuffer().Bind();
+            //mesh.GetIndexBuffer().Bind();
 
             GLCall(glDrawElements(GL_TRIANGLES, mesh.GetIndexBuffer().GetCount(), GL_UNSIGNED_INT, nullptr));
         }

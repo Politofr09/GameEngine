@@ -3,7 +3,6 @@
 #include "Core/UUID.h"
 #include "Core/Utils.h"
 #include "Common.h"
-#include "VisualComponents.h"
 
 #include <bitset>
 #include <typeindex>
@@ -23,12 +22,13 @@ namespace Core::Ecs
 	class ECS
 	{
 	public:
+		// TODO: We can do better.
 		ECS()
 		{
 			RegisterComponent<NameComponent>();
 			RegisterComponent<TransformComponent>();
 			RegisterComponent<ModelComponent>();
-			RegisterComponent<TextureComponent>();
+			RegisterComponent<SpriteComponent>();
 		}
 
 		using EntityID = uint64_t;

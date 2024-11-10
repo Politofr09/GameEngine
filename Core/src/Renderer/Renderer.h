@@ -14,9 +14,9 @@
 
 #pragma once
 
-#define GLCall(x) Core::Gfx::GLClearError(); \
+#define GLCall(x) ::Core::Gfx::GLClearError(); \
     x;\
-    ASSERT(Core::Gfx::GLLogCall());
+    ASSERT(::Core::Gfx::GLLogCall());
 
 namespace Core::Gfx
 {
@@ -27,21 +27,21 @@ namespace Core::Gfx
     {
     public:
         Renderer();
-
         static void Init(int width, int height);
 
         static void SetBackgroundColor(glm::vec3 color);
-
         static void Clear();
 
-        static void Begin(const Camera& cam);
-        static void End();
+        static void BeginScene(const Camera& cam);
+        static void EndScene();
 
         static void SetLight(const Light& light) { m_SceneLight = light; }
 
         static void DrawModel(Model& model, glm::mat4 transform);
 
         static void RenderScene(Scene& scene);
+
+        //static void Submit(Shader& shader, VertexArray& va, glm::mat4& transform);
 
         static void OnViewportResize(int width, int height); // Call this when window / framebuffer changes
         static FrameBuffer& GetFramebuffer() { return m_Framebuffer; }

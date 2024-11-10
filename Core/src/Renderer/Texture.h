@@ -36,15 +36,15 @@ namespace Core::Gfx
 		bool UnLoad() override;
 		void LoadFromMemory(unsigned int width, unsigned int height, int channels, void* data);
 
-		void Bind() const;
+		void Bind(uint32_t slot = 0) const;
 		void UnBind() const;
-		unsigned int GetID() { return m_RendererID; }
+		unsigned int GetID() const { return m_RendererID; }
 
 		std::string GetType() { return m_Type; }
 		void SetType(std::string type) { m_Type = type; }
 
-		int GetWidth() { return m_Width; }
-		int GetHeight() { return m_Height; }
+		int GetWidth() const { return m_Width; }
+		int GetHeight() const { return m_Height; }
 
 	private:
 		unsigned int m_RendererID = 0; // OpenGL ID

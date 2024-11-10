@@ -18,7 +18,7 @@ namespace Core::Gfx
 		const glm::vec3& GetPosition() const { return m_Position; }
 		void SetPosition(glm::vec3 position) { m_Position = position; CalculateViewMatrix(); }
 
-		float GetRotation() { return m_Rotation; }
+		float GetRotation() const { return m_Rotation; }
 		void SetRotation(float rotation) { m_Rotation = rotation; CalculateViewMatrix(); }
 
 		const glm::mat4& GetViewMatrix() const { return m_ViewMatrix; }
@@ -37,7 +37,7 @@ namespace Core::Gfx
 
 		glm::vec3 m_Position = glm::vec3(0.0f);
 		float m_Rotation = 0.0f;
-		float m_Zoom = 1.0f;
+		float m_Zoom = 10.0f;
 		float m_Right = 0.0f;
 		float m_Bottom = 0.0f;
 	};

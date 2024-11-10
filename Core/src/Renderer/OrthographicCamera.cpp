@@ -24,7 +24,7 @@ namespace Core::Gfx
 	{
 		m_Right = right;
 		m_Bottom = bottom;
-		m_ProjectionMatrix = glm::ortho(left / m_Zoom, right / m_Zoom, bottom / m_Zoom, top / m_Zoom, -1.0f, 1.0f);
+		m_ProjectionMatrix = glm::ortho(left / m_Zoom, right / m_Zoom, bottom / m_Zoom, top / m_Zoom, -100.0f, 100.0f);
 	}
 
 	void OrthographicCamera::OnViewportResize(int width, int height)

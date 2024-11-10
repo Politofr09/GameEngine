@@ -3,6 +3,8 @@
 #include "Texture.h"
 #include "Shader.h"
 #include "OrthographicCamera.h"
+#include "FrameBuffer.h"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -10,35 +12,30 @@
 
 namespace Core::Gfx
 {
-	// TODO: Add more shapes; be able to use custom shader
 	class Renderer2D
 	{
 	public:
 		// Initialize projection & VAO render data
-		static void Init();
+		static void Init(unsigned int width, unsigned int height);
+
+		static void OnViewportResize(int width, int height);
 
 		static void Begin(const OrthographicCamera& camera);
 		static void End();
 
-		static void DrawTexture(Texture& texture, glm::vec2 position, glm::vec2 scale = glm::vec2(1, 1), float rotation = 0.0f, glm::vec3 tint = glm::vec3(1, 1, 1));
-		static void DrawTextureRect(Texture& texture, glm::vec2 position, glm::vec4 rectangle, glm::vec2 scale = glm::vec2(1, 1), float rotation = 0.0f, glm::vec3 tint = glm::vec3(1, 1, 1));
-		static void DrawRectangle(glm::vec2 position, glm::vec2 size, glm::vec3 color);
-		static void DrawLine(glm::vec2 start, glm::vec2 end, glm::vec3 color);
-		static void DrawPolygon(const std::vector<float>& vertices, glm::vec2 position, glm::vec2 scale, glm::vec3 color);
+		static void DrawQuad(glm::vec3& position, glm::vec2& size, glm::vec4& color);
+		static void DrawQuad(glm::vec2& position, glm::vec2& size, glm::vec4& color);
+		static void DrawQuadTextured(glm::vec3& position, glm::vec2& size, glm::vec4& color, const Texture& texture);
 
-		static std::vector<float> GeneratePolygonVertices(int numSides, float radius = 1.0f);
+		static FrameBuffer& GetFramebuffer();
 
 	private:
-		static void SendUniforms(glm::mat4 transform, glm::vec3 tint, glm::vec2 uvOffset = glm::vec2(0.0f), glm::vec2 uvScaling = glm::vec2(1.0f, 1.0f));
+		static void StartBatch();
+		static void NextBatch();
+		static void Flush();
 
 	private:
-		static OrthographicCamera m_ActiveCamera;
-		static Shader m_Shader;
-
-		static VertexArray m_QuadVAO;
-		static VertexBuffer m_QuadVBO;
-
-		static Texture m_PixelDummy; // When drawing only shapes we multiply a white pixel just for having the same shader
+		static void SendUniforms();
 	};
 	
 }

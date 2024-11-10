@@ -39,9 +39,17 @@ void Core::Gfx::VertexArray::AddBuffer(const VertexBuffer& vb, const BufferLayou
     }
 }
 
+void Core::Gfx::VertexArray::SetIndexBuffer(const Core::Gfx::IndexBuffer& ib)
+{
+    glBindVertexArray(m_RendererID);
+    ib.Bind();
+    m_IndexBuffer = ib;
+}
+
 void Core::Gfx::VertexArray::Bind() const
 {
     glBindVertexArray(m_RendererID);
+    m_IndexBuffer.Bind();
 }
 
 void Core::Gfx::VertexArray::UnBind() const

@@ -5,12 +5,12 @@ namespace Core::Gfx
 
 	class VertexBuffer
 	{
-	private:
-		unsigned int m_RendererID; // OpenGL ID
-
 	public:
 		VertexBuffer() = default;
-		VertexBuffer(const void* data, int size, bool dynamic_draw = false);
+		VertexBuffer(unsigned int size);
+		VertexBuffer(const void* data, unsigned int size, bool dynamic_draw = false);
+
+		
 		void Free();
 
 		void UpdateData(const void* data, int size);
@@ -26,6 +26,9 @@ namespace Core::Gfx
 			m_RendererID = other.m_RendererID;
 			return *this;
 		}
+	private:
+		unsigned int m_RendererID; // OpenGL ID
+
 	};
 
 }

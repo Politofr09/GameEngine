@@ -1,6 +1,8 @@
 #include <GL/glew.h>
 #include "Core/Utils.h"
 #include "VertexBuffer.h"
+#include "IndexBuffer.h"
+
 #include <vector>
 
 #pragma once
@@ -48,15 +50,14 @@ namespace Core::Gfx
 	// TODO: Add more types?
 	class VertexArray
 	{
-	private:
-		unsigned int m_RendererID; // OpenGL ID
-	
 	public:
 		VertexArray() = default;
 		void Init();
 		void Free();
 
 		void AddBuffer(const VertexBuffer& vb, const BufferLayout& layout);
+		void SetIndexBuffer(const IndexBuffer& ib);
+
 		void Bind() const;
 		void UnBind() const;
 
@@ -67,6 +68,9 @@ namespace Core::Gfx
 			m_RendererID = other.m_RendererID;
 			return *this;
 		}
+	private:
+		unsigned int m_RendererID; // OpenGL ID
+		IndexBuffer m_IndexBuffer;
 	};
 
 }
