@@ -9,8 +9,8 @@
 
 namespace Core
 {
-    float Window::_deltaTime = 0.0f;
-    std::chrono::steady_clock::time_point Window::_prevTime;
+    float Window::m_DeltaTime = 0.0f;
+    std::chrono::steady_clock::time_point Window::m_PrevTime;
 
     static void GLFWErrorCallback(int error, const char* description)
     {
@@ -37,50 +37,50 @@ namespace Core
         glfwSetErrorCallback(GLFWErrorCallback);
 
         if (!decorated) glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-        _window = glfwCreateWindow(_width, _height, _title.c_str(), nullptr, nullptr);
-        ASSERT(_window);
-        glfwMakeContextCurrent(_window);
+        m_Window = glfwCreateWindow(m_Width, m_Height, m_Title.c_str(), nullptr, nullptr);
+        ASSERT(m_Window);
+        glfwMakeContextCurrent(m_Window);
 
         // Setup callbacks
         //glfwSetKeyCallback(_window, key_callback);
-        glfwSetWindowSizeCallback(_window, window_resize_callback);
-        glfwSetWindowPosCallback(_window, window_pos_callback);
-        glfwMaximizeWindow(_window);
-        Input::Keyboard::Init(_window);
-        Input::Mouse::Init(_window);
+        glfwSetWindowSizeCallback(m_Window, window_resize_callback);
+        glfwSetWindowPosCallback(m_Window, window_pos_callback);
+        glfwMaximizeWindow(m_Window);
+        Input::Keyboard::Init(m_Window);
+        Input::Mouse::Init(m_Window);
 
         // Add another callback when the window resizes...
         Events::Dispatcher::Subscribe([&](Events::Event* event){
             if (event->GetType() != "WindowResizedEvent") return;
 
             auto e = dynamic_cast<Events::WindowResizedEvent*>(event);
-            _width = e->width;
-            _height = e->height;
+            m_Width = e->width;
+            m_Height = e->height;
         });
 
         // Init glew
         ASSERT(glewInit() == GLEW_OK);
 
-        _prevTime = std::chrono::steady_clock::now();
+        m_PrevTime = std::chrono::steady_clock::now();
     }
 
     Window::Window(uint32_t w, uint32_t h, const std::string& title)
     {
-        _width = w;
-        _height = h;
+        m_Width = w;
+        m_Height = h;
 
-        _title = title;
+        m_Title = title;
         Init();
     }
 
     uint32_t Window::GetWidth()
     {
-        return _width;
+        return m_Width;
     }
 
     uint32_t Window::GetHeight()
     {
-        return _height;
+        return m_Height;
     }
 
     void Window::Update()
@@ -94,39 +94,39 @@ namespace Core
         }
 
         auto currentTime = std::chrono::steady_clock::now();
-        std::chrono::duration<float> elapsedTime = currentTime - _prevTime;
-        _deltaTime = elapsedTime.count();
-        _prevTime = currentTime;
+        std::chrono::duration<float> elapsedTime = currentTime - m_PrevTime;
+        m_DeltaTime = elapsedTime.count();
+        m_PrevTime = currentTime;
 
         glfwPollEvents();
-        glfwSwapBuffers(_window);
+        glfwSwapBuffers(m_Window);
     }
 
     bool Window::ShouldClose()
     {
-        return glfwWindowShouldClose(_window);
+        return glfwWindowShouldClose(m_Window);
     }
 
     void Window::Close()
     {
-        glfwSetWindowShouldClose(_window, true);
+        glfwSetWindowShouldClose(m_Window, true);
     }
 
     void Window::Maximize()
     {
-        if (glfwGetWindowAttrib(_window, GLFW_MAXIMIZED))
-            glfwRestoreWindow(_window);
+        if (glfwGetWindowAttrib(m_Window, GLFW_MAXIMIZED))
+            glfwRestoreWindow(m_Window);
         else
-            glfwMaximizeWindow(_window);
+            glfwMaximizeWindow(m_Window);
     }
 
     void Window::Minimize()
     {
-        glfwIconifyWindow(_window);
+        glfwIconifyWindow(m_Window);
     }
 
     void Window::SetTitle(const std::string& title)
     {
-        glfwSetWindowTitle(_window, title.c_str());
+        glfwSetWindowTitle(m_Window, title.c_str());
     }
 }

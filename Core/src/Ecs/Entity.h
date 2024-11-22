@@ -36,10 +36,27 @@ namespace Core::Ecs
 			return m_ECS.HasComponent<T>(m_EntityID);
 		}
 
+		void Kill()
+		{
+			m_ECS.RemoveEntity(m_EntityID);
+			m_EntityID = 0;
+		}
+
 		void SetName(const std::string& name) { GetComponent<NameComponent>().Name = name; }
 		const std::string& GetName() { return GetComponent<NameComponent>().Name; }
 
-		UUID GetID() { return m_EntityID; }
+		UUID GetID() const { return m_EntityID; }
+
+		Entity operator = (Entity& other)
+		{
+			this->m_EntityID = other.m_EntityID;
+			return *this;
+		}
+
+		bool operator == (Entity& other)
+		{
+			return this->m_EntityID == other.m_EntityID;
+		}
 
 	private:
 		ECS& m_ECS;

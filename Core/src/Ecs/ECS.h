@@ -201,7 +201,8 @@ namespace Core::Ecs
 		}
 
 		template<typename... Cs>
-		ComponentMask GetComponentMask() {
+		ComponentMask GetComponentMask()
+		{
 			ComponentMask mask;
 			((mask.set(GetComponentIndex<Cs>())), ...);
 			return mask;
@@ -242,8 +243,10 @@ namespace Core::Ecs
 		void Tick(float dt);
 
 		template<typename Func>
-		void each(Func&& func) {
-			for (const auto& entityDesc : m_EntityMasks) {
+		void each(Func&& func) 
+		{
+			for (const auto& entityDesc : m_EntityMasks) 
+			{
 				func(entityDesc.id);
 			}
 		}

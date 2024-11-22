@@ -19,7 +19,7 @@ namespace Core::Gfx
 		static const uint32_t MaxIndices =	MaxQuads * 6;
 
 		/* 31 usable because of white dummy pixel texture
-		 * OpenGL-compliant gpus need to provide at least 16 texture slots per shader call.
+		 * OpenGL-compatible gpus need to provide at least 16 texture slots per shader call.
 		 * In the worst case we have 15 usable slots. 
 		**********************************************************************************/
 		static const uint32_t MaxTextureSlots = 32;
@@ -27,7 +27,6 @@ namespace Core::Gfx
 		uint32_t TextureSlotIndex = 1; // 0 for pixel dummy texture
 
 		OrthographicCamera ActiveCamera;
-		FrameBuffer Framebuffer;
 
 		Shader QuadShader;
 
@@ -43,14 +42,12 @@ namespace Core::Gfx
 
 	static Renderer2DData s_Data;
 
-	void Renderer2D::Init(unsigned int width, unsigned int height)
+	void Renderer2D::Init()
 	{
-		s_Data.Framebuffer.Create(width, height);
-
 		// TODO: Load this from the disk idk why I put it  here... 
 		// Make the shader
 		const char* vertexShaderSource = R"(
-			#version 330 core
+			#version 450 core
 			layout (location = 0) in vec3 a_Position;
 			layout (location = 1) in vec4 a_Color;
 			layout (location = 2) in vec2 a_TexCoord;
@@ -75,14 +72,14 @@ namespace Core::Gfx
 		)";
 
 		const char* fragmentShaderSource = R"(
-			#version 330 core
+			#version 450 core
 			in vec2 v_TexCoord;
 			in vec4 v_Color;
 			in float v_TexIndex;
 
 			out vec4 color;
 			
-			uniform sampler2D u_Textures[32];
+			layout (binding = 0) uniform sampler2D u_Textures[32];
 
 			void main()
 			{
@@ -95,10 +92,10 @@ namespace Core::Gfx
 		// Vertex buffer setup
 		s_Data.QuadVertexArray.Init();
 		BufferLayout layout;
-		layout.Push<float>(3);	// Position
-		layout.Push<float>(4);	// Color
-		layout.Push<float>(2);	// TexCoords
-		layout.Push<float>(1);	// TexIndex
+		layout.Push<float>(3); // Position
+		layout.Push<float>(4); // Color
+		layout.Push<float>(2); // TexCoords
+		layout.Push<float>(1); // TexIndex
 
 		s_Data.QuadVertexBuffer = VertexBuffer(s_Data.MaxIndices * sizeof(QuadVertex));
 		s_Data.QuadVertexArray.AddBuffer(s_Data.QuadVertexBuffer, layout);
@@ -122,19 +119,13 @@ namespace Core::Gfx
 		}
 		IndexBuffer ib(quadIndices, s_Data.MaxIndices);
 		s_Data.QuadVertexArray.SetIndexBuffer(ib);
-		delete[] quadIndices; // Warning: not thread safe
+		delete[] quadIndices; // Warning: not thread safe 
 
 		// Init dummy pixel white texture
 		unsigned int whitePixel = 0xFFFFFF;
 		unsigned char* whitePixelPtr = reinterpret_cast<unsigned char*>(&whitePixel);
 		s_Data.PixelDummy.LoadFromMemory(1, 1, 3, whitePixelPtr);
 		s_Data.TextureSlots[0] = s_Data.PixelDummy;
-	}
-
-	void Renderer2D::OnViewportResize(int width, int height)
-	{
-		s_Data.Framebuffer.Resize(width, height);
-		glViewport(0, 0, width, height);
 	}
 
 	void Renderer2D::SendUniforms()
@@ -146,9 +137,9 @@ namespace Core::Gfx
     void Renderer2D::Begin(const OrthographicCamera& camera)
 	{
 		s_Data.ActiveCamera = camera;
-		s_Data.Framebuffer.Bind();
 
 		s_Data.QuadShader.Use();
+
 		SendUniforms();
 
 		StartBatch();
@@ -161,16 +152,22 @@ namespace Core::Gfx
 		s_Data.QuadVertexBufferPtr = s_Data.QuadVertexBufferBase;
 		s_Data.QuadIndexCount = 0;
 		s_Data.TextureSlotIndex = 1;
+
+		for (uint32_t i = 0; i < Renderer2DData::MaxTextureSlots; i++)
+		{
+			s_Data.TextureSlots[i] = s_Data.PixelDummy;
+		}
 	}
 
 	void Renderer2D::NextBatch()
 	{
+		Flush();
+		StartBatch();
 	}
 	
 	void Renderer2D::End()
 	{
 		Flush();
-		s_Data.Framebuffer.UnBind();
 	}
 
 	void Renderer2D::Flush()
@@ -180,8 +177,10 @@ namespace Core::Gfx
 		s_Data.QuadVertexBuffer.UpdateData(s_Data.QuadVertexBufferBase, dataSize);
 
 		// Bind textures
-		for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
-			s_Data.TextureSlots[i].Bind(i); // Bind specifying a slot
+		for (uint32_t i = 0; i <= s_Data.TextureSlotIndex; i++)
+		{
+			s_Data.TextureSlots[i].Bind(i);
+		}
 
 		// Execute draw call
 		glDrawElements(GL_TRIANGLES, s_Data.QuadIndexCount, GL_UNSIGNED_INT, nullptr);
@@ -192,8 +191,7 @@ namespace Core::Gfx
 		if (s_Data.QuadIndexCount + 6 > s_Data.MaxIndices ||
 			(s_Data.QuadVertexBufferPtr - s_Data.QuadVertexBufferBase) + 4 > s_Data.MaxVertices)
 		{
-			Flush();
-			StartBatch();
+			NextBatch();
 		}
 
 		s_Data.QuadVertexBufferPtr->Position = position;
@@ -234,13 +232,12 @@ namespace Core::Gfx
 		if (s_Data.QuadIndexCount + 6 > s_Data.MaxIndices ||
 			(s_Data.QuadVertexBufferPtr - s_Data.QuadVertexBufferBase) + 4 > s_Data.MaxVertices)
 		{
-			Flush();
-			StartBatch();
+			NextBatch();
 		}
 
 		// Check if texture is already bound, if not add it
 		float texIndex = 0.0f;
-		for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
+		for (uint32_t i = 0; i <= s_Data.TextureSlotIndex; i++)
 		{
 			if (s_Data.TextureSlots[i].GetID() == texture.GetID())
 			{
@@ -253,15 +250,14 @@ namespace Core::Gfx
 		{
 			if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
 			{
-				Flush();
-				StartBatch();
+				NextBatch();
 			}
 
+			// Add the texture to the slots
+			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
 			texIndex = (float)s_Data.TextureSlotIndex;
+			s_Data.TextureSlotIndex++;
 		}
-
-		s_Data.TextureSlots[s_Data.TextureSlotIndex - 1] = texture;
-		s_Data.TextureSlotIndex++;
 
 		// Define quad vertices
 		s_Data.QuadVertexBufferPtr->Position = position;
@@ -289,11 +285,6 @@ namespace Core::Gfx
 		s_Data.QuadVertexBufferPtr++;
 
 		s_Data.QuadIndexCount += 6;
-	}
-
-	FrameBuffer& Renderer2D::GetFramebuffer()
-	{
-		return s_Data.Framebuffer;
 	}
 
 }

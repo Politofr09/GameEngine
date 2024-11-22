@@ -6,9 +6,11 @@
 #include "Renderer/Camera.h"
 #include "Renderer/OrthographicCamera.h"
 #include "Core/Utils.h"
+#include "Panels/SceneHierarchyPanel.h"
 #include "Events/InputEvents.h"
 #include "Events/WindowEvents.h"
 #include "Renderer/Texture.h"
+#include "Renderer/FrameBuffer.h"
 #include "glm/glm.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -17,7 +19,7 @@
 class EditorLayer : public Core::Layer
 {
 public:
-    EditorLayer() : Layer("EditorLayer") {};
+    EditorLayer();
 	
     void OnAttach() override;
 	void OnUpdate() override;
@@ -28,6 +30,7 @@ public:
 private:
     Core::Gfx::Camera m_Cam;
     Core::Gfx::OrthographicCamera m_Cam2d;
+    Core::Gfx::FrameBuffer m_Framebuffer;
 
     //void UpdateCameraController();
     void DrawViewportImGui();
@@ -47,6 +50,8 @@ private:
 
     bool showECSPanel = true;
     void ShowECSPanel(bool* p_open);
+
+    SceneHierarchyPanel m_SceneHierarchyPanel;
 
     bool showContentBrowser = true;
     void ShowContentBrowser(bool* p_open);

@@ -16,9 +16,7 @@ namespace Core::Gfx
 	{
 	public:
 		// Initialize projection & VAO render data
-		static void Init(unsigned int width, unsigned int height);
-
-		static void OnViewportResize(int width, int height);
+		static void Init();
 
 		static void Begin(const OrthographicCamera& camera);
 		static void End();
@@ -26,8 +24,6 @@ namespace Core::Gfx
 		static void DrawQuad(glm::vec3& position, glm::vec2& size, glm::vec4& color);
 		static void DrawQuad(glm::vec2& position, glm::vec2& size, glm::vec4& color);
 		static void DrawQuadTextured(glm::vec3& position, glm::vec2& size, glm::vec4& color, const Texture& texture);
-
-		static FrameBuffer& GetFramebuffer();
 
 	private:
 		static void StartBatch();

@@ -17,7 +17,6 @@
 #include "Renderer/Renderer.h"
 #include "Renderer/Renderer2D.h"
 #include "Renderer/TextRenderer.h"
-#include "Core/Application.h"
 
 #include "Ecs/ECS.h"
 
@@ -25,6 +24,10 @@
 
 using namespace Core::Gfx;
 using namespace Core;
+
+EditorLayer::EditorLayer() 
+    : Layer("EditorLayer"), m_SceneHierarchyPanel(Core::Application::Get()->GetCurrentProject().GetScene()) 
+{}
 
 void EditorLayer::OnAttach()
 {
@@ -36,14 +39,16 @@ void EditorLayer::OnAttach()
     int width = Application::Get()->GetWindow()->GetWidth();
     int height = Application::Get()->GetWindow()->GetHeight();
 
-    // Setup *OpenGL* renderer
-    Renderer::Init(width, height);
-    Renderer2D::Init(width, height);
+    //// Setup *OpenGL* renderer
+    Renderer::Init();
+    Renderer2D::Init();
     TextRenderer::Init();
 
     /**** Setup the camera(s) ****/
     m_Cam.SetAspectRatio((float)width / height);
     m_Cam2d = Core::Gfx::OrthographicCamera(0.0f, (float)width, (float)height, 0.0f);
+    
+    m_Framebuffer.Create(width, height);
 }
 
 static int FONT_SCALE = 3;
@@ -54,6 +59,7 @@ void EditorLayer::OnUpdate()
     //shader->SetFloat("uTime", (float)glfwGetTime());
     Renderer::SetBackgroundColor({ 0.2f, 0.3f, 0.3f });
     Renderer::Clear();
+    m_Framebuffer.Bind();
     Renderer::BeginScene(m_Cam);
     {
         Renderer::Clear();
@@ -66,8 +72,6 @@ void EditorLayer::OnUpdate()
     // Testing Renderer2D
     Renderer2D::Begin(m_Cam2d);
     {
-        Renderer::Clear();
-
         auto& registry = Application::Get()->GetCurrentProject().GetScene().GetRegistry();
         auto& view = registry.GetView<Ecs::TransformComponent, Ecs::SpriteComponent>();
         for (auto e : view)
@@ -90,6 +94,7 @@ void EditorLayer::OnUpdate()
         }
     }
     Renderer2D::End();
+    m_Framebuffer.UnBind();
 }
 
 void EditorLayer::OnImGuiRender()
@@ -125,7 +130,6 @@ void EditorLayer::OnImGuiRender()
             ImGui::MenuItem("Toggle Theme Switcher", NULL, &showThemeSwitcher);
             ImGui::MenuItem("Toggle Asset Registry", NULL, &showAssetRegistry);
             ImGui::MenuItem("Toggle Statistics", NULL, &showRenderingSettings);
-            ImGui::MenuItem("Toggle ECS panel", NULL, &showECSPanel);
             ImGui::EndMenu();
         }
 
@@ -137,7 +141,9 @@ void EditorLayer::OnImGuiRender()
     if (showCameraControl)      ShowCameraControlImgui(&showCameraControl);
     if (showAssetRegistry)      ShowAssetRegistry(&showAssetRegistry);
     if (showThemeSwitcher)      ShowThemeSwitcher(&showThemeSwitcher);
-    if (showECSPanel)           ShowECSPanel(&showECSPanel);
+    //if (showECSPanel)           ShowECSPanel(&showECSPanel);
+    m_SceneHierarchyPanel.OnImGuiRender();
+
     if (showRenderingSettings)  ShowRenderingSettings(&showRenderingSettings);
     if (showContentBrowser)     ShowContentBrowser(&showContentBrowser);
 
@@ -148,8 +154,7 @@ void EditorLayer::OnImGuiRender()
         if (availableSpace.x != ImGui::GetContentRegionAvail().x || availableSpace.y != ImGui::GetContentRegionAvail().y)
         {
             availableSpace = ImGui::GetContentRegionAvail();
-            Renderer::OnViewportResize((int)availableSpace.x, (int)availableSpace.y);
-            Renderer2D::OnViewportResize((int)availableSpace.x, (int)availableSpace.y);
+            m_Framebuffer.Resize((int)availableSpace.x, (int)availableSpace.y);
             m_Cam.OnViewportResize((int)availableSpace.x, (int)availableSpace.y);
             m_Cam2d.OnViewportResize((int)availableSpace.x, (int)availableSpace.y);
         }
@@ -158,10 +163,8 @@ void EditorLayer::OnImGuiRender()
         ImVec2 max = ImVec2(min.x + availableSpace.x, min.y + availableSpace.y);
         ImGui::GetWindowDrawList()->AddRect(min, max, ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)), 6.0f, ImDrawFlags_RoundCornersAll, 6.0f);
 
-        FrameBuffer fb = Renderer2D::GetFramebuffer();
-
         ImGui::BeginChild("Viewport", availableSpace, false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoMove);
-        DisplayRoundedImage((ImTextureID)fb.GetTextureID(), ImVec2(fb.GetWidth(), fb.GetHeight()), 6.0f, ImVec2(0, 1), ImVec2(1, 0));
+        DisplayRoundedImage((ImTextureID)m_Framebuffer.GetTextureID(), ImVec2(m_Framebuffer.GetWidth(), m_Framebuffer.GetHeight()), 0.0f, ImVec2(0, 1), ImVec2(1, 0));
         if (ImGui::IsWindowHovered())
         {
             m_Cam.Move();
@@ -176,11 +179,10 @@ void EditorLayer::ShowCameraControlImgui(bool* p_open)
 {
     if (ImGui::Begin("Switch perspective", p_open))
     {
-
         static float in_FOV = 75.0F;
         if (ImGui::SliderFloat("FOV", &in_FOV, 30.0f, 120.0f))
         {
-            float aspectRatio = Renderer::GetFramebuffer().GetAspectRatio();
+            float aspectRatio = m_Framebuffer.GetAspectRatio();
             m_Cam.SetProjectionMatrix(glm::perspective(glm::radians(in_FOV), aspectRatio, 0.01f, 1000.0f));
             //shader->SetMatrix("uProjection", m_Cam.GetProjectionMatrix());
         }
@@ -189,7 +191,7 @@ void EditorLayer::ShowCameraControlImgui(bool* p_open)
         if (ImGui::Button("Reset"))
         {
             in_FOV = 75.0F;
-            float aspectRatio = Renderer::GetFramebuffer().GetAspectRatio();
+            float aspectRatio = m_Framebuffer.GetAspectRatio();
             m_Cam.SetProjectionMatrix(glm::perspective(glm::radians(in_FOV), aspectRatio, 0.01f, 1000.0f));
             //shader->SetMatrix("uProjection", m_Cam.GetProjectionMatrix());
         }
@@ -371,57 +373,6 @@ void EditorLayer::ShowRenderingSettings(bool* p_open)
         ImGui::PopStyleColor();
 
         ImGui::Separator();
-        
-        // Rendering settings
-        static bool previousFaceCulling = true;
-        static bool faceCulling = true;
-
-        ImGui::Checkbox("Face culling", &faceCulling);
-
-        // Check if face culling state changed
-        if (faceCulling != previousFaceCulling) {
-            if (faceCulling) {
-                Renderer::EnableCulling();
-            }
-            else {
-                Renderer::DisableCulling();
-            }
-            previousFaceCulling = faceCulling; // Update the previous state
-        }
-
-        static bool previousDepthTesting = true;
-        static bool depthTesting = true;
-
-        ImGui::SameLine();
-        ImGui::Checkbox("Depth testing", &depthTesting);
-
-        // Check if face depth testing state changed
-        if (depthTesting != previousDepthTesting) {
-            if (depthTesting) {
-                Renderer::EnableDepthTesting();
-            }
-            else {
-                Renderer::DisableDepthTesting();
-            }
-            previousDepthTesting = depthTesting; // Update the previous state
-        }
-    
-        static bool previousWireframeMode = true;
-        static bool wireFrameMode = true;
-
-        ImGui::SameLine();
-        ImGui::Checkbox("Wireframe mode", &wireFrameMode);
-
-        // Check if face depth testing state changed
-        if (wireFrameMode != previousWireframeMode) {
-            if (wireFrameMode) {
-                Renderer::EnableWireframeMode();
-            }
-            else {
-                Renderer::DisableWireframeMode();
-            }
-            previousWireframeMode = wireFrameMode; // Update the previous state
-        }
     }
     ImGui::End();
 }
@@ -643,12 +594,16 @@ void EditorLayer::ShowContentBrowser(bool* p_open)
         ImGui::SameLine();
         if (ImGui::Button(ICON_FA_FOLDER))
         {
-            const char* dir = tinyfd_selectFolderDialog("Select a directory", "/res");
-            if (dir)
+            // What is thread safety?
+            std::thread([]
             {
-                std::strncpy(directoryBuf, dir, sizeof(directoryBuf) - 1);
-                directoryBuf[sizeof(directoryBuf) - 1] = '\0';
-            }
+                const char* dir = tinyfd_selectFolderDialog("Select a directory", "/res");
+                if (dir)
+                {
+                    std::strncpy(directoryBuf, dir, sizeof(directoryBuf) - 1);
+                    directoryBuf[sizeof(directoryBuf) - 1] = '\0';
+                }
+            }).detach();
         }
 
         if (ImGui::IsItemHovered())

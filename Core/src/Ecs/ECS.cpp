@@ -11,23 +11,26 @@ namespace Core::Ecs
 
 		if (it != m_EntityMasks.end())
 		{
-			// Remove components for the entity
-			for (const auto& [typeId, componentStorage] : m_Components)
+			// Remove the entity from the mask list
+			m_EntityMasks.erase(it);
+
+			// Remove all components associated with the entity
+			for (auto& [typeId, componentStorage] : m_Components)
 			{
+				// Find the component for this entity
 				auto compIt = componentStorage.find(entity);
 				if (compIt != componentStorage.end())
 				{
-					delete static_cast<char*>(compIt->second); // Free the component's memory
-					m_Components[typeId].erase(entity);        // Remove from storage
+					// Free dynamically allocated memory
+					delete static_cast<char*>(compIt->second); // Ensure all components are allocated with new!
+					componentStorage.erase(compIt);            // Remove from storage
 				}
 			}
-			m_EntityMasks.erase(it);
 		}
 	}
 
 	ECS::EntityID ECS::CreateEntityWithID(ECS::EntityID id)
 	{
-
 		// Check if the ID already exists
 		auto it = std::find_if(m_EntityMasks.begin(), m_EntityMasks.end(),
 			[id](const EntityDesc& e) { return e.id == id; });

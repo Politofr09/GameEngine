@@ -57,6 +57,7 @@ namespace Core::Gfx
 
 		void AddBuffer(const VertexBuffer& vb, const BufferLayout& layout);
 		void SetIndexBuffer(const IndexBuffer& ib);
+		IndexBuffer& GetIndexBuffer() { return m_IndexBuffer; }
 
 		void Bind() const;
 		void UnBind() const;
@@ -66,6 +67,7 @@ namespace Core::Gfx
 		VertexArray& operator=(const VertexArray& other)
 		{
 			m_RendererID = other.m_RendererID;
+			m_IndexBuffer = other.m_IndexBuffer;
 			return *this;
 		}
 	private:

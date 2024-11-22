@@ -37,7 +37,7 @@ namespace Core::Gfx
 		void LoadFromMemory(unsigned int width, unsigned int height, int channels, void* data);
 
 		void Bind(uint32_t slot = 0) const;
-		void UnBind() const;
+		void UnBind(uint32_t slot = 0) const;
 		unsigned int GetID() const { return m_RendererID; }
 
 		std::string GetType() { return m_Type; }

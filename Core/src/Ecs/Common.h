@@ -67,7 +67,7 @@ namespace Core::Ecs
 	{
 		PositionComponent Position;
 		RotationComponent Rotation;
-		ScaleComponent Scale;
+		ScaleComponent Scale = { 1.0f, 1.0f, 1.0f };
 
 		operator glm::mat4() const
 		{

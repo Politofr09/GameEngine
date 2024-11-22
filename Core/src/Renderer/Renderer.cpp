@@ -11,7 +11,6 @@ namespace Core::Gfx
     Light Renderer::m_SceneLight;
     FlatShading Renderer::m_FlatShading;
     PhongShading Renderer::m_PhongShading;
-    FrameBuffer Renderer::m_Framebuffer;
 
     void GLClearError()
     {
@@ -32,7 +31,7 @@ namespace Core::Gfx
     {
     }
 
-    void Renderer::Init(int width, int height)
+    void Renderer::Init()
     {
         GLCall(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
 
@@ -41,8 +40,6 @@ namespace Core::Gfx
 
         m_PhongShading.Load();
         //registry.Track(m_PhongShading.ShaderProgram);
-
-        m_Framebuffer.Create(width, height);
     }
 
     void Renderer::EnableCulling()
@@ -88,14 +85,12 @@ namespace Core::Gfx
     void Renderer::BeginScene(const Camera& cam)
     {
         m_ActiveCamera = cam;
-        m_Framebuffer.Bind();
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
     }
 
     void Renderer::EndScene()
     {
-        m_Framebuffer.UnBind();
     }
 
     void Renderer::DrawModel(Model& model, glm::mat4 transform)
@@ -143,9 +138,8 @@ namespace Core::Gfx
         for (auto& mesh : model.GetMeshes())
         {
             mesh.GetVertexArray().Bind();
-            //mesh.GetIndexBuffer().Bind();
 
-            GLCall(glDrawElements(GL_TRIANGLES, mesh.GetIndexBuffer().GetCount(), GL_UNSIGNED_INT, nullptr));
+            GLCall(glDrawElements(GL_TRIANGLES, mesh.GetVertexArray().GetIndexBuffer().GetCount(), GL_UNSIGNED_INT, nullptr));
         }
     }
 
@@ -166,12 +160,6 @@ namespace Core::Gfx
 
             DrawModel(model, transformComponent); // Use of mat4 operator (nice)
         }
-    }
-
-    void Renderer::OnViewportResize(int width, int height)
-    {
-        m_Framebuffer.Resize(width, height);
-        glViewport(0, 0, width, height);
     }
 
 }

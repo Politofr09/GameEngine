@@ -161,8 +161,6 @@ namespace Core
             }
         }
 
-
-        
         return true;
     }
 

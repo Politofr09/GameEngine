@@ -25,18 +25,15 @@ namespace Core::Gfx
 		{
 			va = other.va;
 			vb = other.vb;
-			ib = other.ib;
 		}
 
-		VertexArray GetVertexArray() { return va; }
-		VertexBuffer GetVertexBuffer() { return vb; }
-		IndexBuffer GetIndexBuffer() { return ib; }
+		VertexArray GetVertexArray() const { return va; }
+		VertexBuffer GetVertexBuffer() const { return vb; }
 
 		Mesh& operator =(const Mesh& other)
 		{
 			va = other.va;
 			vb = other.vb;
-			ib = other.ib;
 
 			return *this;
 		}
@@ -45,7 +42,6 @@ namespace Core::Gfx
 		void SetupMesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices);
 		VertexArray va;
 		VertexBuffer vb;
-		IndexBuffer ib;
 	};
 
 }
