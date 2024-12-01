@@ -1,4 +1,4 @@
-<img src="Proto_logo.svg" alt="drawing" width="600"/>
+<img src="Branding/Banner.svg" alt="banner"/>
 
 <h2 style="text-align: center;">My custom game engine written in C++ for my projects</h2>
 
