@@ -2,22 +2,35 @@
 
 using namespace Core::Gfx;
 
-Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices)
+Mesh::Mesh(Vertices& vertices, std::vector<unsigned int>& indices)
 {
 	SetupMesh(vertices, indices);
 }
 
-void Mesh::SetupMesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices)
+void Mesh::SetupMesh(Vertices& vertices, std::vector<unsigned int>& indices)
 {
+    // Initialize and bind the Vertex Array
     va.Init();
     va.Bind();
 
-    vb = VertexBuffer(vertices.data(), vertices.size() * sizeof(Vertex));
+    // Position attribute
+    BufferLayout positionLayout;
+    positionLayout.Push<float>(3);
+    VertexBuffer positionBuffer(vertices.Positions.data(), vertices.Positions.size() * sizeof(glm::vec3));
+    va.AddBuffer(positionBuffer, positionLayout);
 
-    BufferLayout layout;
-    layout.Push<float>(3); // Position attribute
-    layout.Push<float>(3); // Normal attribute
-    layout.Push<float>(2); // uv attribute
-    va.AddBuffer(vb, layout);
-    va.SetIndexBuffer(IndexBuffer(indices.data(), indices.size()));
+    //// Normal attribute
+    BufferLayout normalLayout;
+    normalLayout.Push<float>(3);
+    VertexBuffer normalBuffer(vertices.Normals.data(), vertices.Normals.size() * sizeof(glm::vec3));
+    va.AddBuffer(normalBuffer, normalLayout);
+
+    // Texcoords attribute
+    BufferLayout texcoordLayout;
+    texcoordLayout.Push<float>(2);
+    VertexBuffer texcoordsBuffer(vertices.TexCoords.data(), vertices.TexCoords.size() * sizeof(glm::vec2));
+    va.AddBuffer(texcoordsBuffer, texcoordLayout);
+
+    IndexBuffer indexBuffer(indices.data(), indices.size());
+    va.SetIndexBuffer(indexBuffer);
 }

@@ -22,7 +22,7 @@ void Core::Gfx::VertexArray::Free()
     glDeleteVertexArrays(1, &m_RendererID);
 }
 
-void Core::Gfx::VertexArray::AddBuffer(const VertexBuffer& vb, const BufferLayout& layout)
+void Core::Gfx::VertexArray::AddBuffer(VertexBuffer& vb, const BufferLayout& layout)
 {
     Bind();
     vb.Bind();
@@ -33,10 +33,13 @@ void Core::Gfx::VertexArray::AddBuffer(const VertexBuffer& vb, const BufferLayou
     for (unsigned int i = 0; i < elements.size(); i++)
     {
         const auto& element = elements[i];
-        glEnableVertexAttribArray(i);
-        glVertexAttribPointer(i, element.count, element.type, element.normalized, layout.GetStride(), (const void*)offset);
+        glEnableVertexAttribArray(m_VertexBufferIndex);
+        glVertexAttribPointer(m_VertexBufferIndex, element.count, element.type, element.normalized, layout.GetStride(), (const void*)offset);
         offset += element.count * BufferElement::GetSizeOfType(element.type);
+        m_VertexBufferIndex++;
     }
+
+    m_VertexBuffers.push_back(vb);
 }
 
 void Core::Gfx::VertexArray::SetIndexBuffer(const Core::Gfx::IndexBuffer& ib)

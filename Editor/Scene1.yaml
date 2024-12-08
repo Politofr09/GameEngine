@@ -1,38 +1,20 @@
 Scene: Untitled
 ID: 7746280174807005691
 Entities:
-  - Entity: 12214468577320973912
-    NameComponent: 2D Quad
+  - Entity: 12332770875343846942
+    NameComponent: Square 1
     TransformComponent:
-      Position: [15, 0, 0]
-      Rotation: [0, 0, 0]
-      Scale: [14, 14, 14]
+      Position: [7.05690575, 6.20967293, 0]
+      Rotation: [0, -0, 0]
+      Scale: [18.75, 18.75, 18.75]
     SpriteComponent:
-      TextureHandle: 7841575841953732288
-      Color: [0, 0, 1, 1]
-  - Entity: 13882395818188540427
-    NameComponent: 2D Quad 2
-    TransformComponent:
-      Position: [12, 17.1000004, 0]
-      Rotation: [0, 0, 0]
-      Scale: [12, 12, 0]
-    SpriteComponent:
-      TextureHandle: 16456710713235987244
-      Color: [1, 0, 0, 1]
-  - Entity: 15577581121165535204
-    NameComponent: 2D Quad 3
-    TransformComponent:
-      Position: [31.3999996, 17.2000008, 0]
-      Rotation: [0, 0, 0]
-      Scale: [8, 8, 1]
-    SpriteComponent:
-      TextureHandle: 5433505664014964110
-      Color: [0, 1, 0, 1]
-  - Entity: 1655256055553188592
-    NameComponent: 3D object
+      TextureHandle: 18167740098099831042
+      Color: [1, 1, 1, 1]
+  - Entity: 3995142301690757029
+    NameComponent: Bunny (fbx)
     TransformComponent:
       Position: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     ModelComponent:
-      ModelHandle: 16801593650545335947
+      ModelHandle: 15240123531402163961

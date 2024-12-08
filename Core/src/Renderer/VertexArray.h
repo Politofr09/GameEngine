@@ -1,5 +1,5 @@
 #include <GL/glew.h>
-#include "Core/Utils.h"
+#include "Core/Base.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 
@@ -55,14 +55,14 @@ namespace Core::Gfx
 		void Init();
 		void Free();
 
-		void AddBuffer(const VertexBuffer& vb, const BufferLayout& layout);
+		void AddBuffer(VertexBuffer& vb, const BufferLayout& layout);
 		void SetIndexBuffer(const IndexBuffer& ib);
 		IndexBuffer& GetIndexBuffer() { return m_IndexBuffer; }
 
 		void Bind() const;
 		void UnBind() const;
 
-		unsigned int GetRendererID() { return m_RendererID; }
+		unsigned int GetRendererID() const { return m_RendererID; }
 
 		VertexArray& operator=(const VertexArray& other)
 		{
@@ -73,6 +73,8 @@ namespace Core::Gfx
 	private:
 		unsigned int m_RendererID; // OpenGL ID
 		IndexBuffer m_IndexBuffer;
+		unsigned int m_VertexBufferIndex = 0;
+		std::vector<VertexBuffer> m_VertexBuffers;
 	};
 
 }

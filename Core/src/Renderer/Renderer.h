@@ -9,9 +9,6 @@
 #include "Light.h"
 #include "Core/Scene.h"
 
-#include "Shading/FlatShading.h"
-#include "Shading/PhongShading.h"
-
 #pragma once
 
 #define GLCall(x) ::Core::Gfx::GLClearError(); \
@@ -35,9 +32,9 @@ namespace Core::Gfx
         static void BeginScene(const Camera& cam);
         static void EndScene();
 
-        static void SetLight(const Light& light) { m_SceneLight = light; }
+        static void SetLight(const Light& light) { s_SceneLight = light; }
 
-        static void DrawModel(Model& model, glm::mat4 transform);
+        static void DrawModel(Ref<Model> model, glm::mat4 transform);
 
         static void RenderScene(Scene& scene);
 
@@ -54,10 +51,9 @@ namespace Core::Gfx
         static void DisableWireframeMode();
 
     private:
-        static Camera m_ActiveCamera;
-        static Light m_SceneLight;
-        static FlatShading m_FlatShading;
-        static PhongShading m_PhongShading;
+        static Camera s_ActiveCamera;
+        static Light s_SceneLight;
+        static Ref<Shader> s_FlatShader;
     };
 
 }

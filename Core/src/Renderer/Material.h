@@ -2,60 +2,57 @@
 
 #include "Texture.h"
 #include "Shader.h"
-#include "Core/Asset.h"
-
-#include <unordered_map>
-#include <vector>
 #include <glm/glm.hpp>
 #include <assimp/material.h>
 
 namespace Core::Gfx
 {
+	
+	class Model;
 
-	class Material : public Asset
+	class Material
 	{
 	public:
-		DECLARE_ASSET_TYPE("Material")
+		// Used when the engine defines custom materials (They are not directly paired to a model)
+		// In that case we load material from ".material" file (YAML)
+		static Ref<Material> Create(const std::string& path);
+		void Deserialize();
+		void Serialize() const;
 
-		static AssetHandle Create(const std::string& path, const std::string& name);
+		// Used when models come with their own material
+		static Ref<Material> CreateFromMemory(aiMaterial* mat, const std::string& modelFileName);
+		bool LoadFromMemory(aiMaterial* material, const std::string& modelFileName);
 
-		bool Load();
-		bool UnLoad() override { return true; }
+		bool UnLoad() { m_Loaded = false; return true; }
 
 		Material() = default;
-
-		// Metadata constructor for (de)serializing + texture references
-		Material(const AssetMetadata& metadata, AssetHandle diffuseTexture, AssetHandle specularTexture, AssetHandle normalTexture);
-
-		Material& operator=(const Material& other)
+		Material(const AssetMetadata& metadata)
 		{
-			this->m_ShaderType = other.m_ShaderType;
-			this->Color = other.Color;
-			this->Ambient = other.Ambient;
-			this->Diffuse = other.Diffuse;
-			this->Specular = other.Specular;
-			this->Shininess = other.Shininess;
-
-			this->DiffuseTextureHandle = other.DiffuseTextureHandle;
-			this->SpecularTextureHandle = other.SpecularTextureHandle;
-			this->NormalTextureHandle = other.NormalTextureHandle;
-
-			return *this;
+			Path = metadata.Path;
+			Name = metadata.Name;
 		}
 
-		// This let's the renderer know what Shader to bind when rendering the object
-		ShaderType m_ShaderType = ShaderType::None;
-		aiMaterial* m_AssimpSrcMaterial = nullptr;
+		Ref<Texture> DiffuseTexture  = nullptr;
+		Ref<Texture> SpecularTexture = nullptr;
+		Ref<Texture> NormalTexture   = nullptr;
+		Ref<Shader>  Shader			 = nullptr;
+	
+		glm::vec3	 Color = glm::vec3(0.0f);
+		glm::vec3	 Ambient = glm::vec3(0.0f);
+		glm::vec3	 Diffuse = glm::vec3(0.0f);
+		glm::vec3	 Specular = glm::vec3(0.0f);
+		float		 Shininess = 0.0f;
 
-		AssetHandle DiffuseTextureHandle = 0;
-		AssetHandle SpecularTextureHandle = 0;
-		AssetHandle NormalTextureHandle = 0;
+		std::string  Path;
+		std::string  Name;
+		UUID		 ID;
 
-		glm::vec3 Color = glm::vec3(0.0f);
-		glm::vec3 Ambient = glm::vec3(0.0f);
-		glm::vec3 Diffuse = glm::vec3(0.0f);
-		glm::vec3 Specular = glm::vec3(0.0f);
-		float Shininess = 0.0f;
+		bool IsLoaded() const { return m_Loaded; }
+	private:
+
+
+	private:
+		bool m_Loaded = false;
 	};
 
 }

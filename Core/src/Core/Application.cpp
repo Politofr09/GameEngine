@@ -1,5 +1,5 @@
 #include "Application.h"
-#include "AssetRegistry.h"
+#include "Asset.h"
 #include "Project.h"
 #include <algorithm>
 #include <fstream>
@@ -17,6 +17,10 @@ namespace Core
 
 		s_Instance = this;
 		m_Window = new Window(window_width, window_height, name);
+
+		m_ImGuiLayer = new ImGuiLayer();
+		m_ImGuiLayer->SetupImGui();
+		Events::Dispatcher::Subscribe(std::bind(&ImGuiLayer::OnEvent, m_ImGuiLayer, std::placeholders::_1));
 
 		Events::Dispatcher::Subscribe(std::bind(&Application::OnEvent, this, std::placeholders::_1));
 
@@ -49,18 +53,15 @@ namespace Core
 				layer->OnUpdate();
 			}
 
-			//// ImGui
-			//m_ImGuiLayer->BeginImGuiContent();
+			// ImGui
+			m_ImGuiLayer->BeginImGuiContent();
 
-			//for (auto& layer : m_Layers)
-			//{
-			//	layer->OnImGuiRender();
-			//}
+			for (auto& layer : m_Layers)
+			{
+				layer->OnImGuiRender();
+			}
 
-			//m_ImGuiLayer->EndImGuiContent();
-
-			// Client specific logic
-			Update();
+			m_ImGuiLayer->EndImGuiContent();
 
 			Events::Dispatcher::ProcessEvents();
 			m_Window->Update();

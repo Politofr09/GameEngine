@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Utils.h"
-#include "UUID.h"
-#include "AssetRegistry.h"
+#include "Base.h"
+#include "Asset.h"
 #include "Scene.h"
 
 #include <string>
@@ -32,10 +31,11 @@ namespace Core
 		Scene& GetScene() { return m_Scene; }
 
 		std::string GetPath() const { return m_ScenePath; }
+		std::string GetAssetDirectory() const { return m_AssetDirectory; }
 
 	private:
 		AssetRegistry m_AssetRegistry;
-		std::string m_AssetRegistryPath = "";
+		std::string m_AssetDirectory = "res";
 
 		// TODO make senes a vector so we can have more than one scene in one project
 		Scene m_Scene;

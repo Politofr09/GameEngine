@@ -14,55 +14,62 @@
 namespace Core::Gfx
 {
 
-	class Model : public Asset
+	class Model
 	{
 	public:
-		DECLARE_ASSET_TYPE("Model")
+		static Ref<Model> Create(const std::string& path);
+		static Ref<Model> Create(const AssetMetadata& metadata);
 
-		static AssetHandle Create(const std::string& path, const std::string& name);
-
-		bool Load() override;
-		bool UnLoad() override;
+		bool Load();
+		bool UnLoad();
 
 		Model() = default;
+		Model(AssetMetadata metadata)
+			: m_Metadata(metadata) {}
 
-		Model(std::vector<Mesh> meshes, std::string directory)
-			: m_Meshes(meshes), m_Directory(directory) {}
-		
-		
-		Model(const AssetMetadata& metadata, AssetHandle material);
+		Model(AssetMetadata metadata, std::vector<Mesh> meshes)
+			: m_Metadata(metadata), m_Meshes(meshes) {}
 		
 		Model(const Model& other)
 		{
-			m_Directory = other.m_Directory;
-			m_MaterialHandle = other.m_MaterialHandle;
+			m_Metadata = other.m_Metadata;
+			m_Material = other.m_Material;
 			m_Meshes = other.m_Meshes;
+			m_Loaded = other.m_Loaded;
 		}
 
 		Model& operator=(const Model& other)
 		{
-			m_Directory = other.m_Directory;
-			m_MaterialHandle = other.m_MaterialHandle;
+			m_Metadata = other.m_Metadata;
+			m_Material = other.m_Material;
 			m_Meshes = other.m_Meshes;
-
+			m_Loaded = other.m_Loaded;
 			return *this;
 		}
 
 		std::vector<Mesh> GetMeshes() { return m_Meshes; }
-		AssetHandle GetMaterialHandle() const { return m_MaterialHandle; }
-		void SetMaterialHandle(AssetHandle handle) { m_MaterialHandle = handle; }
+		Ref<Material> GetMaterial() { return m_Material; }
+
+		AssetMetadata& GetMetadata() { return m_Metadata; }
+		bool IsLoaded() const { return m_Loaded; }
+
+		void SetMaterial(Ref<Material> material) 
+		{
+			m_Metadata.Dependencies["Material"] = material->ID;
+			m_Material = material; 
+		}
 
 		aiMaterial* GetAssimpMaterial() { return m_AiMaterial; }
-	private:
 
 	private:
 		std::vector<Mesh> m_Meshes;
-		std::string m_Directory; // Relative path for material / texture references
+		AssetMetadata m_Metadata;
+		bool m_Loaded = false;
 
-		AssetHandle m_MaterialHandle;
+		Ref<Material> m_Material;
 		aiMaterial* m_AiMaterial = nullptr;
 		
-
+	private:
 		void ProcessNode(aiNode* node, const aiScene* scene);
 		Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
 	};

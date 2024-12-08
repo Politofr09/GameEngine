@@ -1,5 +1,6 @@
 #include "Renderer2D.h"
 #include "Core/Utils.h"
+#include "Core/Application.h"
 
 namespace Core::Gfx
 {
@@ -16,14 +17,14 @@ namespace Core::Gfx
 	{
 		static const uint32_t MaxQuads = 20000;
 		static const uint32_t MaxVertices = MaxQuads * 4;
-		static const uint32_t MaxIndices =	MaxQuads * 6;
+		static const uint32_t MaxIndices = MaxQuads * 6;
 
 		/* 31 usable because of white dummy pixel texture
 		 * OpenGL-compatible gpus need to provide at least 16 texture slots per shader call.
-		 * In the worst case we have 15 usable slots. 
+		 * In the worst case we have 15 usable slots.
 		**********************************************************************************/
 		static const uint32_t MaxTextureSlots = 32;
-		std::array<Texture, MaxTextureSlots> TextureSlots;
+		std::array<Ref<Texture>, MaxTextureSlots> TextureSlots;
 		uint32_t TextureSlotIndex = 1; // 0 for pixel dummy texture
 
 		OrthographicCamera ActiveCamera;
@@ -33,8 +34,8 @@ namespace Core::Gfx
 		VertexArray QuadVertexArray;
 		VertexBuffer QuadVertexBuffer;
 
-		Texture PixelDummy; // When drawing only shapes we multiply a white pixel just for having the same shader
-	
+		Ref<Texture> PixelDummy; // When drawing only shapes we multiply a white pixel just for having the same shader
+
 		uint32_t QuadIndexCount = 0;
 		QuadVertex* QuadVertexBufferBase = nullptr;
 		QuadVertex* QuadVertexBufferPtr = nullptr;
@@ -124,26 +125,21 @@ namespace Core::Gfx
 		// Init dummy pixel white texture
 		unsigned int whitePixel = 0xFFFFFF;
 		unsigned char* whitePixelPtr = reinterpret_cast<unsigned char*>(&whitePixel);
-		s_Data.PixelDummy.LoadFromMemory(1, 1, 3, whitePixelPtr);
+		s_Data.PixelDummy = Texture::CreateFromMemory(1, 1, 3, whitePixelPtr);
 		s_Data.TextureSlots[0] = s_Data.PixelDummy;
 	}
 
-	void Renderer2D::SendUniforms()
-	{
-		s_Data.QuadShader.SetMatrix("u_Projection", s_Data.ActiveCamera.GetProjectionMatrix());
-		s_Data.QuadShader.SetMatrix("u_View", s_Data.ActiveCamera.GetViewMatrix());
-	}
-
-    void Renderer2D::Begin(const OrthographicCamera& camera)
+	void Renderer2D::Begin(const OrthographicCamera& camera)
 	{
 		s_Data.ActiveCamera = camera;
 
 		s_Data.QuadShader.Use();
 
-		SendUniforms();
+		s_Data.QuadShader.SetMatrix("u_Projection", s_Data.ActiveCamera.GetProjectionMatrix());
+		s_Data.QuadShader.SetMatrix("u_View", s_Data.ActiveCamera.GetViewMatrix());
 
 		StartBatch();
-	
+
 		glDisable(GL_CULL_FACE);
 	}
 
@@ -164,7 +160,7 @@ namespace Core::Gfx
 		Flush();
 		StartBatch();
 	}
-	
+
 	void Renderer2D::End()
 	{
 		Flush();
@@ -179,7 +175,7 @@ namespace Core::Gfx
 		// Bind textures
 		for (uint32_t i = 0; i <= s_Data.TextureSlotIndex; i++)
 		{
-			s_Data.TextureSlots[i].Bind(i);
+			s_Data.TextureSlots[i]->Bind(i);
 		}
 
 		// Execute draw call
@@ -226,7 +222,7 @@ namespace Core::Gfx
 		DrawQuad(glm::vec3{ position.x, position.y, 0.0f }, size, color);
 	}
 
-	void Renderer2D::DrawQuadTextured(glm::vec3& position, glm::vec2& size, glm::vec4& color, const Texture& texture)
+	void Renderer2D::DrawQuadTextured(glm::vec3& position, glm::vec2& size, glm::vec4& color, Ref<Texture> texture)
 	{
 		// Check if the batch should be restarted based on index limits
 		if (s_Data.QuadIndexCount + 6 > s_Data.MaxIndices ||
@@ -239,7 +235,7 @@ namespace Core::Gfx
 		float texIndex = 0.0f;
 		for (uint32_t i = 0; i <= s_Data.TextureSlotIndex; i++)
 		{
-			if (s_Data.TextureSlots[i].GetID() == texture.GetID())
+			if (s_Data.TextureSlots[i]->GetID() == texture->GetID())
 			{
 				texIndex = (float)i;
 				break;

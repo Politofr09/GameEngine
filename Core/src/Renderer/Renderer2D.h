@@ -23,15 +23,12 @@ namespace Core::Gfx
 
 		static void DrawQuad(glm::vec3& position, glm::vec2& size, glm::vec4& color);
 		static void DrawQuad(glm::vec2& position, glm::vec2& size, glm::vec4& color);
-		static void DrawQuadTextured(glm::vec3& position, glm::vec2& size, glm::vec4& color, const Texture& texture);
+		static void DrawQuadTextured(glm::vec3& position, glm::vec2& size, glm::vec4& color, Ref<Texture> texture);
 
 	private:
 		static void StartBatch();
 		static void NextBatch();
 		static void Flush();
-
-	private:
-		static void SendUniforms();
 	};
 	
 }

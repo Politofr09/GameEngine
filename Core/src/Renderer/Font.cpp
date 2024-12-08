@@ -8,30 +8,24 @@
 namespace Core::Gfx
 {
 
-    AssetHandle Font::Create(const std::string &path, const std::string &name, int fontSize)
-    {
-		AssetMetadata metadata
-		{
-			name,
-			path,
-			UUID()
-		};
-        Font* font = new Font(metadata, fontSize);
-
-		if (font->Load())
-		{
-			return Application::Get()->GetCurrentProject().GetRegistry().Track(font);
-		}
-
-		return 0;
-	}
-
-	Font::Font(const AssetMetadata& metadata, int fontSize)
-		: Asset(metadata), m_Size(fontSize)
+	Ref<Font> Font::Create(const std::string& path)
 	{
+		AssetMetadata metadata;
+		metadata.Path = path;
+		metadata.ID = UUID();
+		metadata.Name = "Font" + std::to_string(metadata.ID);
+		metadata.Type = "Font";
+		return Font::Create(metadata);
 	}
 
-    bool Font::Load()
+	Ref<Font> Font::Create(const AssetMetadata& metadata)
+	{
+		Ref<Font> font = CreateRef<Font>(metadata);
+		font->Load();
+		return font;
+	}
+
+	bool Font::Load()
     {
 		std::ifstream file(m_Metadata.Path, std::ios::binary | std::ios::ate);
 		if (!file.is_open())

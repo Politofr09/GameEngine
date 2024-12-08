@@ -7,10 +7,9 @@
 
 namespace Core::Gfx
 {
-    Camera Renderer::m_ActiveCamera;
-    Light Renderer::m_SceneLight;
-    FlatShading Renderer::m_FlatShading;
-    PhongShading Renderer::m_PhongShading;
+    Camera Renderer::s_ActiveCamera;
+    Light Renderer::s_SceneLight;
+    Ref<Shader> Renderer::s_FlatShader;
 
     void GLClearError()
     {
@@ -35,11 +34,7 @@ namespace Core::Gfx
     {
         GLCall(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
 
-        m_FlatShading.Load();
-        //registry.Track(m_FlatShading.ShaderProgram);
-
-        m_PhongShading.Load();
-        //registry.Track(m_PhongShading.ShaderProgram);
+        s_FlatShader = Shader::Create("assets/shaders/Renderer@Flat.glsl");
     }
 
     void Renderer::EnableCulling()
@@ -84,7 +79,7 @@ namespace Core::Gfx
 
     void Renderer::BeginScene(const Camera& cam)
     {
-        m_ActiveCamera = cam;
+        s_ActiveCamera = cam;
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
     }
@@ -93,49 +88,24 @@ namespace Core::Gfx
     {
     }
 
-    void Renderer::DrawModel(Model& model, glm::mat4 transform)
+    void Renderer::DrawModel(Ref<Model> model, glm::mat4 transform)
     {
-        // Retrieve the material and its shader type
-        auto& material = *Application::Get()->GetCurrentProject().GetRegistry().Get<Material>(model.GetMaterialHandle());
+        auto material = model->GetMaterial();
+        if (!material) return;
 
-        // Set up the shader based on the material's shader type
-        switch (material.m_ShaderType)
-        {
-        case ShaderType::FlatShading:
-            m_FlatShading.Apply(material);
-   
-            // Set additional uniforms that are common to all shaders
-            m_FlatShading.ShaderProgram->SetMatrix("uView", m_ActiveCamera.GetViewMatrix());
-            m_FlatShading.ShaderProgram->SetMatrix("uProjection", m_ActiveCamera.GetProjectionMatrix());
-            m_FlatShading.ShaderProgram->SetMatrix("uTransform", transform);
-            break;
+        if (!material->Shader) material->Shader = s_FlatShader;
+        material->Shader->Use();
 
-        case ShaderType::PhongShading:
-            m_PhongShading.Apply(material);
+        material->Shader->SetMatrix("uView", s_ActiveCamera.GetViewMatrix());
+        material->Shader->SetMatrix("uProjection", s_ActiveCamera.GetProjectionMatrix());
+        material->Shader->SetMatrix("uTransform", transform);
 
-            // Set additional uniforms that are common to all shaders
-            m_PhongShading.ShaderProgram->SetMatrix("uView", m_ActiveCamera.GetViewMatrix());
-            m_PhongShading.ShaderProgram->SetMatrix("uProjection", m_ActiveCamera.GetProjectionMatrix());
-            m_PhongShading.ShaderProgram->SetMatrix("uTransform", transform);
-            m_PhongShading.ShaderProgram->SetVector3("ligth_position", m_SceneLight.Position);
-            m_PhongShading.ShaderProgram->SetVector3("light_color", m_SceneLight.Color);
-            m_PhongShading.ShaderProgram->SetVector3("view_position", m_ActiveCamera.GetPosition());
-            break;
+        material->Shader->SetVector3("uMaterialColor", material->Color);
 
-        case ShaderType::None:
-            m_FlatShading.Apply(material);
-            glBindTexture(GL_TEXTURE_2D, 0);
-            m_FlatShading.ShaderProgram->SetVector3("material_color", glm::vec3(1.0f));
+        material->DiffuseTexture->Bind();
+        //glBindTexture(GL_TEXTURE_2D, material->DiffuseTexture->GetID());
 
-            // Set additional uniforms that are common to all shaders
-            m_FlatShading.ShaderProgram->SetMatrix("uView", m_ActiveCamera.GetViewMatrix());
-            m_FlatShading.ShaderProgram->SetMatrix("uProjection", m_ActiveCamera.GetProjectionMatrix());
-            m_FlatShading.ShaderProgram->SetMatrix("uTransform", transform);
-            break;
-            // Add other shader types as needed
-        }
-
-        for (auto& mesh : model.GetMeshes())
+        for (auto& mesh : model->GetMeshes())
         {
             mesh.GetVertexArray().Bind();
 
@@ -154,11 +124,11 @@ namespace Core::Gfx
         {
             auto& transformComponent = registry.GetComponent<TransformComponent>(e);
             auto& modelComponent = registry.GetComponent<ModelComponent>(e);
-            if (modelComponent.ModelHandle == 0) continue;
+            if (!modelComponent.ModelHandle) continue;
 
-            auto& model = *Application::Get()->GetCurrentProject().GetRegistry().Get<Model>(modelComponent.ModelHandle);
+            auto& model = Application::Get()->GetCurrentProject().GetRegistry().Get<Model>(modelComponent.ModelHandle);
 
-            DrawModel(model, transformComponent); // Use of mat4 operator (nice)
+            DrawModel(model, transformComponent);
         }
     }
 

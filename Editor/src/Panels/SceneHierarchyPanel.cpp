@@ -162,50 +162,47 @@ static void DrawComponents(Entity entity)
 		{
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_DND_Model"))
 			{
-				Core::AssetHandle handle = *(uint64_t*)payload->Data;
+				Core::UUID handle = *(uint64_t*)payload->Data;
 				component.ModelHandle = handle;
 			}
 			ImGui::EndDragDropTarget();
 		}
 
-		auto model = Core::Application::Get()->GetCurrentProject().GetRegistry().Get<Core::Gfx::Model>(component.ModelHandle);
-		auto material = Core::Application::Get()->GetCurrentProject().GetRegistry().Get<Core::Gfx::Material>(model->GetMaterialHandle());
+		if (!component.ModelHandle) return;
+		Ref<Core::Gfx::Model> model = Core::Application::Get()->GetCurrentProject().GetRegistry().Get<Core::Gfx::Model>(component.ModelHandle);
+		Ref<Core::Gfx::Material> material = model->GetMaterial();
 
-		ImGui::Text("Material: %llu", model->GetMaterialHandle());
+		if (!model) return;
+		if (!material) return;
+
+		ImGui::Text("Material: %llu", model->GetMaterial()->ID);
 
 		// Accept payload from drag and drop imgui (only model ids)
 		if (ImGui::BeginDragDropTarget() && component.ModelHandle != 0)
 		{
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_DND_Material"))
 			{
-				Core::AssetHandle handle = *(uint64_t*)payload->Data;
-				model->SetMaterialHandle(handle);
+				Core::UUID handle = *(uint64_t*)payload->Data;
+				model->SetMaterial(Core::Application::Get()->GetCurrentProject().GetRegistry().Get<Core::Gfx::Material>(handle));
 			}
 			ImGui::EndDragDropTarget();
 		}
 
 		if (component.ModelHandle != 0 && ImGui::TreeNode("Material editor"))
 		{
-			const char* shaderTypes[] = { "None", "FlatShading", "PhongShading" }; // Update with your actual shader types
-			static int currentShaderType = static_cast<int>(material->m_ShaderType);
-			if (ImGui::Combo("Shader Type", &currentShaderType, shaderTypes, IM_ARRAYSIZE(shaderTypes)))
-			{
-				material->m_ShaderType = static_cast<Core::Gfx::ShaderType>(currentShaderType);
-			}
-
 			ImGui::ColorEdit3("Color", &material->Color[0]);
 			ImGui::ColorEdit3("Ambient", &material->Ambient[0]);
 			ImGui::ColorEdit3("Diffuse", &material->Diffuse[0]);
 			ImGui::ColorEdit3("Specular", &material->Specular[0]);
 			ImGui::SliderFloat("Shininess", &material->Shininess, 0.01f, 128.0f);
 
-			ImGui::Text("DiffuseTexture: %llu", material->DiffuseTextureHandle);
+			ImGui::Text("DiffuseTexture: %llu", material->DiffuseTexture->GetMetadata().ID);
 			if (ImGui::BeginDragDropTarget())
 			{
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_DND_Texture"))
 				{
-					Core::AssetHandle handle = *(uint64_t*)payload->Data;
-					material->DiffuseTextureHandle = handle;
+					Core::UUID handle = *(uint64_t*)payload->Data;
+					material->DiffuseTexture = Core::Application::Get()->GetCurrentProject().GetRegistry().Get<Core::Gfx::Texture>(handle);
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -223,7 +220,7 @@ static void DrawComponents(Entity entity)
 		{
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_DND_Texture"))
 			{
-				Core::AssetHandle handle = *(uint64_t*)payload->Data;
+				Core::UUID handle = *(uint64_t*)payload->Data;
 				component.TextureHandle = handle;
 			}
 			ImGui::EndDragDropTarget();

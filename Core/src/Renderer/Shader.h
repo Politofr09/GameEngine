@@ -1,5 +1,4 @@
 #include "Core/Asset.h"
-#include "Core/AssetRegistry.h"
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -23,29 +22,26 @@ namespace Core::Gfx
 		// TODO: Add more types as we develop more rendering techniques and shaders
 	};
 
-	class Shader : public Asset
+	class Shader
 	{
 	public:
-		DECLARE_ASSET_TYPE("Shader")
-
-		static Shader& Create(AssetRegistry& registry, const std::string& path, const std::string& name);
+		static Ref<Shader> Create(const std::string& path);
+		static Ref<Shader> Create(const AssetMetadata& metadata);
 
 		// Default constructor
 		Shader() = default;
+		Shader(const AssetMetadata& metadata)
+			: m_Metadata(metadata) {}
 
-		// Metadata constructor (for (de)serializing)
-		Shader(const AssetMetadata& metadata);
-
-		bool Load() override;
-		bool UnLoad() override;
+		bool Load();
+		bool UnLoad();
 		bool LoadFromMemory(const char* vertexShaderSource, const char* fragmentShaderSource);
 
-		void Use();
-		void End();
+		void Use() const;
+		void End() const;
 
-		unsigned int GetID() { return m_RendererID; }
+		unsigned int GetID() const { return m_RendererID; }
 
-		// Uniform loading functions
 		void SetBool(const std::string& uniformName, bool value);
 		void SetFloat(const std::string& uniformName, float value);
 		void SetInt(const std::string& uniformName, int value);
@@ -54,9 +50,13 @@ namespace Core::Gfx
 		void SetVector4(const std::string& uniformName, glm::vec4 value);
 		void SetMatrix(const std::string& uniformName, glm::mat4 value);
 	
+		AssetMetadata& GetMetadata() { return m_Metadata; }
+		bool IsLoaded() const { return m_Loaded; }
 
 	private:
 		unsigned int m_RendererID = 0;
+		AssetMetadata m_Metadata;
+		bool m_Loaded = false;
 	};
 
 }

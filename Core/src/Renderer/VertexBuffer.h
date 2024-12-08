@@ -9,7 +9,6 @@ namespace Core::Gfx
 		VertexBuffer() = default;
 		VertexBuffer(unsigned int size);
 		VertexBuffer(const void* data, unsigned int size, bool dynamic_draw = false);
-
 		
 		void Free();
 
@@ -19,7 +18,7 @@ namespace Core::Gfx
 		void Bind() const;
 		void UnBind() const;
 
-		int GetRendererID() { return m_RendererID; }
+		int GetRendererID() const { return m_RendererID; }
 
 		VertexBuffer& operator=(const VertexBuffer& other)
 		{

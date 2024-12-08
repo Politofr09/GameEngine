@@ -10,38 +10,34 @@
 namespace Core::Gfx
 {
 
-	struct Vertex
+	struct Vertices
 	{
-		glm::vec3 Position;
-		glm::vec3 Normal;
-		glm::vec2 TexCoords;
+		std::vector<glm::vec3> Positions;
+		std::vector<glm::vec3> Normals;
+		std::vector<glm::vec2> TexCoords;
 	};
 
 	class Mesh
 	{
 	public:
-		Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices);
+		Mesh(Vertices& vertices, std::vector<unsigned int>& indices);
 		Mesh(Mesh& other)
 		{
 			va = other.va;
-			vb = other.vb;
 		}
 
 		VertexArray GetVertexArray() const { return va; }
-		VertexBuffer GetVertexBuffer() const { return vb; }
 
 		Mesh& operator =(const Mesh& other)
 		{
 			va = other.va;
-			vb = other.vb;
 
 			return *this;
 		}
 
 	private:
-		void SetupMesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices);
+		void SetupMesh(Vertices& vertices, std::vector<unsigned int>& indices);
 		VertexArray va;
-		VertexBuffer vb;
 	};
 
 }

@@ -14,6 +14,7 @@ void Dispatcher::ProcessEvents()
 
 		for (const auto& observer : _observers)
 		{
+			if (event->Handled) continue;
 			observer(event);
 		}
 	}

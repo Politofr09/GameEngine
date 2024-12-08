@@ -3,8 +3,8 @@
 // for use with https://github.com/FortAwesome/Font-Awesome/blob/5.x/webfonts/fa-regular-400.ttf, https://github.com/FortAwesome/Font-Awesome/blob/5.x/webfonts/fa-solid-900.ttf
 #pragma once
 
-#define FONT_ICON_FILE_NAME_FAR "res/fa-regular-400.ttf"
-#define FONT_ICON_FILE_NAME_FAS "res/fa-solid-900.ttf"
+#define FONT_ICON_FILE_NAME_FAR "assets/fonts/fa-regular-400.ttf"
+#define FONT_ICON_FILE_NAME_FAS "assets/fonts/fa-solid-900.ttf"
 
 #define ICON_MIN_FA 0xe005
 #define ICON_MAX_16_FA 0xf8ff

@@ -1,24 +1,23 @@
 #include <string>
 #include "Core/Asset.h"
-#include "Core/AssetRegistry.h"
 
 #pragma once
 
 namespace Core::Gfx 
 {
 
-	class Texture : public Asset
+	class Texture
 	{
 	public:
-		DECLARE_ASSET_TYPE("Texture")
+		static Ref<Texture> Create(const std::string& path);
+		static Ref<Texture> Create(const AssetMetadata& metadata);
 
-		static AssetHandle Create(const std::string& path, const std::string& name = "Texture", std::string type = "texture_diffuse");
+		static Ref<Texture> CreateFromMemory(unsigned int width, unsigned int height, int channels, void* data);
 
 		// Default constructor
 		Texture() = default;
-		
-		// Metadata constructor (+ additional required texture type)
-		Texture(const AssetMetadata& metadata, std::string type);
+		Texture(const AssetMetadata& metadata)
+			: m_Metadata(metadata) {}
 
 		Texture& operator=(const Texture& other)
 		{
@@ -26,34 +25,38 @@ namespace Core::Gfx
 			this->m_Height = other.m_Height;
 			this->m_NrChannels = other.m_NrChannels;
 			this->m_RendererID = other.m_RendererID;
-			this->m_Loaded = other.m_Loaded;
-			this->m_Type = other.m_Type;
+			this->m_Metadata = other.m_Metadata;
+			//this->m_Type = other.m_Type;
 
 			return *this;
 		}
 
-		bool Load() override;
-		bool UnLoad() override;
+		bool Load();
+		bool UnLoad();
 		void LoadFromMemory(unsigned int width, unsigned int height, int channels, void* data);
 
 		void Bind(uint32_t slot = 0) const;
 		void UnBind(uint32_t slot = 0) const;
 		unsigned int GetID() const { return m_RendererID; }
 
-		std::string GetType() { return m_Type; }
-		void SetType(std::string type) { m_Type = type; }
+		//std::string GetType() { return m_Type; }
+		//void SetType(std::string type) { m_Type = type; }
 
 		int GetWidth() const { return m_Width; }
 		int GetHeight() const { return m_Height; }
 
+		AssetMetadata& GetMetadata() { return m_Metadata; }
+		bool IsLoaded() const { return m_Loaded; }
+
 	private:
 		unsigned int m_RendererID = 0; // OpenGL ID
-
 		int m_Width = 0;
 		int m_Height = 0;
 		int m_NrChannels = 0;
+		//std::string m_Type = "texture_diffuse";
 
-		std::string m_Type = "texture_diffuse";
+		AssetMetadata m_Metadata;
+		bool m_Loaded = false;
 	};
 
 }

@@ -5,7 +5,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/euler_angles.hpp>
 
-#include "Core/AssetRegistry.h"
+#include "Core/Asset.h"
 
 namespace Core::Ecs
 {
@@ -79,12 +79,12 @@ namespace Core::Ecs
 
 	struct ModelComponent
 	{
-		AssetHandle ModelHandle;
+		UUID ModelHandle = 0;
 	};
 
 	struct SpriteComponent
 	{
-		AssetHandle TextureHandle;
+		UUID TextureHandle = 0;
 		glm::vec4	Color;
 	};
 

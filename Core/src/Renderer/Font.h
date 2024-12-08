@@ -1,5 +1,5 @@
 #include "Core/Asset.h"
-#include "Core/AssetRegistry.h"
+#include "Core/Asset.h"
 #include <glm/glm.hpp>
 #include <map>
 #include <string>
@@ -20,18 +20,18 @@ namespace Core::Gfx
 	};
 	typedef Character Glyph;
 
-	class Font : public Asset
+	class Font
 	{
 	public:
-		DECLARE_ASSET_TYPE("Font")
-
-		static AssetHandle Create(const std::string& path, const std::string& name, int fontSize);
+		static Ref<Font> Create(const std::string& path);
+		static Ref<Font> Create(const AssetMetadata& metadata);
 
 		Font() = default;
-		Font(const AssetMetadata& metadata, int fontSize);
+		Font(const AssetMetadata& metadata)
+			: m_Metadata(metadata) {}
 
-		bool Load() override;
-		bool UnLoad() override;		
+		bool Load();
+		bool UnLoad();		
 
 		Character GetCharacter(char c) const { return m_Characters.at(c); }
 		int GetTextureID() const { return m_TextureID; }
@@ -40,11 +40,17 @@ namespace Core::Gfx
 
 		glm::ivec2 MeasureText(const std::string& text, float scale) const;
 
+		AssetMetadata& GetMetadata() { return m_Metadata; }
+		bool IsLoaded() const { return m_Loaded; }
+
 	private:
 		std::unordered_map<char, Character> m_Characters;
 		stbtt_bakedchar m_BakedChars[128]{}; // ASCII 32..126 is 95 glyphs
 		unsigned int m_TextureID = 0;
 		int m_Size = 0;
+
+		AssetMetadata m_Metadata;
+		bool m_Loaded = false;
 	};
 
 }

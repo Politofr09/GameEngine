@@ -1,6 +1,6 @@
 #include <GL/glew.h>
 #include "Window.h"
-#include "Utils.h"
+#include "Base.h"
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "Events/WindowEvents.h"

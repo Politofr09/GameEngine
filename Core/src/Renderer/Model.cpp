@@ -11,40 +11,22 @@
 namespace Core::Gfx
 {
 
-	AssetHandle Model::Create(const std::string& path, const std::string& name)
+	Ref<Model> Model::Create(const std::string& path)
 	{
-		AssetMetadata metadata
-		{
-			name,
-			path,
-			UUID()
-		};
-		// Provide dummy asset handle
-		Model* model = new Model(metadata, 0);
-
-		if (model->Load())
-		{
-			// Check if we can retrieve material from the registry to avoid duplication
-			// Materials actually point to a full 3d model / scene file
-			// Thus we can check if there is a material with the same path
-
-			if (AssetHandle handle = Application::Get()->GetCurrentProject().GetRegistry().FindByPath<Material>(model->GetPath()) != 0)
-			{
-				model->SetMaterialHandle(handle);
-			}
-			else
-			{
-				model->SetMaterialHandle(Material::Create(model->GetPath(), model->GetName() + "_material"));
-			}
-
-			return Application::Get()->GetCurrentProject().GetRegistry().Track(model);
-		}
-
-		return 0;
+		AssetMetadata metadata;
+		metadata.Path = path;
+		metadata.ID = UUID();
+		metadata.Name = "Model" + std::to_string(metadata.ID);
+		metadata.Type = "Model";
+		return Model::Create(metadata);
 	}
 
-	Model::Model(const AssetMetadata& metadata, AssetHandle material)
-		: Asset(metadata), m_MaterialHandle(material) {}
+	Ref<Model> Model::Create(const AssetMetadata& metadata)
+	{
+		Ref<Model> model = CreateRef<Model>(metadata);
+		model->Load();
+		return model;
+	}
 
 	bool Model::Load()
 	{
@@ -58,15 +40,15 @@ namespace Core::Gfx
 			LOG_ERROR("ERROR::ASSIMP::" + std::string(importer.GetErrorString()));
 			return false;
 		}
-		m_Directory = m_Metadata.Path.substr(0, m_Metadata.Path.find_last_of('/'));
-		
 
 		// Process recursively root node
 		ProcessNode(scene->mRootNode, scene);
 
-		m_Loaded = true;
+		m_Material = Material::CreateFromMemory(m_AiMaterial, m_Metadata.Path);
 
-		return true;
+		importer.FreeScene();
+
+		return m_Loaded = true;
 	}
 
 	bool Model::UnLoad()
@@ -76,12 +58,12 @@ namespace Core::Gfx
 
 	void Model::ProcessNode(aiNode* node, const aiScene* scene)
 	{
+		CORE_PROFILE_FUNCTION();
 		for (unsigned int i = 0; i < node->mNumMeshes; i++)
 		{
 			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 			m_AiMaterial = scene->mMaterials[mesh->mMaterialIndex];
 
-			//m_Material = Material::CreateFromAssimp(*m_Registry, material, m_Directory);
 			m_Meshes.push_back(ProcessMesh(mesh, scene));
 		}
 		for (unsigned int i = 0; i < node->mNumChildren; i++)
@@ -92,47 +74,32 @@ namespace Core::Gfx
 
 	Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 	{
-		std::vector<Vertex> vertices;
+		CORE_PROFILE_FUNCTION();
+		Vertices vertices;
 		std::vector<unsigned int> indices;
 
-		vertices.reserve(mesh->mNumVertices);
-		for (unsigned int i = 0; i < mesh->mNumVertices; i++)
-		{
-			Vertex vertex{};
-
-			glm::vec3 pos{};
-			pos.x = mesh->mVertices[i].x;
-			pos.y = mesh->mVertices[i].y;
-			pos.z = mesh->mVertices[i].z;
-			vertex.Position = pos;
-
-			glm::vec3 normal{ 0, 0, 0 };
-			if (mesh->HasNormals())
+		vertices.Positions.reserve(mesh->mNumVertices);
+		vertices.Normals.reserve(mesh->mNumVertices);
+		vertices.TexCoords.reserve(mesh->mNumVertices);
+		
+		CORE_PROFILE_SCOPE("For loop 1"); {
+			for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 			{
-				normal.x = mesh->mNormals[i].x;
-				normal.y = mesh->mNormals[i].y;
-				normal.z = mesh->mNormals[i].z;
-			}
-			vertex.Normal = normal;
+				vertices.Positions.emplace_back(glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z));
 
-			glm::vec2 texCoord{ 0, 0 };
-			if (mesh->mTextureCoords[0])
-			{
-				texCoord.x = mesh->mTextureCoords[0][i].x;
-				texCoord.y = mesh->mTextureCoords[0][i].y;
-			}
-			vertex.TexCoords = texCoord;
+				vertices.Normals.emplace_back(mesh->HasNormals() ? glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z) : glm::vec3(0.0f, 0.0f, 0.0f));
 
-			vertices.emplace_back(vertex);
+				vertices.TexCoords.emplace_back(mesh->mTextureCoords[0] ? glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y) : glm::vec2(0.0f, 0.0f));
+			}
 		}
 
-		// Process the indices
-		indices.reserve(mesh->mNumFaces * 3);
-		for (unsigned int i = 0; i < mesh->mNumFaces; ++i) 
-		{
-			indices.emplace_back(mesh->mFaces[i].mIndices[0]);
-			indices.emplace_back(mesh->mFaces[i].mIndices[1]);
-			indices.emplace_back(mesh->mFaces[i].mIndices[2]);
+		CORE_PROFILE_SCOPE("For loop 2"); {
+			indices.reserve(mesh->mNumFaces * 3);
+			for (unsigned int i = 0; i < mesh->mNumFaces; ++i)
+			{
+				aiFace& face = mesh->mFaces[i];
+				indices.insert(indices.end(), face.mIndices, face.mIndices + face.mNumIndices);
+			}
 		}
 
 		return Mesh(vertices, indices);

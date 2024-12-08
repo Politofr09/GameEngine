@@ -1,26 +1,27 @@
-#include <iostream>
-#include <imgui/imgui.h>
-#include <imgui/IconsFontAwesome5.h>
-#include <tinyfiledialogs/tinyfiledialogs.h>
-#include <filesystem>
 
 #include "EditorLayer.h"
-#include "ImGuiLayer.h"
-
 #include "Core/Keyboard.h"
 #include "Core/Mouse.h"
-#include "Core/AssetRegistry.h"
+#include "Core/Asset.h"
 #include "Core/Application.h"
 #include "Core/Instrumentor.h"
 #include "Events/Event.h"
-
 #include "Renderer/Renderer.h"
 #include "Renderer/Renderer2D.h"
 #include "Renderer/TextRenderer.h"
-
 #include "Ecs/ECS.h"
 
 #include "CommonUI.h"
+
+#include <iostream>
+#include <filesystem>
+
+#include <imgui/imgui.h>
+#include <imgui/ImGuizmo.h>
+#include <imgui/IconsFontAwesome5.h>
+#include <tinyfiledialogs/tinyfiledialogs.h>
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 using namespace Core::Gfx;
 using namespace Core;
@@ -81,17 +82,18 @@ void EditorLayer::OnUpdate()
 
             if (s.TextureHandle)
             {
-                Texture* texture = Application::Get()->GetCurrentProject().GetRegistry().Get<Texture>(s.TextureHandle);
+                Ref<Texture> texture = Application::Get()->GetCurrentProject().GetRegistry().Get<Texture>(s.TextureHandle);
 
-                Renderer2D::DrawQuadTextured(glm::vec3(t.Position), glm::vec2(t.Scale.x, t.Scale.y), s.Color,
-                    *texture
-                );
+                Renderer2D::DrawQuadTextured(glm::vec3(t.Position), glm::vec2(t.Scale.x, t.Scale.y), s.Color, texture);
             }
             else
             {
                 Renderer2D::DrawQuad(glm::vec3(t.Position), glm::vec2(t.Scale.x, t.Scale.y), s.Color);
             }
         }
+
+        // Manual test: Rendering lines
+        //Renderer2D::DrawLine(glm::vec2(100.0f, 100.0f), glm::vec2(200.0f, 200.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f));
     }
     Renderer2D::End();
     m_Framebuffer.UnBind();
@@ -143,9 +145,9 @@ void EditorLayer::OnImGuiRender()
     if (showThemeSwitcher)      ShowThemeSwitcher(&showThemeSwitcher);
     //if (showECSPanel)           ShowECSPanel(&showECSPanel);
     m_SceneHierarchyPanel.OnImGuiRender();
+    m_ContentBrowserPanel.OnImGuiRender();
 
     if (showRenderingSettings)  ShowRenderingSettings(&showRenderingSettings);
-    if (showContentBrowser)     ShowContentBrowser(&showContentBrowser);
 
     static ImVec2 availableSpace = ImVec2();
     ImGui::GetStyle().WindowPadding = { 1.5f, 1.5f };
@@ -159,18 +161,65 @@ void EditorLayer::OnImGuiRender()
             m_Cam2d.OnViewportResize((int)availableSpace.x, (int)availableSpace.y);
         }
 
-        ImVec2 min = ImGui::GetCursorScreenPos();
-        ImVec2 max = ImVec2(min.x + availableSpace.x, min.y + availableSpace.y);
-        ImGui::GetWindowDrawList()->AddRect(min, max, ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)), 6.0f, ImDrawFlags_RoundCornersAll, 6.0f);
-
         ImGui::BeginChild("Viewport", availableSpace, false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoMove);
-        DisplayRoundedImage((ImTextureID)m_Framebuffer.GetTextureID(), ImVec2(m_Framebuffer.GetWidth(), m_Framebuffer.GetHeight()), 0.0f, ImVec2(0, 1), ImVec2(1, 0));
-        if (ImGui::IsWindowHovered())
-        {
-            m_Cam.Move();
-        }
-        ImGui::EndChild();
+        //DisplayRoundedImage((ImTextureID)m_Framebuffer.GetTextureID(), ImVec2(m_Framebuffer.GetWidth(), m_Framebuffer.GetHeight()), 0.0f, ImVec2(0, 1), ImVec2(1, 0));
 
+        Application::Get()->GetImGuiLayer()->BlockEvents(!ImGui::IsWindowHovered());
+        ImGui::Image((ImTextureID)m_Framebuffer.GetTextureID(), ImVec2(m_Framebuffer.GetWidth(), m_Framebuffer.GetHeight()), ImVec2(0, 1), ImVec2(1, 0));
+
+        // Gizmos
+        auto& entity = m_SceneHierarchyPanel.GetSelectedEntity();
+        if (entity.GetID())
+        {
+            ImGuizmo::SetOrthographic(false);
+            ImGuizmo::SetDrawlist();
+
+            glm::mat4 modelMatrix = entity.GetComponent<Ecs::TransformComponent>();
+
+            ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, m_Framebuffer.GetWidth(), m_Framebuffer.GetHeight());
+
+            bool snap = Input::Keyboard::IsKeyDown(GLFW_KEY_LEFT_CONTROL);
+            float snapValue = 0.5f;
+            if (m_GizmoOperation == ImGuizmo::OPERATION::ROTATE) 
+                snapValue = 15.0f;
+
+            float snapValues[3] = { snapValue, snapValue, snapValue };
+
+            ImGuizmo::Manipulate(glm::value_ptr(m_Cam.GetViewMatrix()), glm::value_ptr(m_Cam.GetProjectionMatrix()),
+                (ImGuizmo::OPERATION)m_GizmoOperation,
+                ImGuizmo::LOCAL, 
+                glm::value_ptr(modelMatrix),
+                nullptr,
+                snap ? snapValues : nullptr
+            );
+
+            if (ImGuizmo::IsUsing())
+            {
+                auto& transform = entity.GetComponent<Ecs::TransformComponent>();
+
+                transform.Position = glm::vec3(modelMatrix[3]);  // Translation is in the 4th column
+                transform.Rotation = glm::eulerAngles(glm::quat_cast(modelMatrix));  // Extract rotation from the matrix
+                transform.Scale = glm::vec3(glm::length(modelMatrix[0]), glm::length(modelMatrix[1]), glm::length(modelMatrix[2]));  // Scale is in column lengths
+            }
+        }
+
+        // TODO: Rework event system and clean everything up
+        // - Event categories
+        // - Better API
+        // - Event& instead of Event* pointer it's not comfortable enough
+        // - dynamic_cast... bad
+        // - EventDispatcher rework
+        
+        // TODO
+        // ... so we can isolate key events and mouse inputs
+        // like block the events for imgui,
+        // or just let the camera move
+        // but if imguizmo is active ignore camera key input...
+        // ...
+
+        if (ImGui::IsWindowHovered() && !ImGuizmo::IsUsing()) m_Cam.Move();
+
+        ImGui::EndChild();
     }
     ImGui::End();
 }
@@ -252,11 +301,20 @@ void EditorLayer::ShowThemeSwitcher(bool* p_open)
 
 void EditorLayer::ShowAssetRegistry(bool* p_open)
 {
-    //if (!p_open) return;
+    if (!p_open) return;
 
     if (ImGui::Begin("Asset Registry", p_open))
     {
-        ImGui::Text("Number of assets: %i", Application::Get()->GetCurrentProject().GetRegistry().GetAllResources().size());
+        AssetRegistry& registry = Application::Get()->GetCurrentProject().GetRegistry();
+
+        //size_t totalAssets = registry.GetTextureStorage().size() +
+        //    registry.GetModelStorage().GetAllResources().size() +
+        //    registry.GetMaterialStorage().GetAllResources().size() +
+        //    registry.GetShaderStorage().GetAllResources().size() +
+        //    registry.GetFontStorage().GetAllResources().size();
+
+        //ImGui::Text("Number of assets: %zu", totalAssets);
+
         if (ImGui::BeginTable("Resource Table", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
         {
             // Set up column headers
@@ -266,51 +324,53 @@ void EditorLayer::ShowAssetRegistry(bool* p_open)
             ImGui::TableSetupColumn("Preview", ImGuiTableColumnFlags_WidthFixed, 100.0f);
             ImGui::TableHeadersRow();
 
-            // Populate the table with resource data
-            for (const auto& pair : Application::Get()->GetCurrentProject().GetRegistry().GetAllResources())
-            {
-                uint64_t assetID = pair.first;
-
-                ImGui::TableNextRow();
-
-                // Asset Name
-                ImGui::TableSetColumnIndex(0);
-                ImGui::Button(pair.second->GetName().c_str());
-                //ImGui::PushID(static_cast<int>(assetID));
-
-                // Drag and drop asset ids
-                if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+            // Helper lambda to display assets from a specific storage
+            auto displayAssets = [&](const auto& storage, const std::string& assetType) {
+                for (const auto& [metadata, asset] : storage)
                 {
-                    std::string item_name = "ASSET_DND_" + std::string(pair.second->GetType());
-                    ImGui::SetDragDropPayload(item_name.c_str(), &assetID, sizeof(assetID));
+                    uint64_t assetID = metadata.ID;
 
-                    // Display the asset ID in the UI
-                    ImGui::Text("%s: %llu", pair.second->GetType(), assetID); // Use %llu for printing uint64_t
+                    ImGui::TableNextRow();
 
-                    ImGui::EndDragDropSource();
-                }
-                //ImGui::PopID();
+                    // Asset Name
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Button(metadata.Name.c_str());
 
-                // Asset Type
-                ImGui::TableSetColumnIndex(1);
-                ImGui::TextUnformatted(pair.second->GetType());
-                // Asset ID
-                ImGui::TableSetColumnIndex(2);
-                ImGui::Text("%llu", assetID);
+                    // Drag and drop asset IDs
+                    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+                    {
+                        std::string item_name = "ASSET_DND_" + assetType;
+                        ImGui::SetDragDropPayload(item_name.c_str(), &assetID, sizeof(assetID));
 
-                // Preview
-                ImGui::TableSetColumnIndex(3);
-                if (std::string(pair.second->GetType()) == "Texture")
-                {
-                    Texture* tex = Application::Get()->GetCurrentProject().GetRegistry().Get<Texture>(assetID);
-                    ImGui::Image((ImTextureID)(intptr_t)tex->GetID(), { 100.0f, 100.0f });
-                }
-                else
-                {
+                        // Display the asset ID in the UI
+                        ImGui::Text("%s: %llu", assetType.c_str(), assetID); // Use %llu for uint64_t
+
+                        ImGui::EndDragDropSource();
+                    }
+
+                    // Asset Type
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::TextUnformatted(assetType.c_str());
+
+                    // Asset ID
+                    ImGui::TableSetColumnIndex(2);
+                    ImGui::Text("%llu", assetID);
+
+                    // Preview
+                    ImGui::TableSetColumnIndex(3);
+
                     ImGui::Text("No preview");
+                    
                 }
+                };
 
-            }
+            // Display assets from each storage
+            displayAssets(registry.GetTextureStorage(), "Texture");
+            displayAssets(registry.GetModelStorage(), "Model");
+            displayAssets(registry.GetMaterialStorage(), "Material");
+            displayAssets(registry.GetShaderStorage(), "Shader");
+            displayAssets(registry.GetFontStorage(), "Font");
+
             ImGui::EndTable();
         }
     }
@@ -340,7 +400,8 @@ void EditorLayer::ShowRenderingSettings(bool* p_open)
 
         float averageFrameTime = totalFrameTime / numFrames;
         float totalFrameRate = 0.0f;
-        for (float rate : frameRates) {
+        for (float rate : frameRates) 
+        {
             totalFrameRate += rate;
         }
         float averageFrameRate = totalFrameRate / numFrames;
@@ -377,326 +438,21 @@ void EditorLayer::ShowRenderingSettings(bool* p_open)
     ImGui::End();
 }
 
-// We have some serious work to do on this specific panel...
-void EditorLayer::ShowECSPanel(bool* p_open)
-{
-    using namespace Core::Ecs;
-    if (ImGui::Begin("ECS", p_open))
-    {
-        ECS& registry = Application::Get()->GetCurrentProject().GetScene().GetRegistry();
-
-        if (ImGui::Button("Add Entity"))
-        {
-            registry.AddComponent<NameComponent>(registry.CreateEntity(), NameComponent{ "Entity" });
-        }
-
-        registry.each([&](ECS::EntityID e) 
-        {
-            Entity entity{ e, registry };
-            std::string nodeName = entity.GetName() + " (" + std::to_string(e) + ")";
-            if (ImGui::TreeNode(nodeName.c_str()))
-            {
-                // Show the components of the entity
-                ImGui::Text("Components:");
-
-                if (entity.HasComponent<TransformComponent>() && ImGui::TreeNode("Transform"))
-                {
-                    auto& t = entity.GetComponent<TransformComponent>();
-
-                    // Use sliders for position, rotation, and scale
-                    ImGui::DragFloat3("Position", &t.Position.x, 0.1f);
-                    ImGui::DragFloat3("Rotation", &t.Rotation.x);
-                    ImGui::DragFloat3("Scale", &t.Scale.x, 0.1f);
-
-                    ImGui::TreePop();
-                }
-
-                if (entity.HasComponent<ModelComponent>() && ImGui::TreeNode("Model"))
-                {
-                    auto& m = entity.GetComponent<ModelComponent>();
-
-                    ImGui::Text("Model: %llu", m.ModelHandle);
-
-                    // Accept payload from drag and drop imgui (only model ids)
-                    if (ImGui::BeginDragDropTarget())
-                    {
-                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_DND_Model"))
-                        {
-                            Core::AssetHandle handle = *(uint64_t*)payload->Data;
-                            m.ModelHandle = handle;
-                        }
-                        ImGui::EndDragDropTarget();
-                    }
-
-                    auto model = Application::Get()->GetCurrentProject().GetRegistry().Get<Core::Gfx::Model>(m.ModelHandle);
-                    auto material = Application::Get()->GetCurrentProject().GetRegistry().Get<Core::Gfx::Material>(model->GetMaterialHandle());
-
-                    ImGui::Text("Material: %llu", model->GetMaterialHandle());
-
-                    // Accept payload from drag and drop imgui (only model ids)
-                    if (ImGui::BeginDragDropTarget() && m.ModelHandle != 0)
-                    {
-                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_DND_Material"))
-                        {
-                            Core::AssetHandle handle = *(uint64_t*)payload->Data;
-                            model->SetMaterialHandle(handle);
-                        }
-                        ImGui::EndDragDropTarget();
-                    }
-
-                    if (ImGui::TreeNode("Material editor") && m.ModelHandle != 0)
-                    {
-                        // Shader Type Selector
-                        const char* shaderTypes[] = { "None", "FlatShading", "PhongShading" }; // Update with your actual shader types
-                        static int currentShaderType = static_cast<int>(material->m_ShaderType);
-                        if (ImGui::Combo("Shader Type", &currentShaderType, shaderTypes, IM_ARRAYSIZE(shaderTypes)))
-                        {
-                            material->m_ShaderType = static_cast<ShaderType>(currentShaderType);
-                        }
-
-                        // Color Slider
-                        ImGui::ColorEdit3("Color", &material->Color[0]);
-
-                        // Ambient Slider
-                        ImGui::ColorEdit3("Ambient", &material->Ambient[0]);
-
-                        // Diffuse Slider
-                        ImGui::ColorEdit3("Diffuse", &material->Diffuse[0]);
-
-                        // Specular Slider
-                        ImGui::ColorEdit3("Specular", &material->Specular[0]);
-
-                        // Shininess Slider
-                        ImGui::SliderFloat("Shininess", &material->Shininess, 0.01f, 128.0f);
-                        
-                        // Textures
-                        ImGui::Text("DiffuseTexture: %llu", material->DiffuseTextureHandle);
-                        if (ImGui::BeginDragDropTarget())
-                        {
-                            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_DND_Texture"))
-                            {
-                                Core::AssetHandle handle = *(uint64_t*)payload->Data;
-                                material->DiffuseTextureHandle = handle;
-                            }
-                            ImGui::EndDragDropTarget();
-                        }
-
-                        ImGui::TreePop();
-                    }
-
-                    ImGui::TreePop();
-                }
-                
-                if (entity.HasComponent<SpriteComponent>() && ImGui::TreeNode("Sprite"))
-                {
-                    auto& s = entity.GetComponent<SpriteComponent>();
-                    ImGui::Text("Texture: %llu", s.TextureHandle);
-                   
-                    // Accept payload from drag and drop imgui (only model ids)
-                    if (ImGui::BeginDragDropTarget())
-                    {
-                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_DND_Texture"))
-                        {
-                            Core::AssetHandle handle = *(uint64_t*)payload->Data;
-                            s.TextureHandle = handle;
-                        }
-                        ImGui::EndDragDropTarget();
-                    }
-                    
-                    // Use sliders for position, rotation, and scale
-                    ImGui::ColorEdit4("Color", &s.Color.x);
-
-                    ImGui::TreePop();
-                }
-
-                ImGui::TreePop();
-                ImGui::SetCursorPosX(25);
-                if (ImGui::Button("Add Component", ImVec2(150.0f, 40.0f)))
-                {
-                    ImVec2 button_pos = ImGui::GetItemRectMin();  // Get top-left corner of button
-                    ImVec2 button_size = ImGui::GetItemRectSize(); // Get button size
-                    ImGui::SetNextWindowPos(ImVec2(button_pos.x, button_pos.y + button_size.y)); // Set position directly below the button
-                    ImGui::OpenPopup("AddComponentPopup");
-                }
-
-            }
-
-            // Dropdown menu logic
-            if (ImGui::BeginPopup("AddComponentPopup"))
-            {
-                auto& ECS_Registry = Application::Get()->GetCurrentProject().GetScene().GetRegistry();
-                if (ImGui::MenuItem("Transform"))
-                {
-                    // Add TransformComponent to the selected entity
-                    if (!ECS_Registry.HasComponent<TransformComponent>(e))
-                    {
-                        TransformComponent transform{};
-                        transform.Position = { 0.0f, 0.0f, 0.0f };
-                        transform.Rotation = { 0.0f, 0.0f, 0.0f };
-                        transform.Scale = { 1.0f, 1.0f, 1.0f };
-
-                        ECS_Registry.AddComponent<TransformComponent>(e, transform);
-                    }
-                }
-
-                if (ImGui::MenuItem("Model"))
-                {
-                    if (!ECS_Registry.HasComponent<ModelComponent>(e))
-                    {
-                        ECS_Registry.AddComponent<ModelComponent>(e, ModelComponent{ 0 });
-                    }
-                }
-
-                if (ImGui::MenuItem("Sprite"))
-                { 
-                    if (!ECS_Registry.HasComponent<SpriteComponent>(e))
-                    {
-                        ECS_Registry.AddComponent<SpriteComponent>(e, SpriteComponent{ 0, glm::vec4(1.0f) });
-                    }
-                }
-
-                ImGui::EndPopup();
-            }
-        });
-    }
-    ImGui::End();
-}
-
-void EditorLayer::ShowContentBrowser(bool* p_open)
-{
-    if (ImGui::Begin("Content Browser", p_open))
-    {
-        static char directoryBuf[128] = "res";
-
-        ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x / 10 );
-
-        if (ImGui::Button(ICON_FA_ARROW_LEFT " Back"))
-        {
-            std::string pathStr = directoryBuf;
-
-            size_t pos = pathStr.find_last_of("/\\");
-
-            if (pos != std::string::npos)
-            {
-                pathStr = pathStr.substr(0, pos);
-            }
-
-            if (pathStr.empty())
-                pathStr = "res";
-
-            std::strncpy(directoryBuf, pathStr.c_str(), sizeof(directoryBuf) - 1);
-            directoryBuf[sizeof(directoryBuf) - 1] = '\0';
-        }
-
-        ImGui::SameLine();
-        ImGui::InputText("Directory", directoryBuf, sizeof(directoryBuf));
-
-        ImGui::SameLine();
-        if (ImGui::Button(ICON_FA_FOLDER))
-        {
-            // What is thread safety?
-            std::thread([]
-            {
-                const char* dir = tinyfd_selectFolderDialog("Select a directory", "/res");
-                if (dir)
-                {
-                    std::strncpy(directoryBuf, dir, sizeof(directoryBuf) - 1);
-                    directoryBuf[sizeof(directoryBuf) - 1] = '\0';
-                }
-            }).detach();
-        }
-
-        if (ImGui::IsItemHovered())
-        {
-            if (ImGui::BeginTooltip())
-            {
-                ImGui::Text("Select folder");
-                ImGui::EndTooltip();
-            }
-        }
-
-        if (std::filesystem::exists(directoryBuf))
-        {
-            ImGui::BeginChild("Folders", ImVec2(ImGui::GetContentRegionAvail().x / 5, ImGui::GetContentRegionAvail().y), true);
-            
-            // Recursive lambda for child window; only folders
-            std::function<void(const char*)> FolderRecursive = [&](const char* directory)
-            {
-                for (const auto& entry : std::filesystem::directory_iterator(directory))
-                {
-                    if (entry.is_directory())
-                    {
-                        std::string folderName = entry.path().filename().string();
-                        if (ImGui::TreeNode(folderName.c_str()))
-                        {
-                            FolderRecursive(entry.path().string().c_str());
-                            ImGui::TreePop();
-                        }
-                    }
-                }
-            };
-
-            FolderRecursive(directoryBuf);
-            ImGui::EndChild();
-
-            // Main thumbnail view
-            ImGui::SameLine();
-            ImGui::BeginChild("Content", ImVec2(0, ImGui::GetContentRegionAvail().y), true);
-            
-            float contentWidth = ImGui::GetContentRegionAvail().x;
-            int columns = static_cast<int>(contentWidth / 100);
-            if (columns < 1) columns = 1;
-
-
-            ImGui::Columns(columns, nullptr, false);
-
-            for (const auto& entry : std::filesystem::directory_iterator(directoryBuf))
-            {
-                std::string fileName = entry.path().filename().string();
-
-                const char* icon = ICON_FA_QUESTION;
-                if (entry.is_directory()) icon = ICON_FA_FOLDER;
-                
-                const std::string ext = entry.path().extension().string();
-                if (ext == ".jpg" || ext == ".png") icon = ICON_FA_FILE_IMAGE;
-                if (ext == ".ttf") icon = ICON_FA_FILE_ARCHIVE;
-                if (ext == ".glsl") icon = ICON_FA_FILE_CODE;
-
-                if (ImGui::Button(icon, ImVec2(100, 100)))
-                {
-                    std::strncpy(directoryBuf, entry.path().string().c_str(), sizeof(directoryBuf) - 1);
-                    directoryBuf[sizeof(directoryBuf) - 1] = '\0';
-                }
-
-                if (ImGui::IsItemHovered())
-                {
-                    ImGui::BeginTooltip();
-                    ImGui::Text("%s", fileName.c_str());
-                    ImGui::EndTooltip();
-                }
-
-                ImGui::TextWrapped(fileName.c_str());
-
-                ImGui::NextColumn();
-            }
-
-            ImGui::Columns(1);  // End the column layout
-            ImGui::EndChild();
-        }
-        else
-        {
-            ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x / 20);
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
-            ImGui::Text("Please enter a valid directory!");
-            ImGui::PopStyleColor();
-        }
-    }
-    ImGui::End();
-}
-
-
 void EditorLayer::OnEvent(Core::Events::Event* event)
 {
+    // TODO: EVENT SYSTEM !!!
+    if (event->GetType() == "KeyPressedEvent") // Ugly
+    {
+        if (auto keyEvent = dynamic_cast<Events::KeyPressedEvent*>(event))
+        {
+            if (!ImGuizmo::IsUsing())
+            {
+                if (keyEvent->key_code == GLFW_KEY_G) m_GizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
+                if (keyEvent->key_code == GLFW_KEY_R) m_GizmoOperation = ImGuizmo::OPERATION::ROTATE;
+                if (keyEvent->key_code == GLFW_KEY_S) m_GizmoOperation = ImGuizmo::OPERATION::SCALE;
+            }
+        }
+    }
 }
 
 void EditorLayer::OnDettach()

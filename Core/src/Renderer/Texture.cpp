@@ -8,31 +8,33 @@
 namespace Core::Gfx
 {
 
-	AssetHandle Texture::Create(const std::string &path, const std::string &name, std::string type)
+	Ref<Texture> Texture::Create(const std::string& path)
 	{
-		AssetMetadata metadata
-		{
-			name,
-			path,
-			UUID()
-		};
-		Texture* texture = new Texture(metadata, type);
-
-		if (texture->Load())
-		{
-			return Application::Get()->GetCurrentProject().GetRegistry().Track(texture);
-		}
-
-		return 0;
+		AssetMetadata metadata;
+		metadata.Path = path;
+		metadata.ID = UUID();
+		metadata.Name = "Texture" + std::to_string(metadata.ID);
+		metadata.Type = "Texture";
+		return Texture::Create(metadata);
 	}
 
-	Texture::Texture(const AssetMetadata& metadata, std::string type)
-		: Asset(metadata), m_Type(type) {}
+	Ref<Texture> Texture::Create(const AssetMetadata& metadata)
+	{
+		Ref<Texture> texture = CreateRef<Texture>(metadata);
+		texture->Load();
+		return texture;
+	}
 
-	// Texture::Texture(const Texture& texture)
-	// {
-	// 	*this = texture;
-	// }
+	Ref<Texture> Texture::CreateFromMemory(unsigned int width, unsigned int height, int channels, void* data)
+	{
+		AssetMetadata metadata;
+		metadata.ID = UUID();
+		metadata.Name = "Texture" + std::to_string(metadata.ID);
+		metadata.Type = "Texture";
+		Ref<Texture> texture = CreateRef<Texture>(metadata);
+		texture->LoadFromMemory(width, height, channels, data);
+		return texture;
+	}
 
 	bool Texture::Load()
 	{
@@ -42,8 +44,7 @@ namespace Core::Gfx
 		if (data == NULL)
 		{
 			LOG_ERROR("stbi_load failed to load image: " + m_Metadata.Path);
-			m_Loaded = false;
-			return false;
+			return m_Loaded = false;
 		}
 
 		LoadFromMemory(m_Width, m_Height, m_NrChannels, data);

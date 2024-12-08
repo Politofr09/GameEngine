@@ -1,5 +1,6 @@
 #include "Project.h"
 #include "Instrumentor.h"
+#include "UUID.h"
 
 #include <fstream>
 
@@ -17,7 +18,7 @@ namespace Core
 		out << YAML::Key << "Author" << YAML::Value << m_Author;
 		out << YAML::Key << "ID" << YAML::Value << id;
 		out << YAML::Key << "Scene" << YAML::Value << m_ScenePath;
-		out << YAML::Key << "AssetDef" << YAML::Value << m_AssetRegistryPath;
+		out << YAML::Key << "AssetDirectory" << YAML::Value << m_AssetDirectory;
 		out << YAML::EndMap;
 
 		std::ofstream fout(path);
@@ -25,7 +26,7 @@ namespace Core
 		fout.close();
 
 		m_Scene.Serialize(m_ScenePath);
-		m_AssetRegistry.Serialize(m_AssetRegistryPath);
+		m_AssetRegistry.Serialize();
 	}
 
 	bool Project::Deserialize(const std::string& path)
@@ -53,10 +54,11 @@ namespace Core
 			m_Scene.Deserialize(m_ScenePath);
 		}
 
-		if (auto assetRegistryPathNode = data["Project"]["AssetDef"])
+		if (auto assetRegistryDirectoryNode = data["Project"]["AssetDirectory"])
 		{
-			m_AssetRegistryPath = assetRegistryPathNode.as<std::string>();
-			m_AssetRegistry.Deserialize(m_AssetRegistryPath);
+			m_AssetDirectory = assetRegistryDirectoryNode.as<std::string>();
+			m_AssetRegistry.SetAssetDirectory(m_AssetDirectory);
+			m_AssetRegistry.Deserialize();
 		}
 	}
 

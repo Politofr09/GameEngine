@@ -3,6 +3,7 @@
 #include "Window.h"
 #include "Events/Event.h"
 #include "Layer.h"
+#include "ImGuiLayer.h"
 #include "Project.h"
 
 #pragma once
@@ -32,19 +33,21 @@ namespace Core
 		void PopLayer(Layer* layer);
 		
 		void Run();
-		virtual void Update() = 0;
 
 		void OnEvent(Events::Event*);
 
 		~Application();
 
-		inline Window* GetWindow() { return m_Window; }
-		inline Project& GetCurrentProject() { return m_CurrentProject; }
+		Window* GetWindow() { return m_Window; }
+		Project& GetCurrentProject() { return m_CurrentProject; }
+		ImGuiLayer* GetImGuiLayer() { return m_ImGuiLayer; }
+
 		static Application* Get() { return s_Instance; }
 		void LoadProject(const std::string& filename);
 
 	protected:
 		Window* m_Window;
+		ImGuiLayer* m_ImGuiLayer = nullptr;
 		std::vector<Layer*> m_Layers;
 		Project m_CurrentProject;
 		std::string m_OpenedProjectPath;
