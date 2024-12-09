@@ -4,6 +4,7 @@
 #include "Shader.h"
 #include <glm/glm.hpp>
 #include <assimp/material.h>
+#include <assimp/scene.h>
 
 namespace Core::Gfx
 {
@@ -20,8 +21,8 @@ namespace Core::Gfx
 		void Serialize() const;
 
 		// Used when models come with their own material
-		static Ref<Material> CreateFromMemory(aiMaterial* mat, const std::string& modelFileName);
-		bool LoadFromMemory(aiMaterial* material, const std::string& modelFileName);
+		static Ref<Material> CreateFromMemory(const aiScene* scene, aiMaterial* mat, const std::string& modelFileName);
+		bool LoadFromMemory(const aiScene* scene, aiMaterial* material, const std::string& modelFileName);
 
 		bool UnLoad() { m_Loaded = false; return true; }
 
@@ -49,7 +50,8 @@ namespace Core::Gfx
 
 		bool IsLoaded() const { return m_Loaded; }
 	private:
-
+		// Retrieves both external textures and embedded textures
+		void RetrieveTextures(const aiScene* scene, const aiMaterial* material);
 
 	private:
 		bool m_Loaded = false;

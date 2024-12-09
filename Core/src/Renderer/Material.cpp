@@ -105,14 +105,14 @@ namespace Core::Gfx
         fout.close();
     }
 
-    Ref<Material> Material::CreateFromMemory(aiMaterial* mat, const std::string& modelFileName)
+    Ref<Material> Material::CreateFromMemory(const aiScene* scene, aiMaterial* mat, const std::string& modelFileName)
     {
         Ref<Material> material = CreateRef<Material>();
-        material->LoadFromMemory(mat, modelFileName);
+        material->LoadFromMemory(scene, mat, modelFileName);
         return material;
     }
     
-    bool Material::LoadFromMemory(aiMaterial* material, const std::string& modelFileName)
+    bool Material::LoadFromMemory(const aiScene* scene, aiMaterial* material, const std::string& modelFileName)
     {
         Path = modelFileName;
 
@@ -138,12 +138,31 @@ namespace Core::Gfx
             Shininess = shininess;
         }
 
+        RetrieveTextures(scene, material);
+
+        return true;
+    }
+
+    void Material::RetrieveTextures(const aiScene* scene, const aiMaterial* material)
+    {
+
+        bool hasEmbedded = scene->mTextures != nullptr;
+
         // Create textures that might not be registered
         aiString str;
         std::string relativeDirectory = std::filesystem::path(Path).parent_path().string() + "/";
-        if (material->GetTexture(aiTextureType_DIFFUSE, 0, &str) == AI_SUCCESS)
+
+        if (material->GetTexture(aiTextureType_DIFFUSE, 0, &str) == AI_SUCCESS && !hasEmbedded)
         {
-            Ref<Texture> existingDiffuse = Application::Get()->GetCurrentProject().GetRegistry().Get<Texture>(std::string(relativeDirectory + str.C_Str()));
+            std::filesystem::path texturePath = str.C_Str();
+            // Check if it's a relative path
+            // if so, add the relative directory
+            if (std::filesystem::canonical(texturePath) != texturePath)
+            {
+                texturePath = std::string(relativeDirectory + texturePath.string());
+            }
+
+            Ref<Texture> existingDiffuse = Application::Get()->GetCurrentProject().GetRegistry().Get<Texture>(texturePath.string());
             if (existingDiffuse->GetMetadata().ID)
             {
                 DiffuseTexture = existingDiffuse;
@@ -155,9 +174,18 @@ namespace Core::Gfx
             }
         }
 
+
         if (material->GetTexture(aiTextureType_SPECULAR, 0, &str) == AI_SUCCESS)
         {
-            Ref<Texture> existingSpecular = Application::Get()->GetCurrentProject().GetRegistry().Get<Texture>(std::string(relativeDirectory + str.C_Str()));
+            std::filesystem::path texturePath = str.C_Str();
+            // Check if it's a relative path
+            // if so, add the relative directory
+            if (std::filesystem::canonical(texturePath) != texturePath)
+            {
+                texturePath = std::string(relativeDirectory + texturePath.string());
+            }
+
+            Ref<Texture> existingSpecular = Application::Get()->GetCurrentProject().GetRegistry().Get<Texture>(texturePath.string());
             if (existingSpecular->GetMetadata().ID)
             {
                 SpecularTexture = existingSpecular;
@@ -171,7 +199,15 @@ namespace Core::Gfx
 
         if (material->GetTexture(aiTextureType_NORMALS, 0, &str) == AI_SUCCESS)
         {
-            Ref<Texture> existingNormal = Application::Get()->GetCurrentProject().GetRegistry().Get<Texture>(std::string(relativeDirectory + str.C_Str()));
+            std::filesystem::path texturePath = str.C_Str();
+            // Check if it's a relative path
+            // if so, add the relative directory
+            if (std::filesystem::canonical(texturePath) != texturePath)
+            {
+                texturePath = std::string(relativeDirectory + texturePath.string());
+            }
+
+            Ref<Texture> existingNormal = Application::Get()->GetCurrentProject().GetRegistry().Get<Texture>(texturePath.string());
             if (existingNormal->GetMetadata().ID)
             {
                 NormalTexture = existingNormal;
@@ -181,8 +217,6 @@ namespace Core::Gfx
                 NormalTexture = Texture::Create(relativeDirectory + str.C_Str());
             }
         }
-
-        return true;
     }
 
 }

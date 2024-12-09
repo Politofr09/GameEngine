@@ -44,7 +44,7 @@ namespace Core::Gfx
 		// Process recursively root node
 		ProcessNode(scene->mRootNode, scene);
 
-		m_Material = Material::CreateFromMemory(m_AiMaterial, m_Metadata.Path);
+		m_Material = Material::CreateFromMemory(scene, m_AiMaterial, m_Metadata.Path);
 
 		importer.FreeScene();
 
