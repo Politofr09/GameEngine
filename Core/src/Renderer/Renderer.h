@@ -50,10 +50,25 @@ namespace Core::Gfx
         static void EnableWireframeMode();
         static void DisableWireframeMode();
 
+        static void DrawGrid();
+        
+        struct GridSettings
+        {
+            float gridSize = 100.0f;               // uGridSize
+            float gridCellSize = 0.8f;            // uGridCellSize
+            glm::vec4 gridColorThin = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);  // uGridColorThin
+            glm::vec4 gridColorThick = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f); // uGridColorThick
+            float gridMinPixelsBetweenCells = 2.0f; // uGridMinPixelsBetweenCells
+        };
+
+        static GridSettings s_GridSettings;
+
     private:
         static Camera s_ActiveCamera;
         static Light s_SceneLight;
-        static Ref<Shader> s_FlatShader;
+        static Ref<Shader> s_PhongShader;
+        static Ref<Shader> s_GridShader;
+
     };
 
 }

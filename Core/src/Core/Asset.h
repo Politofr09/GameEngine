@@ -202,12 +202,13 @@ namespace Core
         void Serialize();
 
         // Populate
-        void SetAssetDirectory(const std::string& directory) { m_AssetDirectory = directory + "/"; }
         void Deserialize();
         std::vector<std::filesystem::path> Scan() const;
 
         // void Rescan() <-- hot reloading... just sayin' ...
 
+        void SetAssetDirectory(const std::string& directory) { m_AssetDirectory = directory + "/"; }
+        std::string GetAssetDirectory() { return m_AssetDirectory; }
         void Free();
 
         void SerializeMetadata(const AssetMetadata& metadata);

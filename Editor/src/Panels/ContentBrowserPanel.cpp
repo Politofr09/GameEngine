@@ -15,15 +15,13 @@ static std::filesystem::path normalizePath(std::filesystem::path& messyPath)
 
 ContentBrowserPanel::ContentBrowserPanel()
 {
-    m_CurrentDirectory = Application::Get()->GetCurrentProject().GetAssetDirectory();
-    m_AssetDirectory = normalizePath(std::filesystem::path(Application::Get()->GetCurrentProject().GetAssetDirectory()));
-
-    m_FolderIcon = Texture::Create("assets/icons/ContentBrowser@Folder.png");
     m_FileIcon = Texture::Create("assets/icons/ContentBrowser@File.png");
 }
 
 void ContentBrowserPanel::OnImGuiRender()
 {
+    auto& registry = Application::Get()->GetCurrentProject().GetRegistry();
+
 	ImGui::Begin("Content browser");
 
     // Sidebar
@@ -33,32 +31,16 @@ void ContentBrowserPanel::OnImGuiRender()
     {
         m_SidebarWidth = ImGui::GetWindowSize().x;
 
-        std::function<void(std::filesystem::path)> ShowDirectory = [&](std::filesystem::path path)
+        if (ImGui::TreeNodeEx(registry.GetAssetDirectory().c_str()))
         {
-            if (!std::filesystem::is_directory(path))
-                return;
-
-            std::string label = ICON_FA_FOLDER + std::string(" ") + path.filename().string();
-
-            bool open = ImGui::TreeNodeEx(label.c_str(), ImGuiTreeNodeFlags_OpenOnDoubleClick);
-            if (ImGui::IsItemClicked())
-                m_CurrentDirectory = path;
-            if (open)
-            {
-
-                for (const auto& entry : std::filesystem::directory_iterator(path))
-                {
-                    if (entry.is_directory())
-                    {
-                        // Recursively display subdirectories
-                        ShowDirectory(entry.path());
-                    }
-                }
-
-                ImGui::TreePop();
-            }
-        };
-        ShowDirectory(m_AssetDirectory);
+            if (ImGui::Button("Textures"))  m_SelectedAssetFilter = "Textures";
+            if (ImGui::Button("Models"))    m_SelectedAssetFilter = "Models";
+            if (ImGui::Button("Shaders"))   m_SelectedAssetFilter = "Shaders";
+            if (ImGui::Button("Materials")) m_SelectedAssetFilter = "Materials";
+            if (ImGui::Button("Fonts"))     m_SelectedAssetFilter = "Fonts";
+            
+            ImGui::TreePop();
+        }
     }
     ImGui::EndChild();
     ImGui::GetStyle().ChildRounding = 5.0f;
@@ -83,69 +65,50 @@ void ContentBrowserPanel::OnImGuiRender()
     ImGui::SameLine();
     ImGui::BeginChild("MainContent", ImVec2(0, 0), true);
     {
-        float padding = 8.0f;
-        float thumbnailSize = 96.0f;
-        float cellSize = thumbnailSize + padding;
-        float panelWidth = ImGui::GetWindowSize().x;
-        int columnCount = (int)(panelWidth / cellSize);  // Calculate number of columns
-        if (columnCount < 1) columnCount = 1;
-
-        ImGui::Columns(columnCount, nullptr, false);  // Set up columns for the grid
-
-        // Iterate over the directory contents
-        for (const auto& entry : std::filesystem::directory_iterator(m_CurrentDirectory))
+        auto ShowAssetStorage = [&](const auto& storage, const std::string& assetType)
         {
-            ImGui::PushID(entry.path().string().c_str());  // Unique ID for each item
-            if (entry.is_directory())
-            {
-                ImGui::Image((void*)(intptr_t)m_FolderIcon->GetID(), ImVec2(thumbnailSize, thumbnailSize));
-                if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
-                {
-                    m_CurrentDirectory = entry.path();
-                }
+            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize(assetType.c_str()).x) * 0.5f);
+            ImGui::Text(assetType.c_str());
+            ImGui::Separator();
 
-                // Draw folder name
-                ImGui::TextWrapped(entry.path().filename().string().c_str());
+            float padding = 8.0f;
+            float thumbnailSize = 96.0f;
+            float cellSize = thumbnailSize + padding;
+            float panelWidth = ImGui::GetWindowSize().x;
+            int columnCount = (int)(panelWidth / cellSize);  // Calculate number of columns
+            if (columnCount < 1) columnCount = 1;
 
-                ImGui::NextColumn();
-            }
-            else
+            ImGui::Columns(columnCount, nullptr, false);  // Set up columns for the grid
+
+            for (auto& pair : storage)
             {
+                AssetMetadata metadata = pair.first;
+
+                ImGui::PushID(metadata.ID);
+
+                ImGui::SetNextWindowBgAlpha(0.2f);
+                float columnWidth = ImGui::GetColumnWidth();  // Get the current column width
+                ImGui::BeginChild(("Asset_" + std::to_string(metadata.ID)).c_str(), ImVec2(columnWidth - padding, 120), true);
+
                 ImGui::Image((void*)(intptr_t)m_FileIcon->GetID(), ImVec2(thumbnailSize, thumbnailSize));
+                ImGui::TextWrapped(metadata.Name.c_str());
 
-                // Get the file extension
-                std::string extension = entry.path().extension().string();
-                if (!extension.empty() && extension[0] == '.')
-                    extension.erase(0, 1); // Remove the leading dot
-
-                // Calculate overlay position
-                ImVec2 iconPos = ImGui::GetItemRectMin();
-                ImVec2 iconSize = ImGui::GetItemRectSize();
-                ImVec2 textPos = ImVec2(iconPos.x + iconSize.x / 4, iconPos.y + iconSize.y - 45);
-
-                // Overlay the extension text
-                ImGui::GetWindowDrawList()->AddText(
-                    ImGui::GetFont(),                
-                    ImGui::GetFontSize() + 10,       
-                    textPos,
-                    IM_COL32(0, 0, 0, 255),
-                    extension.c_str(),
-                    nullptr,
-                    0.0f,
-                    nullptr
-                );
+                ImGui::EndChild();
+                ImGui::NextColumn();
+                ImGui::PopID();
             }
-            ImGui::PopID();
-        }
+            ImGui::Columns(1); // Reset columns
+        };
 
-        ImGui::Columns(1);  // Reset columns
+
+        if      (m_SelectedAssetFilter == "Textures") ShowAssetStorage(registry.GetTextureStorage(), "Textures");
+        else if (m_SelectedAssetFilter == "Models") ShowAssetStorage(registry.GetTextureStorage(), "Models");
+        else if (m_SelectedAssetFilter == "Shaders") ShowAssetStorage(registry.GetTextureStorage(), "Shaders");
+        else if (m_SelectedAssetFilter == "Materials") ShowAssetStorage(registry.GetTextureStorage(), "Materials");
+        else if (m_SelectedAssetFilter == "Fonts") ShowAssetStorage(registry.GetTextureStorage(), "Fonts");
     }
     ImGui::EndChild();
 
     ImGui::End();
 }
 
-void ContentBrowserPanel::ImportMenu()
-{
-
-}

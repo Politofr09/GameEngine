@@ -31,13 +31,13 @@ in vec3 vPos;
 in vec2 uv;
 
 uniform sampler2D material_diffuse_texture;
-uniform vec3 uMaterialColor;
 
 // Phong model uniforms
 uniform vec3 uLightPosition;
 uniform vec3 uLightColor;
 uniform vec3 uViewPosition;
 
+uniform vec3 uMaterialColor;
 uniform vec3 uMaterialAmbient;
 uniform vec3 uMaterialDiffuse;
 uniform vec3 uMaterialSpecular;
@@ -54,10 +54,10 @@ void main()
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = diff * uMaterialDiffuse * uLightColor;
 
-    // Specular
+    // Specular (Blinn-Phong)
     vec3 viewDir = normalize(uViewPosition - vPos);
-    vec3 reflectDir = reflect(-lightDir, norm);  
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 100/uMaterialShininess);
+    vec3 halfwayDir = normalize(lightDir + viewDir);  // Halfway vector
+    float spec = pow(max(dot(norm, halfwayDir), 0.0), uMaterialShininess);
     vec3 specular = uMaterialSpecular * spec * uLightColor;
 
     // Combine results

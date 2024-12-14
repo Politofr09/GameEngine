@@ -4,7 +4,7 @@ Entities:
   - Entity: 12332770875343846942
     NameComponent: Square 1
     TransformComponent:
-      Position: [7.05690575, 6.20967293, 0]
+      Position: [7.05690575, 7.11000013, 1]
       Rotation: [0, -0, 0]
       Scale: [18.75, 18.75, 18.75]
     SpriteComponent:
@@ -14,7 +14,7 @@ Entities:
     NameComponent: Bunny (fbx)
     TransformComponent:
       Position: [0, 0, 0]
-      Rotation: [0, -0, 0]
-      Scale: [1, 1, 1]
+      Rotation: [1.58514882e-41, -1.86036384e-41, -8.12753109e-42]
+      Scale: [0.999991953, 0.999998689, 0.999991417]
     ModelComponent:
       ModelHandle: 15240123531402163961

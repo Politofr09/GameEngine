@@ -9,7 +9,9 @@ namespace Core::Gfx
 {
     Camera Renderer::s_ActiveCamera;
     Light Renderer::s_SceneLight;
-    Ref<Shader> Renderer::s_FlatShader;
+    Ref<Shader> Renderer::s_PhongShader;
+    Ref<Shader> Renderer::s_GridShader;
+    Renderer::GridSettings Renderer::s_GridSettings;
 
     void GLClearError()
     {
@@ -34,7 +36,10 @@ namespace Core::Gfx
     {
         GLCall(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
 
-        s_FlatShader = Shader::Create("assets/shaders/Renderer@Flat.glsl");
+        s_PhongShader = Shader::Create("assets/shaders/Renderer@Phong.glsl");
+
+        s_GridShader = Shader::Create("assets/shaders/Renderer@Grid.glsl");
+ 
     }
 
     void Renderer::EnableCulling()
@@ -67,6 +72,28 @@ namespace Core::Gfx
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
+    void Renderer::DrawGrid()
+    {
+        s_GridShader->Use();
+
+        s_GridShader->SetFloat("uGridSize", s_GridSettings.gridSize);
+        s_GridShader->SetFloat("uGridCellSize", s_GridSettings.gridCellSize);
+        s_GridShader->SetVector4("uGridColorThin", s_GridSettings.gridColorThin);
+        s_GridShader->SetVector4("uGridColorThick", s_GridSettings.gridColorThick);
+        s_GridShader->SetFloat("uGridMinPixelsBetweenCells", s_GridSettings.gridMinPixelsBetweenCells);
+
+        s_GridShader->SetMatrix("uView", s_ActiveCamera.GetViewMatrix());
+        s_GridShader->SetMatrix("uProjection", s_ActiveCamera.GetProjectionMatrix());
+
+        glEnable(GL_BLEND);
+        glDisable(GL_CULL_FACE);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBindVertexArray(0);
+        glDrawArrays(GL_TRIANGLES, 0, 6); // Draw two triangles (6 vertices)
+        glEnable(GL_CULL_FACE);
+        glDisable(GL_BLEND);
+    }
+
     void Renderer::SetBackgroundColor(glm::vec3 color)
     {
         GLCall(glClearColor(color.x, color.y, color.z, 1.0f));
@@ -93,7 +120,7 @@ namespace Core::Gfx
         auto material = model->GetMaterial();
         if (!material) return;
 
-        if (!material->Shader) material->Shader = s_FlatShader;
+        if (!material->Shader) material->Shader = s_PhongShader;
         material->Shader->Use();
 
         material->Shader->SetMatrix("uView", s_ActiveCamera.GetViewMatrix());
@@ -101,6 +128,14 @@ namespace Core::Gfx
         material->Shader->SetMatrix("uTransform", transform);
 
         material->Shader->SetVector3("uMaterialColor", material->Color);
+        material->Shader->SetVector3("uMaterialAmbient", material->Ambient);
+        material->Shader->SetVector3("uMaterialDiffuse", material->Diffuse);
+        material->Shader->SetVector3("uMaterialSpecular", material->Specular);
+        material->Shader->SetFloat("uMaterialShininess", material->Shininess);
+
+        material->Shader->SetVector3("uLightPosition", s_SceneLight.Position);
+        material->Shader->SetVector3("uLightColor", s_SceneLight.Color);
+        material->Shader->SetVector3("uViewPosition", s_ActiveCamera.GetPosition());
 
         material->DiffuseTexture->Bind();
         //glBindTexture(GL_TEXTURE_2D, material->DiffuseTexture->GetID());
@@ -130,6 +165,8 @@ namespace Core::Gfx
 
             DrawModel(model, transformComponent);
         }
+
+        DrawGrid();
     }
 
 }

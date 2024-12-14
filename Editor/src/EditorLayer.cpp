@@ -60,6 +60,9 @@ void EditorLayer::OnUpdate()
     //shader->SetFloat("uTime", (float)glfwGetTime());
     Renderer::SetBackgroundColor({ 0.2f, 0.3f, 0.3f });
     Renderer::Clear();
+    Light light;
+    light.Position = { 0.0f, 10.0f, 0.0f };
+    Renderer::SetLight(light);
     m_Framebuffer.Bind();
     Renderer::BeginScene(m_Cam);
     {
@@ -197,9 +200,19 @@ void EditorLayer::OnImGuiRender()
             {
                 auto& transform = entity.GetComponent<Ecs::TransformComponent>();
 
-                transform.Position = glm::vec3(modelMatrix[3]);  // Translation is in the 4th column
-                transform.Rotation = glm::eulerAngles(glm::quat_cast(modelMatrix));  // Extract rotation from the matrix
-                transform.Scale = glm::vec3(glm::length(modelMatrix[0]), glm::length(modelMatrix[1]), glm::length(modelMatrix[2]));  // Scale is in column lengths
+                // Extract translation, rotation, and scale from the model matrix
+                glm::vec3 translation, scale;
+                glm::quat rotation;
+                glm::vec3 skew;
+                glm::vec4 perspective;
+
+                bool success = glm::decompose(modelMatrix, scale, rotation, translation, skew, perspective);
+                if (success)
+                {
+                    transform.Position = translation;
+                    transform.Rotation = glm::eulerAngles(rotation);  // Convert quaternion to Euler angles
+                    transform.Scale = scale;
+                }
             }
         }
 
@@ -434,6 +447,21 @@ void EditorLayer::ShowRenderingSettings(bool* p_open)
         ImGui::PopStyleColor();
 
         ImGui::Separator();
+
+        // Grid Size
+        ImGui::SliderFloat("Grid Size", &Renderer::s_GridSettings.gridSize, 10.0f, 500.0f);
+
+        // Grid Cell Size
+        ImGui::SliderFloat("Grid Cell Size", &Renderer::s_GridSettings.gridCellSize, 0.1f, 10.0f);
+
+        // Grid Color Thin
+        ImGui::ColorEdit4("Grid Color Thin", &Renderer::s_GridSettings.gridColorThin.r);
+
+        // Grid Color Thick
+        ImGui::ColorEdit4("Grid Color Thick", &Renderer::s_GridSettings.gridColorThick.r);
+
+        // Min Pixels Between Cells
+        ImGui::SliderFloat("Grid Min Pixels Between Cells", &Renderer::s_GridSettings.gridMinPixelsBetweenCells, 1.0f, 10.0f);
     }
     ImGui::End();
 }
