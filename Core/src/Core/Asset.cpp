@@ -95,7 +95,7 @@ namespace Core
 
 		// Now add the metadata to its corresponding asset storage and pair it with placeholder
 		if (metadata.Type == "Texture")
-			m_Textures[metadata] = CreateRef<Texture>(metadata);
+			m_Textures[metadata] = CreateRef<Texture>(metadata, TextureSpecifiation{});
 		else if (metadata.Type == "Model")
 			m_Models[metadata] = CreateRef<Model>(metadata);
 		else if (metadata.Type == "Material")
@@ -142,7 +142,7 @@ namespace Core
 				if (extension == ".png" || extension == ".jpg")
 				{
 					metadata.Type = "Texture";
-					m_Textures[metadata] = CreateRef<Texture>(metadata);
+					m_Textures[metadata] = CreateRef<Texture>(metadata, TextureSpecifiation{});
 				}
 				else if (extension == ".obj" || extension == ".fbx")
 				{

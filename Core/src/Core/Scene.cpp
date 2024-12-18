@@ -67,7 +67,7 @@ namespace Core
 		out << YAML::BeginMap; // Root map
 		{
 			out << YAML::Key << "Scene" << YAML::Value << "Untitled";  // Name of the scene
-			out << YAML::Key << "ID" << YAML::Value << m_ID;  // Scene ID
+			out << YAML::Key << "ID" << YAML::Value << ID;  // Scene ID
 
 			out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;  // Begin sequence for entities
 			m_Registry.each([&](ECS::EntityID e)
@@ -107,7 +107,7 @@ namespace Core
 			return false;
 		}
 
-		m_ID = data["ID"].as<uint64_t>(UUID());
+		ID = data["ID"].as<uint64_t>(UUID());
 
 		// TODO: Deserialize m_Name when added LOL
 

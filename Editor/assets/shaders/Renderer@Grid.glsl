@@ -21,7 +21,7 @@ const int Indices[6] = int[6](0, 2, 1, 2, 0, 3);
 void main()
 {
     int i = Indices[gl_VertexID];
-    vec4 position = vec4(Positions[i] * uGridSized, 1.0f);
+    vec4 position = vec4(Positions[i] * uGridSize, 1.0f);
 
     position.x += uCameraWorldPos.x;
     position.z += uCameraWorldPos.z;

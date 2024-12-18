@@ -8,38 +8,38 @@
 namespace Core::Gfx
 {
 
-	Ref<Texture> Texture::Create(const std::string& path)
+	Ref<Texture> Texture::Create(const std::string& path, const TextureSpecifiation& spec)
 	{
 		AssetMetadata metadata;
 		metadata.Path = path;
 		metadata.ID = UUID();
 		metadata.Name = "Texture" + std::to_string(metadata.ID);
 		metadata.Type = "Texture";
-		return Texture::Create(metadata);
+		return Texture::Create(metadata, spec);
 	}
 
-	Ref<Texture> Texture::Create(const AssetMetadata& metadata)
+	Ref<Texture> Texture::Create(const AssetMetadata& metadata, const TextureSpecifiation& spec)
 	{
-		Ref<Texture> texture = CreateRef<Texture>(metadata);
+		Ref<Texture> texture = CreateRef<Texture>(metadata, spec);
 		texture->Load();
 		return texture;
 	}
 
-	Ref<Texture> Texture::CreateFromMemory(unsigned int width, unsigned int height, int channels, void* data)
+	Ref<Texture> Texture::CreateFromMemory(unsigned int width, unsigned int height, int channels, unsigned char* data)
 	{
 		AssetMetadata metadata;
 		metadata.ID = UUID();
 		metadata.Name = "Texture" + std::to_string(metadata.ID);
 		metadata.Type = "Texture";
-		Ref<Texture> texture = CreateRef<Texture>(metadata);
-		texture->LoadFromMemory(width, height, channels, data);
+		Ref<Texture> texture = CreateRef<Texture>(metadata, TextureSpecifiation{});
+		texture->LoadFromMemory(data);
 		return texture;
 	}
 
 	bool Texture::Load()
 	{
 		//stbi_set_flip_vertically_on_load(1);
-		unsigned char* data = stbi_load(m_Metadata.Path.c_str(), &m_Width, &m_Height, &m_NrChannels, 0);
+		unsigned char* data = stbi_load(m_Metadata.Path.c_str(), (int*) &m_Spec.Width, (int*) &m_Spec.Height, &m_Spec.Channels, 0);
 
 		if (data == NULL)
 		{
@@ -47,7 +47,11 @@ namespace Core::Gfx
 			return m_Loaded = false;
 		}
 
-		LoadFromMemory(m_Width, m_Height, m_NrChannels, data);
+		if (m_Spec.Type == TextureSpecifiation::Type::Texture2D)
+			LoadFromMemory(data);
+		else
+			LoadCubemap(data);
+
 		stbi_image_free(data);
 
 		LOG_INFO("Texture " + m_Metadata.Name + " loaded.");
@@ -55,24 +59,74 @@ namespace Core::Gfx
 		return true;
 	}
 
-	bool Texture::UnLoad()
+	bool Texture::LoadCubemap(unsigned char* data)
+	{
+		int faceWidth = m_Spec.Width / 4;
+		int faceHeight = m_Spec.Height / 3;
+
+		glGenTextures(1, &m_RendererID);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, m_RendererID);
+
+		const int faceOffsets[6][2] = {
+			{ 2, 1 }, // Positive X
+			{ 0, 1 }, // Negative X
+			{ 1, 0 }, // Positive Y
+			{ 1, 2 }, // Negative Y
+			{ 1, 1 }, // Positive Z
+			{ 3, 1 }  // Negative Z
+		};
+		
+		for (int face = 0; face < 6; face++)
+		{
+			int offsetX = faceOffsets[face][0] * faceWidth;
+			int offsetY = faceOffsets[face][1] * faceHeight;
+
+			unsigned char* faceData = new unsigned char[faceWidth * faceHeight * 4];
+			for (int y = 0; y < faceHeight; ++y) 
+			{
+				int srcY = offsetY + y;
+				int destY = y;
+				memcpy(
+					faceData + (destY * faceWidth * 4),
+					data + (srcY * m_Spec.Width * 4) + (offsetX * 4),
+					faceWidth * 4
+				);
+			}
+
+			glTexImage2D(
+				GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
+				0, GL_RGBA, faceWidth, faceHeight,
+				0, GL_RGBA, GL_UNSIGNED_BYTE, faceData
+			);
+
+			delete[] faceData;
+		}
+
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+		return m_RendererID != 0;
+	}
+
+	bool Texture::UnLoad() const
 	{
 		glDeleteTextures(1, &m_RendererID);
 		return true;
 	}
 
-	void Texture::LoadFromMemory(unsigned int width, unsigned int height, int channels, void* data)
+	void Texture::LoadFromMemory(unsigned char* data)
 	{
-		m_Width = width;
-		m_Height = height;
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
 		glGenTextures(1, &m_RendererID);
+
 		glBindTexture(GL_TEXTURE_2D, m_RendererID);
 	
 		// Determine the texture format based on the number of channels
 		GLenum format;
-		switch (channels)
+		switch (m_Spec.Channels)
 		{
 		case 1:
 			format = GL_RED;
@@ -84,12 +138,12 @@ namespace Core::Gfx
 			format = GL_RGBA;
 			break;
 		default:
-			LOG_ERROR("Unsupported number of channels: " + m_NrChannels);
+			LOG_ERROR("Unsupported number of channels: " + m_Spec.Channels);
 			return;
 		}
 
 		// Set texture data
-		glTexImage2D(GL_TEXTURE_2D, 0, format, m_Width, m_Height, 0, format, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, m_Spec.Width, m_Spec.Height, 0, format, GL_UNSIGNED_BYTE, data);
 
 		// Set texture parameters
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -97,7 +151,7 @@ namespace Core::Gfx
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		glGenerateMipmap(GL_TEXTURE_2D);
+		if (m_Spec.Mipmaps) glGenerateMipmap(GL_TEXTURE_2D);
 
 		m_Loaded = true;
 	}

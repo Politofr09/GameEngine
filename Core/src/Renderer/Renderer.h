@@ -51,6 +51,7 @@ namespace Core::Gfx
         static void DisableWireframeMode();
 
         static void DrawGrid();
+        static void DrawSkybox();
         
         struct GridSettings
         {
@@ -68,6 +69,8 @@ namespace Core::Gfx
         static Light s_SceneLight;
         static Ref<Shader> s_PhongShader;
         static Ref<Shader> s_GridShader;
+        static Ref<Shader> s_SkyboxShader;
+        static Ref<Texture> s_DefaultSkyboxTexture;
 
     };
 

@@ -11,6 +11,9 @@ namespace Core::Gfx
     Light Renderer::s_SceneLight;
     Ref<Shader> Renderer::s_PhongShader;
     Ref<Shader> Renderer::s_GridShader;
+    Ref<Shader> Renderer::s_SkyboxShader;
+    Ref<Texture> Renderer::s_DefaultSkyboxTexture;
+
     Renderer::GridSettings Renderer::s_GridSettings;
 
     void GLClearError()
@@ -36,10 +39,17 @@ namespace Core::Gfx
     {
         GLCall(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
 
+        // These assets don't need to be exposed to the asset registry; they are internal things of the engine
         s_PhongShader = Shader::Create("assets/shaders/Renderer@Phong.glsl");
-
         s_GridShader = Shader::Create("assets/shaders/Renderer@Grid.glsl");
- 
+        s_SkyboxShader = Shader::Create("assets/shaders/Renderer@Skybox.glsl");
+
+        TextureSpecifiation spec;
+        spec.Type = TextureSpecifiation::Type::Cubemap;
+        s_DefaultSkyboxTexture = Texture::Create(
+            "assets/textures/Renderer@DefaultSkybox.png",
+            spec
+        );
     }
 
     void Renderer::EnableCulling()
@@ -92,6 +102,22 @@ namespace Core::Gfx
         glDrawArrays(GL_TRIANGLES, 0, 6); // Draw two triangles (6 vertices)
         glEnable(GL_CULL_FACE);
         glDisable(GL_BLEND);
+    }
+
+    void Renderer::DrawSkybox()
+    {
+        s_SkyboxShader->Use();
+
+        s_SkyboxShader->SetMatrix("uView", s_ActiveCamera.GetViewMatrix());
+        s_SkyboxShader->SetMatrix("uProjection", s_ActiveCamera.GetProjectionMatrix());
+        s_SkyboxShader->SetVector3("uCameraWorldPos", s_ActiveCamera.GetPosition());
+
+        s_DefaultSkyboxTexture->Bind();
+
+        glDisable(GL_DEPTH_TEST);
+        glBindVertexArray(0);
+        glDrawArrays(GL_TRIANGLES, 0, 24);
+        glEnable(GL_DEPTH_TEST);
     }
 
     void Renderer::SetBackgroundColor(glm::vec3 color)
@@ -150,6 +176,7 @@ namespace Core::Gfx
 
     void Renderer::RenderScene(Scene& scene)
     {
+        DrawSkybox();
         using namespace Ecs;
         ECS registry = scene.GetRegistry();
 

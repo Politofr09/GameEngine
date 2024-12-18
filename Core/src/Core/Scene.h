@@ -24,7 +24,7 @@ namespace Core
 
 	private:
 		Ecs::ECS m_Registry;
-		UUID m_ID;
+		UUID ID;
 	};
 
 }
