@@ -64,6 +64,8 @@ namespace Core::Gfx
 		int faceWidth = m_Spec.Width / 4;
 		int faceHeight = m_Spec.Height / 3;
 
+		std::cout << "Face width of the cubemap: " << faceWidth << std::endl;
+
 		glGenTextures(1, &m_RendererID);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, m_RendererID);
 
@@ -75,28 +77,30 @@ namespace Core::Gfx
 			{ 1, 1 }, // Positive Z
 			{ 3, 1 }  // Negative Z
 		};
+
+		GLenum format = GetGLFormat();
 		
 		for (int face = 0; face < 6; face++)
 		{
 			int offsetX = faceOffsets[face][0] * faceWidth;
 			int offsetY = faceOffsets[face][1] * faceHeight;
 
-			unsigned char* faceData = new unsigned char[faceWidth * faceHeight * 4];
+			unsigned char* faceData = new unsigned char[faceWidth * faceHeight * m_Spec.Channels];
 			for (int y = 0; y < faceHeight; ++y) 
 			{
 				int srcY = offsetY + y;
 				int destY = y;
 				memcpy(
-					faceData + (destY * faceWidth * 4),
-					data + (srcY * m_Spec.Width * 4) + (offsetX * 4),
-					faceWidth * 4
+					faceData + (destY * faceWidth * m_Spec.Channels),
+					data + (srcY * m_Spec.Width * m_Spec.Channels) + (offsetX * m_Spec.Channels),
+					faceWidth * m_Spec.Channels
 				);
 			}
 
 			glTexImage2D(
 				GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
-				0, GL_RGBA, faceWidth, faceHeight,
-				0, GL_RGBA, GL_UNSIGNED_BYTE, faceData
+				0, format, faceWidth, faceHeight,
+				0, format, GL_UNSIGNED_BYTE, faceData
 			);
 
 			delete[] faceData;
@@ -123,26 +127,9 @@ namespace Core::Gfx
 		glGenTextures(1, &m_RendererID);
 
 		glBindTexture(GL_TEXTURE_2D, m_RendererID);
-	
-		// Determine the texture format based on the number of channels
-		GLenum format;
-		switch (m_Spec.Channels)
-		{
-		case 1:
-			format = GL_RED;
-			break;
-		case 3:
-			format = GL_RGB;
-			break;
-		case 4:
-			format = GL_RGBA;
-			break;
-		default:
-			LOG_ERROR("Unsupported number of channels: " + m_Spec.Channels);
-			return;
-		}
 
 		// Set texture data
+		GLenum format = GetGLFormat();
 		glTexImage2D(GL_TEXTURE_2D, 0, format, m_Spec.Width, m_Spec.Height, 0, format, GL_UNSIGNED_BYTE, data);
 
 		// Set texture parameters
@@ -166,6 +153,26 @@ namespace Core::Gfx
 	{
 		//glBindTexture(GL_TEXTURE_2D, 0);
 		glBindTextureUnit(slot, 0);
+	}
+
+	unsigned int Texture::GetGLFormat()
+	{
+		// Determine the texture format based on the number of channels
+		switch (m_Spec.Channels)
+		{
+		case 1:
+			return GL_RED;
+			break;
+		case 3:
+			return GL_RGB;
+			break;
+		case 4:
+			return GL_RGBA;
+			break;
+		default:
+			LOG_ERROR("Unsupported number of channels: " + m_Spec.Channels);
+			return 0;
+		}
 	}
 
 }

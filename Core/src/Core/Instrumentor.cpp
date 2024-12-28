@@ -77,4 +77,9 @@ namespace Core
         m_OutputStream.flush();
     }
 
+    double GetCPUUsage()
+    {
+        return 0.0;
+    }
+
 }

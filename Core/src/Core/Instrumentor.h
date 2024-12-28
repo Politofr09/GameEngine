@@ -10,6 +10,8 @@
 namespace Core
 {
 
+    double GetCPUUsage();
+
     struct ProfileResult
     {
         std::string Name;

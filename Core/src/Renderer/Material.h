@@ -36,7 +36,7 @@ namespace Core::Gfx
 		Ref<Texture> DiffuseTexture  = nullptr;
 		Ref<Texture> SpecularTexture = nullptr;
 		Ref<Texture> NormalTexture   = nullptr;
-		Ref<Shader>  Shader			 = nullptr;
+		Ref<Shader>  ShaderProgram	 = nullptr; // Renamed so linux doesn't yell at me
 	
 		glm::vec3	 Color = glm::vec3(0.0f);
 		glm::vec3	 Ambient = glm::vec3(0.0f);

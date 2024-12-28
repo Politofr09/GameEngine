@@ -40,7 +40,7 @@ namespace Core
 		}
 		catch (YAML::ParserException e)
 		{
-			LOG_ERROR("Failed to load project file", e.what());
+			LOG_ERROR(std::string("Failed to load project file ") + std::string(e.what()));
 			return false;
 		}
 
@@ -60,6 +60,7 @@ namespace Core
 			m_AssetRegistry.SetAssetDirectory(m_AssetDirectory);
 			m_AssetRegistry.Deserialize();
 		}
+		return true;
 	}
 
 }

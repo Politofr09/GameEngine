@@ -7,6 +7,7 @@
 #include <bitset>
 #include <typeindex>
 #include <typeinfo>
+#include <type_traits>
 #include <unordered_map>
 #include <functional>
 
@@ -98,8 +99,9 @@ namespace Core::Ecs
 		};
 	public:
 		template<typename... ECS>
-		View<ECS...> GetView() {
-			return View<ECS...>(*this);
+		View<ECS...>& GetView() 
+		{
+			return *new View<ECS...>(*this);
 		}
 
 		template <typename T>
@@ -170,6 +172,29 @@ namespace Core::Ecs
 		}
 
 		template <typename T>
+		void AddComponent(EntityID entity, const T& component)
+		{
+			size_t componentIndex = GetComponentIndex<T>();
+
+			// Find the entity in the entity masks
+			auto it = std::find_if(m_EntityMasks.begin(), m_EntityMasks.end(),
+				[entity](const EntityDesc& e) { return e.id == entity; });
+
+			if (it != m_EntityMasks.end())
+			{
+				// Set the component bit in the entity's mask
+				it->mask.set(componentIndex);
+
+				// Add the component to the entity's storage
+				m_Components[typeid(T)][entity] = new T(component);
+			}
+			else
+			{
+				LOG_ERROR("Entity not found.");
+			}
+		}
+
+		template <typename T>
 		bool HasComponent(EntityID entity)
 		{
 			const size_t componentIndex = GetComponentIndex<T>();
@@ -193,11 +218,8 @@ namespace Core::Ecs
 			auto it = std::find_if(m_EntityMasks.begin(), m_EntityMasks.end(),
 				[entity](const EntityDesc& e) { return e.id == entity; });
 
-			if (it != m_EntityMasks.end() && it->mask.test(componentIndex))
-			{
-				return *static_cast<T*>(m_Components[typeid(T)][entity]);
-			}
-			return T();
+			ASSERT(it != m_EntityMasks.end() && it->mask.test(componentIndex));
+			return *static_cast<T*>(m_Components[typeid(T)][entity]);
 		}
 
 		template<typename... Cs>

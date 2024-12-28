@@ -14,7 +14,7 @@ public:
 	void OnImGuiRender();
 
 	void SelectEntity(Core::Ecs::Entity entity) { m_SelectedEntity = entity; };
-	Core::Ecs::Entity GetSelectedEntity() const { return m_SelectedEntity; }
+	Core::Ecs::Entity& GetSelectedEntity() { return m_SelectedEntity; }
 	
 private:
 	void DrawEntityNode(Core::Ecs::Entity entity);

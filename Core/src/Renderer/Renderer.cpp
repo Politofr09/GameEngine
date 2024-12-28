@@ -1,6 +1,8 @@
 #include "Renderer.h"
 #include "Shader.h"
 #include "Events/WindowEvents.h"
+#include "Core/Instrumentor.h"
+
 #include <iostream>
 
 #include "Core/Application.h"
@@ -37,6 +39,7 @@ namespace Core::Gfx
 
     void Renderer::Init()
     {
+        CORE_PROFILE_FUNCTION();
         GLCall(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
 
         // These assets don't need to be exposed to the asset registry; they are internal things of the engine
@@ -84,6 +87,7 @@ namespace Core::Gfx
 
     void Renderer::DrawGrid()
     {
+        CORE_PROFILE_FUNCTION();
         s_GridShader->Use();
 
         s_GridShader->SetFloat("uGridSize", s_GridSettings.gridSize);
@@ -106,6 +110,7 @@ namespace Core::Gfx
 
     void Renderer::DrawSkybox()
     {
+        CORE_PROFILE_FUNCTION();
         s_SkyboxShader->Use();
 
         s_SkyboxShader->SetMatrix("uView", s_ActiveCamera.GetViewMatrix());
@@ -143,25 +148,27 @@ namespace Core::Gfx
 
     void Renderer::DrawModel(Ref<Model> model, glm::mat4 transform)
     {
+        CORE_PROFILE_FUNCTION();
+
         auto material = model->GetMaterial();
         if (!material) return;
 
-        if (!material->Shader) material->Shader = s_PhongShader;
-        material->Shader->Use();
+        if (!material->ShaderProgram) material->ShaderProgram = s_PhongShader;
+        material->ShaderProgram->Use();
 
-        material->Shader->SetMatrix("uView", s_ActiveCamera.GetViewMatrix());
-        material->Shader->SetMatrix("uProjection", s_ActiveCamera.GetProjectionMatrix());
-        material->Shader->SetMatrix("uTransform", transform);
+        material->ShaderProgram->SetMatrix("uView", s_ActiveCamera.GetViewMatrix());
+        material->ShaderProgram->SetMatrix("uProjection", s_ActiveCamera.GetProjectionMatrix());
+        material->ShaderProgram->SetMatrix("uTransform", transform);
 
-        material->Shader->SetVector3("uMaterialColor", material->Color);
-        material->Shader->SetVector3("uMaterialAmbient", material->Ambient);
-        material->Shader->SetVector3("uMaterialDiffuse", material->Diffuse);
-        material->Shader->SetVector3("uMaterialSpecular", material->Specular);
-        material->Shader->SetFloat("uMaterialShininess", material->Shininess);
+        material->ShaderProgram->SetVector3("uMaterialColor", material->Color);
+        material->ShaderProgram->SetVector3("uMaterialAmbient", material->Ambient);
+        material->ShaderProgram->SetVector3("uMaterialDiffuse", material->Diffuse);
+        material->ShaderProgram->SetVector3("uMaterialSpecular", material->Specular);
+        material->ShaderProgram->SetFloat("uMaterialShininess", material->Shininess);
 
-        material->Shader->SetVector3("uLightPosition", s_SceneLight.Position);
-        material->Shader->SetVector3("uLightColor", s_SceneLight.Color);
-        material->Shader->SetVector3("uViewPosition", s_ActiveCamera.GetPosition());
+        material->ShaderProgram->SetVector3("uLightPosition", s_SceneLight.Position);
+        material->ShaderProgram->SetVector3("uLightColor", s_SceneLight.Color);
+        material->ShaderProgram->SetVector3("uViewPosition", s_ActiveCamera.GetPosition());
 
         material->DiffuseTexture->Bind();
         //glBindTexture(GL_TEXTURE_2D, material->DiffuseTexture->GetID());
@@ -188,7 +195,7 @@ namespace Core::Gfx
             auto& modelComponent = registry.GetComponent<ModelComponent>(e);
             if (!modelComponent.ModelHandle) continue;
 
-            auto& model = Application::Get()->GetCurrentProject().GetRegistry().Get<Model>(modelComponent.ModelHandle);
+            Ref<Model> model = Application::Get()->GetCurrentProject().GetRegistry().Get<Model>(modelComponent.ModelHandle);
 
             DrawModel(model, transformComponent);
         }

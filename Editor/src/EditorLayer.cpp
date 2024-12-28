@@ -40,6 +40,7 @@ void EditorLayer::OnAttach()
     int width = Application::Get()->GetWindow()->GetWidth();
     int height = Application::Get()->GetWindow()->GetHeight();
 
+
     //// Setup *OpenGL* renderer
     Renderer::Init();
     Renderer2D::Init();
@@ -56,6 +57,8 @@ static int FONT_SCALE = 3;
 
 void EditorLayer::OnUpdate()
 {
+    CORE_PROFILE_FUNCTION();
+
     // UpdateCameraController();
     //shader->SetFloat("uTime", (float)glfwGetTime());
     Renderer::SetBackgroundColor({ 0.2f, 0.3f, 0.3f });
@@ -106,7 +109,7 @@ void EditorLayer::OnImGuiRender()
 {
     // ImGui content
     //ImGui::Begin("Menubar", (bool*)0, ImGuiWindowFlags_MenuBar);
-    //CORE_PROFILE_FUNCTION();
+    CORE_PROFILE_FUNCTION();
 
     if (ImGui::BeginMenuBar())
     {

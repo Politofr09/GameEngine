@@ -182,7 +182,7 @@ namespace Core::Gfx
 		glDrawElements(GL_TRIANGLES, s_Data.QuadIndexCount, GL_UNSIGNED_INT, nullptr);
 	}
 
-	void Renderer2D::DrawQuad(glm::vec3& position, glm::vec2& size, glm::vec4& color)
+	void Renderer2D::DrawQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color)
 	{
 		if (s_Data.QuadIndexCount + 6 > s_Data.MaxIndices ||
 			(s_Data.QuadVertexBufferPtr - s_Data.QuadVertexBufferBase) + 4 > s_Data.MaxVertices)
@@ -217,12 +217,12 @@ namespace Core::Gfx
 		s_Data.QuadIndexCount += 6;
 	}
 
-	void Renderer2D::DrawQuad(glm::vec2& position, glm::vec2& size, glm::vec4& color)
+	void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color)
 	{
 		DrawQuad(glm::vec3{ position.x, position.y, 0.0f }, size, color);
 	}
 
-	void Renderer2D::DrawQuadTextured(glm::vec3& position, glm::vec2& size, glm::vec4& color, Ref<Texture> texture)
+	void Renderer2D::DrawQuadTextured(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color, Ref<Texture> texture)
 	{
 		// Check if the batch should be restarted based on index limits
 		if (s_Data.QuadIndexCount + 6 > s_Data.MaxIndices ||
