@@ -39,7 +39,8 @@ namespace Core::Gfx
 
     void Renderer::Init()
     {
-        CORE_PROFILE_FUNCTION();
+        CORE_PROFILE_SCOPE("Renderer_init");
+
         GLCall(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
 
         // These assets don't need to be exposed to the asset registry; they are internal things of the engine

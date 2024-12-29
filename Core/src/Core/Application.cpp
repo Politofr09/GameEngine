@@ -14,6 +14,7 @@ namespace Core
 	Application::Application(const std::string& name, int window_width, int window_height)
 	{
 		CORE_PROFILE_BEGIN_SESSION("App", "ProfilingResults.json");
+		CORE_PROFILE_FUNCTION();
 
 		s_Instance = this;
 		m_Window = new Window(window_width, window_height, name);
@@ -46,6 +47,7 @@ namespace Core
 
 	void Application::Run()
 	{
+		CORE_PROFILE_FUNCTION();
 		while (!m_Window->ShouldClose())
 		{
 			for (auto& layer : m_Layers)
@@ -66,7 +68,6 @@ namespace Core
 			Events::Dispatcher::ProcessEvents();
 			m_Window->Update();
 		}
-
 	}
 
 	void Application::OnEvent(Events::Event* event)
@@ -75,6 +76,7 @@ namespace Core
 
 	Application::~Application()
 	{
+		CORE_PROFILE_FUNCTION();
 		m_CurrentProject.Serialize(m_OpenedProjectPath);
 
 		for (auto& layer : m_Layers)

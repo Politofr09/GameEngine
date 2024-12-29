@@ -27,6 +27,8 @@ namespace Core::Gfx
 
 	bool Font::Load()
     {
+		CORE_PROFILE_SCOPE("Font_load");
+
 		std::ifstream file(m_Metadata.Path, std::ios::binary | std::ios::ate);
 		if (!file.is_open())
 		{

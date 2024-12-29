@@ -6,11 +6,11 @@ Entities:
     TransformComponent:
       Position: [0, 1.89999998, 3.9000001]
       Rotation: [0, -100, 0]
-      Scale: [1, 1, 1]
+      Scale: [1, 2, 1]
     ModelComponent:
       ModelHandle: 7815844647375743766
   - Entity: 11442609307475401706
-    NameComponent: Ball
+    NameComponent: Bunny
     TransformComponent:
       Position: [0, 0.300000012, 0]
       Rotation: [0, 0, 0]

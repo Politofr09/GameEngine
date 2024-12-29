@@ -235,6 +235,8 @@ namespace Core
     // Start new ImGui frame
     void ImGuiLayer::BeginImGuiContent()
     {
+        CORE_PROFILE_FUNCTION();
+
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();

@@ -38,6 +38,8 @@ namespace Core::Gfx
 
 	bool Texture::Load()
 	{
+        CORE_PROFILE_SCOPE("Texture_load");
+
 		//stbi_set_flip_vertically_on_load(1);
 		unsigned char* data = stbi_load(m_Metadata.Path.c_str(), (int*) &m_Spec.Width, (int*) &m_Spec.Height, &m_Spec.Channels, 0);
 

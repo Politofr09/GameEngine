@@ -2,6 +2,7 @@
 
 #include "Core/UUID.h"
 #include "Core/Utils.h"
+#include "Core/Instrumentor.h"
 #include "Common.h"
 
 #include <bitset>
@@ -128,6 +129,7 @@ namespace Core::Ecs
 		template<typename T>
 		void RemoveComponent(EntityID entity)
 		{
+			CORE_PROFILE_FUNCTION();
 			const size_t componentIndex = GetComponentIndex<T>();
 
 			auto it = std::find_if(m_EntityMasks.begin(), m_EntityMasks.end(),
@@ -151,6 +153,7 @@ namespace Core::Ecs
 		template <typename T>
 		void AddComponent(EntityID entity, T& component)
 		{
+			CORE_PROFILE_FUNCTION();
 			size_t componentIndex = GetComponentIndex<T>();
 
 			// Find the entity in the entity masks
@@ -174,6 +177,8 @@ namespace Core::Ecs
 		template <typename T>
 		void AddComponent(EntityID entity, const T& component)
 		{
+			CORE_PROFILE_FUNCTION();
+
 			size_t componentIndex = GetComponentIndex<T>();
 
 			// Find the entity in the entity masks
@@ -197,6 +202,8 @@ namespace Core::Ecs
 		template <typename T>
 		bool HasComponent(EntityID entity)
 		{
+			CORE_PROFILE_FUNCTION();
+
 			const size_t componentIndex = GetComponentIndex<T>();
 
 			// Find the entity in the entity masks
@@ -213,6 +220,8 @@ namespace Core::Ecs
 		template<typename T>
 		T& GetComponent(EntityID entity)
 		{
+			CORE_PROFILE_FUNCTION();
+
 			const size_t componentIndex = GetComponentIndex<T>();
 
 			auto it = std::find_if(m_EntityMasks.begin(), m_EntityMasks.end(),
@@ -225,6 +234,8 @@ namespace Core::Ecs
 		template<typename... Cs>
 		ComponentMask GetComponentMask()
 		{
+			CORE_PROFILE_FUNCTION();
+
 			ComponentMask mask;
 			((mask.set(GetComponentIndex<Cs>())), ...);
 			return mask;
@@ -277,6 +288,8 @@ namespace Core::Ecs
 		template<typename T>
 		size_t GetComponentIndex()
 		{
+			CORE_PROFILE_FUNCTION();
+
 			const std::type_index typeId = typeid(T);
 
 			if (m_ComponentIndices.find(typeId) == m_ComponentIndices.end())

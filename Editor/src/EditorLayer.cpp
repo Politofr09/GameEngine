@@ -32,7 +32,7 @@ EditorLayer::EditorLayer()
 
 void EditorLayer::OnAttach()
 {
-    CORE_PROFILE_FUNCTION();
+    CORE_PROFILE_SCOPE("EditorLayer_OnAttach");
 
     // Setup event
 	Events::Dispatcher::Subscribe(std::bind(&EditorLayer::OnEvent, this, std::placeholders::_1));
@@ -57,7 +57,7 @@ static int FONT_SCALE = 3;
 
 void EditorLayer::OnUpdate()
 {
-    CORE_PROFILE_FUNCTION();
+    CORE_PROFILE_SCOPE("EditorLayer_OnUpdate");
 
     // UpdateCameraController();
     //shader->SetFloat("uTime", (float)glfwGetTime());
@@ -109,7 +109,7 @@ void EditorLayer::OnImGuiRender()
 {
     // ImGui content
     //ImGui::Begin("Menubar", (bool*)0, ImGuiWindowFlags_MenuBar);
-    CORE_PROFILE_FUNCTION();
+    CORE_PROFILE_SCOPE("EditorLayer_OnImGuiRender");
 
     if (ImGui::BeginMenuBar())
     {

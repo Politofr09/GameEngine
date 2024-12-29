@@ -9,7 +9,7 @@ namespace Core
 
 	void Project::Serialize(const std::string& path)
 	{
-		CORE_PROFILE_FUNCTION();
+		CORE_PROFILE_SCOPE("Project_serialize");
 
 		YAML::Emitter out;
 		out << YAML::BeginMap;
@@ -31,7 +31,7 @@ namespace Core
 
 	bool Project::Deserialize(const std::string& path)
 	{
-		CORE_PROFILE_FUNCTION();
+		CORE_PROFILE_SCOPE("Project_deserialize");
 
 		YAML::Node data;
 		try

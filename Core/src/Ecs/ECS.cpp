@@ -6,6 +6,8 @@ namespace Core::Ecs
 
 	void ECS::RemoveEntity(EntityID entity)
 	{
+		CORE_PROFILE_FUNCTION();
+
 		auto it = std::find_if(m_EntityMasks.begin(), m_EntityMasks.end(),
 			[entity](const EntityDesc& e) { return e.id == entity; });
 
@@ -31,6 +33,8 @@ namespace Core::Ecs
 
 	ECS::EntityID ECS::CreateEntityWithID(ECS::EntityID id)
 	{
+		CORE_PROFILE_FUNCTION();
+
 		// Check if the ID already exists
 		auto it = std::find_if(m_EntityMasks.begin(), m_EntityMasks.end(),
 			[id](const EntityDesc& e) { return e.id == id; });

@@ -245,6 +245,8 @@ static void DrawComponents(Entity entity)
 
 void SceneHierarchyPanel::OnImGuiRender()
 {
+	CORE_PROFILE_SCOPE("SceneHierarchyPanel_OnImGuiRender");
+
 	ImGui::Begin("Scene Hierarchy");
 
 	if (ImGui::Button("Add Entity"))

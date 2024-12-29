@@ -59,7 +59,7 @@ namespace Core
 
 	void Scene::Serialize(const std::string& path)
 	{
-		CORE_PROFILE_FUNCTION();
+		CORE_PROFILE_SCOPE("Scene_serialize");
 
 		YAML::Emitter out;
 		out << YAML::BeginMap; // Root map
@@ -85,7 +85,7 @@ namespace Core
 
 	bool Scene::Deserialize(const std::string& path)
 	{
-		CORE_PROFILE_FUNCTION();
+		CORE_PROFILE_SCOPE("Scene_deserialize");
 
 		YAML::Node data;
 		try

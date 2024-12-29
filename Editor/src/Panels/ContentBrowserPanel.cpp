@@ -1,4 +1,5 @@
 #include "ContentBrowserPanel.h"
+#include "Core/Instrumentor.h"
 #include "Core/Application.h"
 #include <imgui/imgui.h>
 #include <imgui/IconsFontAwesome5.h>
@@ -20,6 +21,8 @@ ContentBrowserPanel::ContentBrowserPanel()
 
 void ContentBrowserPanel::OnImGuiRender()
 {
+    CORE_PROFILE_SCOPE("ContentBrowserPanel_OnImGuiRender");
+    
     auto& registry = Application::Get()->GetCurrentProject().GetRegistry();
 
 	ImGui::Begin("Content browser");
