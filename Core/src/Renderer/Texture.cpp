@@ -82,14 +82,14 @@ namespace Core::Gfx
 			int offsetY = faceOffsets[face][1] * faceHeight;
 
 			unsigned char* faceData = new unsigned char[faceWidth * faceHeight * 4];
-			for (int y = 0; y < faceHeight; ++y) 
+			size_t rowStride = m_Spec.Width * 4; // Full source image stride (width in bytes)
+			size_t faceStride = faceWidth * 4;  // Per-face stride (in bytes)
+			for (int y = 0; y < faceHeight; ++y)
 			{
-				int srcY = offsetY + y;
-				int destY = y;
 				memcpy(
-					faceData + (destY * faceWidth * 4),
-					data + (srcY * m_Spec.Width * 4) + (offsetX * 4),
-					faceWidth * 4
+					faceData + (y * faceStride),
+					data + ((offsetY + y) * rowStride) + (offsetX * 4),
+					faceStride
 				);
 			}
 

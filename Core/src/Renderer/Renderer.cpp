@@ -47,7 +47,7 @@ namespace Core::Gfx
         TextureSpecifiation spec;
         spec.Type = TextureSpecifiation::Type::Cubemap;
         s_DefaultSkyboxTexture = Texture::Create(
-            "assets/textures/Renderer@DefaultSkybox.png",
+            "assets/textures/Renderer@DefaultSkybox2.png",
             spec
         );
     }
