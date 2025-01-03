@@ -46,6 +46,8 @@ void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 	{
 		ImGui::TreePop();
 	}
+
+	if (entityDeleted) m_SelectedEntity.Kill();
 }
 
 template <typename T, typename UIFunction>
@@ -100,8 +102,13 @@ static void DrawComponents(Entity entity)
 
 		char buffer[256];
 		memset(buffer, 0, sizeof(buffer));
+#ifdef _WIN32
 		strncpy_s(buffer, sizeof(buffer), name.c_str(), sizeof(buffer));
-
+#else 
+		std::strncpy(buffer, name.c_str(), sizeof(buffer) - 1); // Ensure null termination
+		buffer[sizeof(buffer) - 1] = '\0';                      // Explicitly null terminate
+#endif
+		
 		ImGui::SetCursorPosX(10.0f);
 		if (ImGui::InputText("##Name", buffer, sizeof(buffer)))
 		{
@@ -238,6 +245,8 @@ static void DrawComponents(Entity entity)
 
 void SceneHierarchyPanel::OnImGuiRender()
 {
+	CORE_PROFILE_SCOPE("SceneHierarchyPanel_OnImGuiRender");
+
 	ImGui::Begin("Scene Hierarchy");
 
 	if (ImGui::Button("Add Entity"))
@@ -252,12 +261,12 @@ void SceneHierarchyPanel::OnImGuiRender()
 		Entity entity{ entityID, registry };
 		DrawEntityNode(entity);
 
-		if (entityDeleted)
-		{
-			registry.RemoveEntity(entityID);
-			entityDeleted = false;
-			return;
-		}
+		// if (entityDeleted)
+		// {
+		// 	m_SelectedEntity.Kill();
+		// 	entityDeleted = false;
+		// 	return;
+		// }
 	});
 
 	ImGui::End();

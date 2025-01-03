@@ -155,12 +155,8 @@ namespace Core::Gfx
         if (material->GetTexture(aiTextureType_DIFFUSE, 0, &str) == AI_SUCCESS && !hasEmbedded)
         {
             std::filesystem::path texturePath = str.C_Str();
-            // Check if it's a relative path
-            // if so, add the relative directory
-            if (std::filesystem::canonical(texturePath) != texturePath)
-            {
-                texturePath = std::string(relativeDirectory + texturePath.string());
-            }
+
+            texturePath = std::string(relativeDirectory + texturePath.string());
 
             Ref<Texture> existingDiffuse = Application::Get()->GetCurrentProject().GetRegistry().Get<Texture>(texturePath.string());
             if (existingDiffuse->GetMetadata().ID)
@@ -178,12 +174,8 @@ namespace Core::Gfx
         if (material->GetTexture(aiTextureType_SPECULAR, 0, &str) == AI_SUCCESS)
         {
             std::filesystem::path texturePath = str.C_Str();
-            // Check if it's a relative path
-            // if so, add the relative directory
-            if (std::filesystem::canonical(texturePath) != texturePath)
-            {
-                texturePath = std::string(relativeDirectory + texturePath.string());
-            }
+            
+            texturePath = std::string(relativeDirectory + texturePath.string());
 
             Ref<Texture> existingSpecular = Application::Get()->GetCurrentProject().GetRegistry().Get<Texture>(texturePath.string());
             if (existingSpecular->GetMetadata().ID)
@@ -200,12 +192,8 @@ namespace Core::Gfx
         if (material->GetTexture(aiTextureType_NORMALS, 0, &str) == AI_SUCCESS)
         {
             std::filesystem::path texturePath = str.C_Str();
-            // Check if it's a relative path
-            // if so, add the relative directory
-            if (std::filesystem::canonical(texturePath) != texturePath)
-            {
-                texturePath = std::string(relativeDirectory + texturePath.string());
-            }
+
+            texturePath = std::string(relativeDirectory + texturePath.string());            
 
             Ref<Texture> existingNormal = Application::Get()->GetCurrentProject().GetRegistry().Get<Texture>(texturePath.string());
             if (existingNormal->GetMetadata().ID)

@@ -9,7 +9,7 @@ namespace Core
 
 	void Project::Serialize(const std::string& path)
 	{
-		CORE_PROFILE_FUNCTION();
+		CORE_PROFILE_SCOPE("Project_serialize");
 
 		YAML::Emitter out;
 		out << YAML::BeginMap;
@@ -31,7 +31,7 @@ namespace Core
 
 	bool Project::Deserialize(const std::string& path)
 	{
-		CORE_PROFILE_FUNCTION();
+		CORE_PROFILE_SCOPE("Project_deserialize");
 
 		YAML::Node data;
 		try
@@ -40,7 +40,7 @@ namespace Core
 		}
 		catch (YAML::ParserException e)
 		{
-			LOG_ERROR("Failed to load project file", e.what());
+			LOG_ERROR(std::string("Failed to load project file ") + std::string(e.what()));
 			return false;
 		}
 
@@ -60,6 +60,7 @@ namespace Core
 			m_AssetRegistry.SetAssetDirectory(m_AssetDirectory);
 			m_AssetRegistry.Deserialize();
 		}
+		return true;
 	}
 
 }

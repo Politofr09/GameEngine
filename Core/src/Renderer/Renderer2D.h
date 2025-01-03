@@ -21,9 +21,9 @@ namespace Core::Gfx
 		static void Begin(const OrthographicCamera& camera);
 		static void End();
 
-		static void DrawQuad(glm::vec3& position, glm::vec2& size, glm::vec4& color);
-		static void DrawQuad(glm::vec2& position, glm::vec2& size, glm::vec4& color);
-		static void DrawQuadTextured(glm::vec3& position, glm::vec2& size, glm::vec4& color, Ref<Texture> texture);
+		static void DrawQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color);
+		static void DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color);
+		static void DrawQuadTextured(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color, Ref<Texture> texture);
 
 	private:
 		static void StartBatch();

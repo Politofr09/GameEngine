@@ -1,5 +1,6 @@
 #include "Shader.h"
-#include "Utils.h"
+#include "Core/Utils.h"
+#include "Core/Instrumentor.h"
 
 namespace Core::Gfx
 {
@@ -23,6 +24,8 @@ namespace Core::Gfx
 
     bool Shader::Load()
     {
+        CORE_PROFILE_SCOPE("Shader_load");
+
         std::ifstream shaderFile(m_Metadata.Path);
         if (!shaderFile.is_open())
         {

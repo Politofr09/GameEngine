@@ -61,6 +61,8 @@ namespace Core::Gfx
 		TextureSpecifiation GetSpecification() const { return m_Spec; }
 
 	private:
+		unsigned int GetGLFormat();
+	private:
 		unsigned int m_RendererID = 0; // OpenGL ID
 		TextureSpecifiation m_Spec;
 

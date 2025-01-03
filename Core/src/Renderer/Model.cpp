@@ -30,7 +30,7 @@ namespace Core::Gfx
 
 	bool Model::Load()
 	{
-		CORE_PROFILE_FUNCTION();
+		CORE_PROFILE_SCOPE("Model_load");
 
 		Assimp::Importer importer;
 		const aiScene* scene = importer.ReadFile(m_Metadata.Path, aiProcess_FlipUVs | aiProcess_Triangulate | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph);
@@ -82,7 +82,7 @@ namespace Core::Gfx
 		vertices.Normals.reserve(mesh->mNumVertices);
 		vertices.TexCoords.reserve(mesh->mNumVertices);
 		
-		CORE_PROFILE_SCOPE("For loop 1"); {
+		CORE_PROFILE_SCOPE("Model_Vertex_processing"); {
 			for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 			{
 				vertices.Positions.emplace_back(glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z));
@@ -93,7 +93,7 @@ namespace Core::Gfx
 			}
 		}
 
-		CORE_PROFILE_SCOPE("For loop 2"); {
+		CORE_PROFILE_SCOPE("Model_Indices_processing"); {
 			indices.reserve(mesh->mNumFaces * 3);
 			for (unsigned int i = 0; i < mesh->mNumFaces; ++i)
 			{

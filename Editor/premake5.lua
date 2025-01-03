@@ -26,6 +26,7 @@ project "Editor"
         "../vendor/GLFW/bin/glfw/",
         "../vendor/GLEW/bin/%{cfg.buildcfg}",
         "../vendor/assimp/bin/%{cfg.buildcfg}",
+        "../vendor/yaml-cpp/bin/%{cfg.buildcfg}",
         "../Core/bin/%{cfg.buildcfg}"
     }
 
@@ -34,6 +35,7 @@ project "Editor"
         "glfw",
         "glew",
         "assimp",
+        "yaml-cpp"
     }
 
     filter "system:windows"

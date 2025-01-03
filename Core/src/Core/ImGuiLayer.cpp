@@ -1,5 +1,6 @@
 #include "ImGuiLayer.h"
 #include "Core/Application.h"
+#include "Instrumentor.h"
 
 #include <iostream>
 
@@ -163,6 +164,8 @@ namespace Core
 
     void ImGuiLayer::SetupImGui(bool dark)
     {
+        CORE_PROFILE_FUNCTION();
+
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         // Setup styling and other ImGui settings
@@ -232,6 +235,8 @@ namespace Core
     // Start new ImGui frame
     void ImGuiLayer::BeginImGuiContent()
     {
+        CORE_PROFILE_FUNCTION();
+
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -280,6 +285,7 @@ namespace Core
     // Render ImGui
     void ImGuiLayer::EndImGuiContent()
     {
+        CORE_PROFILE_FUNCTION();
         // Dockspace end
         ImGui::End();
 

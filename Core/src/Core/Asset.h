@@ -142,17 +142,6 @@ namespace Core
         AssetStorage<Gfx::Shader> GetShaderStorage()     { return m_Shaders;   }
         AssetStorage<Gfx::Font> GetFontStorage()         { return m_Fonts;     }
 
-        // TODO: Kill()... static_assert(false...)
-        // template <> ...
-        // And all that boilerplate
-
-        /***********************************************************************************************\
-        * Quick developer note:                                                                         *
-        * Using (for the first time, 23/11/2024!) #pragma region Just to organize this template mess.   *
-        * You can comfortably collapse the regions (at least in visual studio) and it's easier          *
-        * to read the source code.                                                                      *
-        \***********************************************************************************************/
-
         template <typename T>
         UUID Track(Ref<T> asset)
         {

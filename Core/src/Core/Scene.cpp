@@ -37,8 +37,8 @@ namespace Core
 		if (node.IsSequence() && node.size() == 3)
 		{
 			return glm::vec3(node[0].as<float>(), node[1].as<float>(), node[2].as<float>());
-		}
-		glm::vec3(0.0f);
+		} 
+		return glm::vec3(0.0f);
 	}
 
 	glm::vec4 YAMLToVec4(const YAML::Node& node)
@@ -47,21 +47,19 @@ namespace Core
 		{
 			return glm::vec4(node[0].as<float>(), node[1].as<float>(), node[2].as<float>(), node[3].as<float>());
 		}
-		glm::vec4(0.0f);
+		return glm::vec4(0.0f);
 	}
-
 
 	Entity Scene::CreateEntity(const std::string& name)
 	{
 		Entity entity(m_Registry.CreateEntity(), m_Registry);
 		entity.AddComponent<NameComponent>(NameComponent{ name });
-
 		return entity;
 	}
 
 	void Scene::Serialize(const std::string& path)
 	{
-		CORE_PROFILE_FUNCTION();
+		CORE_PROFILE_SCOPE("Scene_serialize");
 
 		YAML::Emitter out;
 		out << YAML::BeginMap; // Root map
@@ -87,7 +85,7 @@ namespace Core
 
 	bool Scene::Deserialize(const std::string& path)
 	{
-		CORE_PROFILE_FUNCTION();
+		CORE_PROFILE_SCOPE("Scene_deserialize");
 
 		YAML::Node data;
 		try
@@ -96,9 +94,10 @@ namespace Core
 		}
 		catch (YAML::Exception e)
 		{
-			LOG_ERROR("Failed to load scene file", e.what());
+			LOG_ERROR(std::string("Failed to load scene file") + std::string(e.what()));
 			return false;
 		}
+
 
 		YAML::Node scene = data["Scene"];
 		if (!scene)

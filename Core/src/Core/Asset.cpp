@@ -26,6 +26,14 @@ namespace Core
 	void AssetRegistry::SerializeMetadata(const AssetMetadata& metadata)
 	{
 		std::string path = RemoveFileExtension(metadata.Path) + ".assetinfo";
+
+		// Normalize the path
+		std::filesystem::path filePath(path);
+		filePath = filePath.make_preferred(); // This normalizes path separators based on the OS.
+
+		// Ensure the parent directory exists
+		std::filesystem::create_directories(filePath.parent_path());
+
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 		{
@@ -45,7 +53,7 @@ namespace Core
 		out << YAML::EndMap;
 
 		// Write to the file
-		std::ofstream fout(path);
+		std::ofstream fout(filePath);
 		fout << out.c_str();
 		fout.close();
 	}

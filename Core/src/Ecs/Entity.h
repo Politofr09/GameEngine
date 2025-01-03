@@ -18,6 +18,12 @@ namespace Core::Ecs
 			m_ECS.AddComponent<T>(m_EntityID, component);
 		}
 
+		template <typename T>
+		void AddComponent(const T& component)
+		{
+			m_ECS.AddComponent<T>(m_EntityID, component);
+		}
+
 		template<typename T>
 		T& GetComponent()
 		{
@@ -47,7 +53,7 @@ namespace Core::Ecs
 
 		UUID GetID() const { return m_EntityID; }
 
-		Entity operator = (Entity& other)
+		Entity operator = (Entity other)
 		{
 			this->m_EntityID = other.m_EntityID;
 			return *this;

@@ -70,15 +70,12 @@ namespace Core
 
 #ifdef CORE_PROFILING
 
-#include "Instrumentor.h"
-
 #define CORE_PROFILE_BEGIN_SESSION(name, filepath) ::Core::Instrumentor::Get().BeginSession(name, filepath)
 #define CORE_PROFILE_END_SESSION() ::Core::Instrumentor::Get().EndSession()
-#define CORE_PROFILE_SCOPE_LINE2(name, line) ::Core::InstrumentationTimer timer##line(__func__)
+#define CORE_PROFILE_SCOPE_LINE2(name, line) ::Core::InstrumentationTimer timer##line(name)
 #define CORE_PROFILE_SCOPE_LINE(name, line) CORE_PROFILE_SCOPE_LINE2(name, line)
 #define CORE_PROFILE_SCOPE(name) CORE_PROFILE_SCOPE_LINE(name, __LINE__)
-#define CORE_PROFILE_FUNCTION() CORE_PROFILE_SCOPE(__FUNC__)
-
+#define CORE_PROFILE_FUNCTION() CORE_PROFILE_SCOPE(__func__)
 #else
 #define CORE_PROFILE_BEGIN_SESSION(name, filepath)
 #define CORE_PROFILE_END_SESSION()

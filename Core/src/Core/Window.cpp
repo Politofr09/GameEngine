@@ -6,6 +6,7 @@
 #include "Events/WindowEvents.h"
 #include "Events/InputEvents.h"
 #include <imgui/imgui.h>
+#include "Instrumentor.h"
 
 namespace Core
 {
@@ -33,6 +34,8 @@ namespace Core
 
     void Window::Init(bool decorated)
     {
+        CORE_PROFILE_SCOPE("Window_init");
+
         ASSERT(glfwInit());
         glfwSetErrorCallback(GLFWErrorCallback);
 

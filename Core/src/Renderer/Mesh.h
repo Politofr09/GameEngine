@@ -21,7 +21,7 @@ namespace Core::Gfx
 	{
 	public:
 		Mesh(Vertices& vertices, std::vector<unsigned int>& indices);
-		Mesh(Mesh& other)
+		Mesh(const Mesh& other)
 		{
 			va = other.va;
 		}

@@ -1,20 +1,19 @@
 Scene: Untitled
 ID: 7746280174807005691
 Entities:
-  - Entity: 12332770875343846942
-    NameComponent: Square 1
+  - Entity: 6165476163266209856
+    NameComponent: Monkey
     TransformComponent:
-      Position: [7.05690575, 8.71000004, 1]
-      Rotation: [0, -0, 0]
-      Scale: [18.7499943, 18.75, 18.75]
-    SpriteComponent:
-      TextureHandle: 8612828474618395439
-      Color: [1, 1, 1, 1]
-  - Entity: 3995142301690757029
-    NameComponent: Bunny (fbx)
-    TransformComponent:
-      Position: [0, 0, 0]
-      Rotation: [0, 239, 0]
-      Scale: [0.999991953, 0.999998689, 0.999991417]
+      Position: [0, 1.89999998, 3.9000001]
+      Rotation: [0, -100, 0]
+      Scale: [1, 2, 1]
     ModelComponent:
-      ModelHandle: 15240123531402163961
+      ModelHandle: 7815844647375743766
+  - Entity: 11442609307475401706
+    NameComponent: Bunny
+    TransformComponent:
+      Position: [0, 0.300000012, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    ModelComponent:
+      ModelHandle: 4750023700509674244
